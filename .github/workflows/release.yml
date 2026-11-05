@@ -50,8 +50,9 @@ jobs:
         if: always()
         run: rm -f release.jks
 
-      - name: Create GitHub Release
+      - name: Create or Update GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create v1.0.0 app/build/outputs/apk/release/app-release.apk --generate-notes
+          gh release view ${{ github.ref_name }} || gh release create ${{ github.ref_name }} --generate-notes
+          gh release upload ${{ github.ref_name }} app/build/outputs/apk/release/app-release.apk --clobber
