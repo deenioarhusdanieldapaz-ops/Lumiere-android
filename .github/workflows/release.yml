@@ -1,0 +1,57 @@
+name: Android Release Build & Sign
+
+on:
+  push:
+    tags:
+      - 'v*' # Só corre quando criamos uma tag de versão (ex: v1.0.0)
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle 8.4
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.4
+
+      - name: Generate Gradle Wrapper
+        run: gradle wrapper --gradle-version 8.4
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Decode Keystore
+        run: |
+          echo "::add-mask::${{ secrets.KEYSTORE_BASE64 }}"
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > release.jks
+
+      - name: Build Release APK
+        run: |
+          ./gradlew assembleRelease \
+            -Pandroid.injected.signing.store.file=$(pwd)/release.jks \
+            -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
+            -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
+            -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
+
+      - name: Cleanup Keystore
+        if: always()
+        run: rm -f release.jks
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: app/build/outputs/apk/release/app-release.apk
+          generate_release_notes: true
