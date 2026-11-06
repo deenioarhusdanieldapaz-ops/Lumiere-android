@@ -183,7 +183,8 @@ fun TaskScreen(viewModel: TaskViewModel) {
                         task = task,
                         onTaskClick = { viewModel.toggleTaskCompletion(task) },
                         onTaskLongClick = { taskMenu = task },
-                        onInfoClick = { taskDetails = task } // AQUI: Abre os detalhes
+                        onInfoClick = { taskDetails = task },
+                        onTimerClick = { viewModel.toggleTimer(task) }
                     )
                 }
             }
