@@ -1,5 +1,7 @@
 package com.lumiere.app.ui.screens
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,6 +19,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -54,22 +58,7 @@ fun TaskScreen(viewModel: TaskViewModel) {
     var links by remember { mutableStateOf("") }
     var completionCriteria by remember { mutableStateOf("") }
 
-    fun prepareSheet(task: Task?) {
-        taskToEdit = task
-        title = task?.title ?: ""
-        category = task?.category ?: ""
-        urgency = task?.urgency ?: 1
-        importance = task?.importance ?: 1
-        energy = task?.energy ?: 1
-        context = task?.context ?: ""
-        estimatedDuration = task?.estimatedDurationMinutes?.toString() ?: ""
-        timeReserved = task?.timeReservedMinutes?.toString() ?: ""
-        instructions = task?.instructions ?: ""
-        links = task?.links ?: ""
-        completionCriteria = task?.completionCriteria ?: ""
-        showSheet = true
-    }
-
+    
     val completedTasks = tasks.count { it.isCompleted }
     val pendingTasks = tasks.count { !it.isCompleted }
 
@@ -82,7 +71,7 @@ fun TaskScreen(viewModel: TaskViewModel) {
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { prepareSheet(null) },
+                onClick = { taskToEdit = null; showSheet = true },
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) { Icon(Icons.Default.Add, contentDescription = "Nova Tarefa") }
@@ -104,6 +93,19 @@ fun TaskScreen(viewModel: TaskViewModel) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     SummaryCard(Modifier.weight(1f), "Pendentes", pendingTasks.toString(), LumiereGold)
                     SummaryCard(Modifier.weight(1f), "Concluídas", completedTasks.toString(), Color.Green)
+                }
+            }
+
+            val tasksOverdue = tasks.filter { !it.isCompleted && it.dueDate != null && it.dueDate < System.currentTimeMillis() }
+            if (tasksOverdue.isNotEmpty()) {
+                item {
+                    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFF3E1A1A))) {
+                        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Info, contentDescription = null, tint = Color.Red)
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text("Atenção: ${tasksOverdue.size} tarefas atrasadas", color = Color.White)
+                        }
+                    }
                 }
             }
 
@@ -130,6 +132,23 @@ fun TaskScreen(viewModel: TaskViewModel) {
                 }
             }
             
+
+            item {
+                Card(modifier = Modifier.fillMaxWidth().padding(top = 8.dp), shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
+                    Box(modifier = Modifier.background(brush = Brush.horizontalGradient(colors = listOf(Color(0xFF2A200F), LumiereDarkGray))).padding(20.dp)) {
+                        Column {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.Star, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(20.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Inteligência Lumière", color = LumiereGold, fontWeight = FontWeight.Bold)
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text("Você tem $pendingTasks tarefas pendentes e ${tasksOverdue.size} atrasadas. Vamos organizar o seu dia?", color = MaterialTheme.colorScheme.onBackground, fontSize = 14.sp)
+                        }
+                    }
+                }
+            }
+
             item { Spacer(modifier = Modifier.height(80.dp)) }
         }
     }
@@ -142,7 +161,21 @@ fun TaskScreen(viewModel: TaskViewModel) {
                 ListItem(
                     headlineContent = { Text("Editar Tarefa", color = MaterialTheme.colorScheme.onSurface) },
                     leadingContent = { Icon(LumiereIcons.Edit, contentDescription = null, tint = LumiereGold) },
-                    modifier = Modifier.clickable { prepareSheet(taskMenu); taskMenu = null },
+                    modifier = Modifier.clickable { 
+                    taskToEdit = taskMenu
+                    title = taskMenu!!.title
+                    category = taskMenu!!.category ?: ""
+                    urgency = taskMenu!!.urgency
+                    importance = taskMenu!!.importance
+                    energy = taskMenu!!.energy
+                    context = taskMenu!!.context ?: ""
+                    estimatedDuration = taskMenu!!.estimatedDurationMinutes?.toString() ?: ""
+                    timeReserved = taskMenu!!.timeReservedMinutes?.toString() ?: ""
+                    instructions = taskMenu!!.instructions ?: ""
+                    links = taskMenu!!.links ?: ""
+                    completionCriteria = taskMenu!!.completionCriteria ?: ""
+                    showSheet = true; taskMenu = null 
+                },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                 )
                 ListItem(
@@ -183,7 +216,20 @@ fun TaskScreen(viewModel: TaskViewModel) {
                     }
                     if (!taskDetails!!.links.isNullOrBlank()) {
                         Text("Links:", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        Text(taskDetails!!.links!!, color = Color.Cyan)
+                        val context = LocalContext.current
+                        Text(
+                            text = taskDetails!!.links!!,
+                            color = Color.Cyan,
+                            textDecoration = TextDecoration.Underline,
+                            modifier = Modifier.clickable {
+                                try {
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(taskDetails!!.links))
+                                    context.startActivity(intent)
+                                } catch (e: Exception) {
+                                    // Ignorar se o link for inválido
+                                }
+                            }
+                        )
                         Spacer(modifier = Modifier.height(8.dp))
                     }
                     if (!taskDetails!!.completionCriteria.isNullOrBlank()) {
