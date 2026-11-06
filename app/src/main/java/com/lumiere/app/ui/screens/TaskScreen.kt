@@ -15,6 +15,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,6 +56,12 @@ fun TaskScreen(viewModel: TaskViewModel) {
     var context by remember { mutableStateOf("") }
     var estimatedDuration by remember { mutableStateOf("") }
     var timeReserved by remember { mutableStateOf("") }
+    var taskDueDate by remember { mutableStateOf<Long?>(null) }
+    var taskPriority by remember { mutableIntStateOf(1) }
+    var taskRecurrence by remember { mutableStateOf("NONE") }
+    var expandedRecurrence by remember { mutableStateOf(false) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(false) }
     var instructions by remember { mutableStateOf("") }
     var links by remember { mutableStateOf("") }
     var completionCriteria by remember { mutableStateOf("") }
@@ -71,7 +79,12 @@ fun TaskScreen(viewModel: TaskViewModel) {
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { taskToEdit = null; showSheet = true },
+                onClick = { 
+                    taskToEdit = null
+                    title = ""; category = ""; context = ""; taskDueDate = null; taskPriority = 1; taskRecurrence = "NONE"
+                    urgency = 1; importance = 1; energy = 1; estimatedDuration = ""; timeReserved = ""; instructions = ""; links = ""; completionCriteria = ""
+                    showSheet = true 
+                },
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) { Icon(Icons.Default.Add, contentDescription = "Nova Tarefa") }
@@ -268,7 +281,55 @@ fun TaskScreen(viewModel: TaskViewModel) {
                 }
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Text("Urgência: ${if(urgency==1) "Baixa" else if(urgency==2) "Média" else "Alta"}", color = MaterialTheme.colorScheme.onSurface)
+                                // DATA E HORA
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    OutlinedButton(onClick = { showDatePicker = true }, modifier = Modifier.weight(1f)) {
+                        Icon(Icons.Default.DateRange, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(taskDueDate?.let { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date(it)) } ?: "Sem Data", color = LumiereGold, fontSize = 12.sp)
+                    }
+                    OutlinedButton(onClick = { showTimePicker = true }, modifier = Modifier.weight(1f), enabled = taskDueDate != null) {
+                        Icon(Icons.Default.Refresh, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(taskDueDate?.let { SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(it)) } ?: "Hora", color = if (taskDueDate != null) LumiereGold else Color.Gray, fontSize = 12.sp)
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // RECORRÊNCIA
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedButton(onClick = { expandedRecurrence = true }, modifier = Modifier.fillMaxWidth()) {
+                        Icon(Icons.Default.Refresh, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = when(taskRecurrence) {
+                                "DAILY" -> "Repetir: Diariamente"
+                                "WEEKLY" -> "Repetir: Semanalmente"
+                                "MONTHLY" -> "Repetir: Mensalmente"
+                                "YEARLY" -> "Repetir: Anualmente"
+                                else -> "Repetir: Nunca"
+                            },
+                            color = LumiereGold
+                        )
+                    }
+                    DropdownMenu(expanded = expandedRecurrence, onDismissRequest = { expandedRecurrence = false }, containerColor = LumiereDarkGray) {
+                        listOf("NONE" to "Nunca", "DAILY" to "Diariamente", "WEEKLY" to "Semanalmente", "MONTHLY" to "Mensalmente", "YEARLY" to "Anualmente").forEach { (rule, label) ->
+                            DropdownMenuItem(text = { Text(label, color = MaterialTheme.colorScheme.onBackground) }, onClick = { taskRecurrence = rule; expandedRecurrence = false })
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // PRIORIDADE
+                Text("Prioridade:", color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp)
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    FilterChip(selected = taskPriority == 1, onClick = { taskPriority = 1 }, label = { Text("Baixa") })
+                    FilterChip(selected = taskPriority == 2, onClick = { taskPriority = 2 }, label = { Text("Média") })
+                    FilterChip(selected = taskPriority == 3, onClick = { taskPriority = 3 }, label = { Text("Alta") })
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+
+Text("Urgência: ${if(urgency==1) "Baixa" else if(urgency==2) "Média" else "Alta"}", color = MaterialTheme.colorScheme.onSurface)
                 Slider(value = urgency.toFloat(), onValueChange = { urgency = it.toInt() }, valueRange = 1f..3f, steps = 1)
                 
                 Text("Importância: ${if(importance==1) "Baixa" else if(importance==2) "Média" else "Alta"}", color = MaterialTheme.colorScheme.onSurface)
@@ -296,6 +357,9 @@ fun TaskScreen(viewModel: TaskViewModel) {
                             importance = importance,
                             energy = energy,
                             context = context.ifBlank { null },
+                            dueDate = taskDueDate,
+                            priority = taskPriority,
+                            recurrenceRule = taskRecurrence,
                             estimatedDurationMinutes = estimatedDuration.toIntOrNull(),
                             timeReservedMinutes = timeReserved.toIntOrNull(),
                             instructions = instructions.ifBlank { null },
@@ -310,6 +374,49 @@ fun TaskScreen(viewModel: TaskViewModel) {
                 ) { Text("Guardar", color = Color.Black) }
                 Spacer(modifier = Modifier.height(24.dp))
             }
+        }
+
+        // DIALOG: DatePicker
+        if (showDatePicker) {
+            val datePickerState = rememberDatePickerState(initialSelectedDateMillis = taskDueDate ?: System.currentTimeMillis())
+            DatePickerDialog(
+                onDismissRequest = { showDatePicker = false },
+                confirmButton = {
+                    TextButton(onClick = {
+                        val currentCalendar = Calendar.getInstance()
+                        if (taskDueDate != null) currentCalendar.timeInMillis = taskDueDate!!
+                        val newCalendar = Calendar.getInstance()
+                        newCalendar.timeInMillis = datePickerState.selectedDateMillis ?: System.currentTimeMillis()
+                        newCalendar.set(Calendar.HOUR_OF_DAY, currentCalendar.get(Calendar.HOUR_OF_DAY))
+                        newCalendar.set(Calendar.MINUTE, currentCalendar.get(Calendar.MINUTE))
+                        taskDueDate = newCalendar.timeInMillis
+                        showDatePicker = false
+                    }) { Text("OK", color = LumiereGold) }
+                },
+                dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") } }
+            ) { DatePicker(state = datePickerState) }
+        }
+
+        // DIALOG: TimePicker
+        if (showTimePicker) {
+            val timePickerState = rememberTimePickerState()
+            AlertDialog(
+                onDismissRequest = { showTimePicker = false },
+                title = { Text("Escolher Hora", color = LumiereGold) },
+                text = { TimePicker(state = timePickerState) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        val cal = Calendar.getInstance()
+                        if (taskDueDate != null) cal.timeInMillis = taskDueDate!!
+                        cal.set(Calendar.HOUR_OF_DAY, timePickerState.hour)
+                        cal.set(Calendar.MINUTE, timePickerState.minute)
+                        taskDueDate = cal.timeInMillis
+                        showTimePicker = false
+                    }) { Text("OK", color = LumiereGold) }
+                },
+                dismissButton = { TextButton(onClick = { showTimePicker = false }) { Text("Cancelar") } },
+                containerColor = LumiereDarkGray
+            )
         }
     }
 
