@@ -18,16 +18,35 @@ class TaskViewModel(private val repository: TaskRepository) : ViewModel() {
             initialValue = emptyList()
         )
 
-    fun addTask(title: String, description: String? = null, priority: Int = 1, dueDate: Long? = null) {
+    fun addTask(title: String, category: String?, tags: String?, priority: Int, dueDate: Long?) {
         viewModelScope.launch {
-            repository.insertTask(Task(title = title, description = description, priority = priority, dueDate = dueDate))
+            repository.insertTask(Task(title = title, category = category, tags = tags, priority = priority, dueDate = dueDate))
+        }
+    }
+
+    fun updateTask(task: Task) {
+        viewModelScope.launch {
+            repository.updateTask(task.copy(updatedAt = System.currentTimeMillis()))
         }
     }
 
     fun toggleTaskCompletion(task: Task) {
         viewModelScope.launch {
-            val newStatus = if (task.isCompleted) 0 else 2 // 0=Pendente, 2=Concluída
+            val newStatus = if (task.isCompleted) 0 else 2
             repository.updateTask(task.copy(status = newStatus, updatedAt = System.currentTimeMillis()))
+        }
+    }
+
+    fun duplicateTask(task: Task) {
+        viewModelScope.launch {
+            val newTask = task.copy(id = 0, title = "${task.title} (Cópia)", status = 0, createdAt = System.currentTimeMillis())
+            repository.insertTask(newTask)
+        }
+    }
+
+    fun archiveTask(task: Task) {
+        viewModelScope.launch {
+            repository.updateTask(task.copy(status = 4)) // 4 = Arquivada
         }
     }
 
