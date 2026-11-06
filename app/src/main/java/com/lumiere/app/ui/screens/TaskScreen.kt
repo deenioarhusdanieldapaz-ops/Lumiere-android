@@ -1,5 +1,6 @@
 package com.lumiere.app.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,10 +11,12 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -102,11 +105,63 @@ fun TaskScreen(viewModel: TaskViewModel) {
 
             if (tasks.isEmpty()) {
                 item {
-                    Text("Ainda não tem tarefas. Clica no + para começar.", color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(vertical = 24.dp))
+                    // NOVO ESTADO VAZIO (Mais elegante)
+                    Card(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                        colors = CardDefaults.cardColors(containerColor = LumiereDarkGray),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(32.dp).fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(Icons.Default.CheckCircle, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(64.dp))
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text("Ainda não tem tarefas", color = MaterialTheme.colorScheme.onBackground, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text("Comece por criar a sua primeira tarefa ou explore as recomendações.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                        }
+                    }
                 }
             } else {
                 items(tasks) { task ->
                     TaskItem(task = task, onTaskClick = { viewModel.toggleTaskCompletion(task) })
+                }
+            }
+
+            // NOVO: Cartão da Inteligência Lumière (Mockup)
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .background(
+                                brush = Brush.horizontalGradient(
+                                    colors = listOf(Color(0xFF2A200F), LumiereDarkGray)
+                                )
+                            )
+                            .padding(20.dp)
+                    ) {
+                        Column {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.Star, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(20.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Inteligência Lumière", color = LumiereGold, fontWeight = FontWeight.Bold)
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text("Você tem $pendingTasks tarefas em risco de atraso. Vamos organizar o seu dia?", color = MaterialTheme.colorScheme.onBackground, fontSize = 14.sp)
+                            Spacer(modifier = Modifier.height(12.dp))
+                            TextButton(
+                                onClick = { /* Ação futura */ },
+                                colors = ButtonDefaults.textButtonColors(contentColor = LumiereGold)
+                            ) {
+                                Text("Ver Recomendações →")
+                            }
+                        }
+                    }
                 }
             }
             
@@ -150,9 +205,7 @@ fun TaskScreen(viewModel: TaskViewModel) {
 @Composable
 fun TaskItem(task: Task, onTaskClick: () -> Unit) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onTaskClick() }, // AQUI: O clique na tarefa
+        modifier = Modifier.fillMaxWidth().clickable { onTaskClick() },
         colors = CardDefaults.cardColors(containerColor = LumiereDarkGray),
         shape = RoundedCornerShape(12.dp)
     ) {
@@ -169,7 +222,7 @@ fun TaskItem(task: Task, onTaskClick: () -> Unit) {
                     color = if (task.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
-                    textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None // Risca o texto se concluída
+                    textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None
                 )
                 if (task.description != null) {
                     Text(task.description, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
