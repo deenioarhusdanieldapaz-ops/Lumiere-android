@@ -21,6 +21,8 @@ import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.*
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,6 +30,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -482,7 +485,6 @@ Text("Urgência: ${if(urgency==1) "Baixa" else if(urgency==2) "Média" else "Alt
 fun TaskItem(task: Task, onTaskClick: () -> Unit, onTaskLongClick: () -> Unit, onInfoClick: () -> Unit, onTimerClick: () -> Unit) {
     val isOverdue = !task.isCompleted && task.dueDate != null && task.dueDate < System.currentTimeMillis()
     
-    // Cores e textos de Prioridade
     val priorityColor = when(task.priority) {
         3 -> Color.Red
         2 -> LumiereGold
@@ -494,15 +496,24 @@ fun TaskItem(task: Task, onTaskClick: () -> Unit, onTaskLongClick: () -> Unit, o
         else -> "Baixa"
     }
 
-    // Fundo do cartão: Vermelho se atrasado, transparente se concluído, normal se pendente
     val cardColor = when {
         isOverdue -> Color(0xFF3E1A1A)
         task.isCompleted -> LumiereDarkGray.copy(alpha = 0.5f)
         else -> LumiereDarkGray
     }
     
-    // Borda vermelha se estiver atrasado
     val borderStroke = if (isOverdue) androidx.compose.foundation.BorderStroke(1.dp, Color.Red) else null
+
+    // Lógica do Cronómetro em Tempo Real
+    var currentTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(task.timerStartedAt) {
+        if (task.timerStartedAt != null) {
+            while (true) {
+                currentTime = System.currentTimeMillis()
+                kotlinx.coroutines.delay(1000L)
+            }
+        }
+    }
 
     Card(
         modifier = Modifier.fillMaxWidth().combinedClickable(onClick = onTaskClick, onLongClick = onTaskLongClick),
@@ -511,8 +522,8 @@ fun TaskItem(task: Task, onTaskClick: () -> Unit, onTaskLongClick: () -> Unit, o
         border = borderStroke
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            // Barrinha lateral de Prioridade
-            Box(modifier = Modifier.width(4.dp).height(48.dp).background(priorityColor, RoundedCornerShape(2.dp)))
+            // Barrinha lateral
+            Box(modifier = Modifier.width(4.dp).height(56.dp).background(priorityColor, RoundedCornerShape(2.dp)))
             Spacer(modifier = Modifier.width(12.dp))
             
             // Ícone de Estado
@@ -523,45 +534,37 @@ fun TaskItem(task: Task, onTaskClick: () -> Unit, onTaskLongClick: () -> Unit, o
             )
             Spacer(modifier = Modifier.width(12.dp))
             
+            // Conteúdo Principal
             Column(modifier = Modifier.weight(1f)) {
-                // Título
                 Text(
                     text = task.title,
                     color = if (task.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Bold, fontSize = 16.sp,
-                    textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None
+                    textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None,
+                    maxLines = 2,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
                 
                 Spacer(modifier = Modifier.height(6.dp))
                 
                 // Badges (Categoria, Contexto, Prioridade)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                     if (!task.category.isNullOrBlank()) {
-                        Text(task.category!!, color = LumiereGold, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Text(task.category!!, color = LumiereGold, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                     }
                     if (!task.context.isNullOrBlank()) {
-                        Text("@${task.context}", color = Color.Gray, fontSize = 11.sp)
+                        Text("@${task.context}", color = Color.Gray, fontSize = 11.sp, maxLines = 1)
                     }
                     Surface(color = priorityColor.copy(alpha = 0.2f), shape = RoundedCornerShape(4.dp)) {
-                        Text(priorityText, color = priorityColor, fontSize = 10.sp, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp))
+                        Text(priorityText, color = priorityColor, fontSize = 10.sp, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp), maxLines = 1)
                     }
                 }
                 
-                // Tempo Registado
-                if (task.actualDurationMinutes > 0 || task.timerStartedAt != null) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Refresh, contentDescription = null, tint = if (task.timerStartedAt != null) Color.Green else Color.Gray, modifier = Modifier.size(12.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        val displayTime = if (task.timerStartedAt != null) "${task.actualDurationMinutes} min (a contar...)" else "${task.actualDurationMinutes} min"
-                        Text(displayTime, color = if (task.timerStartedAt != null) Color.Green else Color.Gray, fontSize = 11.sp)
-                    }
-                }
-                
-                // Data e Hora
-                if (task.dueDate != null) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Data e Hora / Cronómetro
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (task.dueDate != null) {
                         Icon(Icons.Default.DateRange, contentDescription = null, tint = if (isOverdue) Color.Red else Color.Gray, modifier = Modifier.size(12.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
@@ -570,22 +573,40 @@ fun TaskItem(task: Task, onTaskClick: () -> Unit, onTaskLongClick: () -> Unit, o
                             fontSize = 11.sp
                         )
                     }
+                    
+                    if (task.timerStartedAt != null) {
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Icon(Icons.Default.Refresh, contentDescription = null, tint = Color.Green, modifier = Modifier.size(12.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        
+                        // Cálculo do tempo real em segundos
+                        val elapsedSeconds = ((currentTime - task.timerStartedAt) / 1000).coerceAtLeast(0)
+                        val hours = elapsedSeconds / 3600
+                        val minutes = (elapsedSeconds % 3600) / 60
+                        val seconds = elapsedSeconds % 60
+                        val timeString = String.format("%02d:%02d:%02d", hours, minutes, seconds)
+                        
+                        Text(timeString, color = Color.Green, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    } else if (task.actualDurationMinutes > 0) {
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text("${task.actualDurationMinutes} min", color = Color.Gray, fontSize = 11.sp)
+                    }
                 }
             }
-            
 
-            // Botão de Cronómetro
-            IconButton(onClick = onTimerClick) {
-                Icon(
-                    imageVector = if (task.timerStartedAt != null) Icons.Default.Close else Icons.Default.PlayArrow,
-                    contentDescription = "Cronómetro",
-                    tint = if (task.timerStartedAt != null) Color.Red else LumiereGold
-                )
-            }
-            // Ícone de Info
-            if (!task.instructions.isNullOrBlank() || !task.links.isNullOrBlank() || !task.completionCriteria.isNullOrBlank()) {
-                IconButton(onClick = onInfoClick) { 
-                    Icon(Icons.Default.Info, contentDescription = "Ver Detalhes", tint = LumiereGold) 
+            // Botões à direita (Cronómetro e Info)
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                IconButton(onClick = onTimerClick, modifier = Modifier.size(32.dp)) {
+                    Icon(
+                        imageVector = if (task.timerStartedAt != null) Icons.Default.Close else Icons.Default.PlayArrow,
+                        contentDescription = "Cronómetro",
+                        tint = if (task.timerStartedAt != null) Color.Red else LumiereGold
+                    )
+                }
+                if (!task.instructions.isNullOrBlank() || !task.links.isNullOrBlank() || !task.completionCriteria.isNullOrBlank()) {
+                    IconButton(onClick = onInfoClick, modifier = Modifier.size(32.dp)) { 
+                        Icon(Icons.Default.Info, contentDescription = "Ver Detalhes", tint = LumiereGold) 
+                    }
                 }
             }
         }
