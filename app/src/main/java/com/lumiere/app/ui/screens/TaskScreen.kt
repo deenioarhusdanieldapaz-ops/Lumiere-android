@@ -29,23 +29,26 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun TaskScreen(viewModel: TaskViewModel) {
     val tasks by viewModel.tasks.collectAsStateWithLifecycle()
+    
     var showDialog by remember { mutableStateOf(false) }
-    var taskTitle by remember { mutableStateOf("") }
-    var taskPriority by remember { mutableStateOf(1) }
-    var taskDueDate by remember { mutableStateOf<Long?>(null) }
+    var taskToEdit by remember { mutableStateOf<Task?>(null) }
+    var taskMenu by remember { mutableStateOf<Task?>(null) }
     var taskToDelete by remember { mutableStateOf<Task?>(null) }
     var showDatePicker by remember { mutableStateOf(false) }
 
-    // Cálculos temporais (Subfase 1)
-    val todayEnd = getEndOfDay(System.currentTimeMillis())
-    val tasksForToday = tasks.filter { !it.isCompleted && it.dueDate != null && it.dueDate in System.currentTimeMillis()..todayEnd }
-    val tasksOverdue = tasks.filter { !it.isCompleted && it.dueDate != null && it.dueDate < System.currentTimeMillis() }
-    val pendingTasks = tasks.count { !it.isCompleted }
+    // Campos do formulário
+    var taskTitle by remember { mutableStateOf("") }
+    var taskCategory by remember { mutableStateOf("") }
+    var taskTags by remember { mutableStateOf("") }
+    var taskPriority by remember { mutableStateOf(1) }
+    var taskDueDate by remember { mutableStateOf<Long?>(null) }
+
     val completedTasks = tasks.count { it.isCompleted }
+    val pendingTasks = tasks.count { !it.isCompleted }
 
     Scaffold(
         topBar = {
@@ -56,7 +59,11 @@ fun TaskScreen(viewModel: TaskViewModel) {
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { showDialog = true },
+                onClick = { 
+                    taskToEdit = null
+                    taskTitle = ""; taskCategory = ""; taskTags = ""; taskPriority = 1; taskDueDate = null
+                    showDialog = true 
+                },
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) { Icon(Icons.Default.Add, contentDescription = "Nova Tarefa") }
@@ -76,22 +83,8 @@ fun TaskScreen(viewModel: TaskViewModel) {
 
             item {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    // Agora o cartão de hoje mostra apenas o que é para HOJE
-                    SummaryCard(Modifier.weight(1f), "Tarefas de Hoje", tasksForToday.size.toString(), LumiereGold)
+                    SummaryCard(Modifier.weight(1f), "Tarefas de Hoje", pendingTasks.toString(), LumiereGold)
                     SummaryCard(Modifier.weight(1f), "Concluídas", completedTasks.toString(), Color.Green)
-                }
-            }
-
-            // Alerta de Atrasadas (Agora usa o cálculo real)
-            if (tasksOverdue.isNotEmpty()) {
-                item {
-                    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFF3E1A1A))) {
-                        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Info, contentDescription = null, tint = Color.Red)
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text("Atenção: ${tasksOverdue.size} tarefas atrasadas", color = Color.White)
-                        }
-                    }
                 }
             }
 
@@ -112,59 +105,101 @@ fun TaskScreen(viewModel: TaskViewModel) {
                     TaskItem(
                         task = task,
                         onTaskClick = { viewModel.toggleTaskCompletion(task) },
-                        onTaskLongClick = { taskToDelete = task }
+                        onTaskLongClick = { taskMenu = task } // Abre o menu de contexto
                     )
                 }
             }
-
-            item {
-                Card(modifier = Modifier.fillMaxWidth().padding(top = 8.dp), shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
-                    Box(modifier = Modifier.background(brush = Brush.horizontalGradient(colors = listOf(Color(0xFF2A200F), LumiereDarkGray))).padding(20.dp)) {
-                        Column {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.Star, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(20.dp))
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Inteligência Lumière", color = LumiereGold, fontWeight = FontWeight.Bold)
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text("Você tem $pendingTasks tarefas pendentes e ${tasksOverdue.size} atrasadas. Vamos organizar o seu dia?", color = MaterialTheme.colorScheme.onBackground, fontSize = 14.sp)
-                        }
-                    }
-                }
-            }
+            
             item { Spacer(modifier = Modifier.height(80.dp)) }
         }
     }
 
-    // DIALOG: Criar Tarefa
+    // MODAL: Menu de Contexto da Tarefa
+    if (taskMenu != null) {
+        ModalBottomSheet(
+            onDismissRequest = { taskMenu = null },
+            containerColor = LumiereDarkGray
+        ) {
+            Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
+                Text(taskMenu!!.title, color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(bottom = 16.dp))
+                
+                ListItem(
+                    headlineContent = { Text("Editar Tarefa", color = MaterialTheme.colorScheme.onSurface) },
+                    leadingContent = { Icon(Icons.Default.Edit, contentDescription = null, tint = LumiereGold) },
+                    modifier = Modifier.clickable {
+                        taskToEdit = taskMenu
+                        taskTitle = taskMenu!!.title
+                        taskCategory = taskMenu!!.category ?: ""
+                        taskTags = taskMenu!!.tags ?: ""
+                        taskPriority = taskMenu!!.priority
+                        taskDueDate = taskMenu!!.dueDate
+                        showDialog = true
+                        taskMenu = null
+                    },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                )
+                
+                ListItem(
+                    headlineContent = { Text("Duplicar", color = MaterialTheme.colorScheme.onSurface) },
+                    leadingContent = { Icon(Icons.Default.ContentCopy, contentDescription = null, tint = LumiereGold) },
+                    modifier = Modifier.clickable {
+                        viewModel.duplicateTask(taskMenu!!)
+                        taskMenu = null
+                    },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                )
+
+                ListItem(
+                    headlineContent = { Text("Arquivar", color = MaterialTheme.colorScheme.onSurface) },
+                    leadingContent = { Icon(Icons.Default.Archive, contentDescription = null, tint = LumiereGold) },
+                    modifier = Modifier.clickable {
+                        viewModel.archiveTask(taskMenu!!)
+                        taskMenu = null
+                    },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                )
+
+                ListItem(
+                    headlineContent = { Text("Eliminar", color = Color.Red) },
+                    leadingContent = { Icon(Icons.Default.Delete, contentDescription = null, tint = Color.Red) },
+                    modifier = Modifier.clickable {
+                        taskToDelete = taskMenu
+                        taskMenu = null
+                    },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                )
+            }
+        }
+    }
+
+    // DIALOG: Criar / Editar Tarefa
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
-            title = { Text("Nova Tarefa", color = MaterialTheme.colorScheme.primary) },
+            title = { Text(if (taskToEdit == null) "Nova Tarefa" else "Editar Tarefa", color = MaterialTheme.colorScheme.primary) },
             text = {
                 Column {
                     OutlinedTextField(
-                        value = taskTitle,
-                        onValueChange = { taskTitle = it },
-                        label = { Text("Título") },
-                        colors = OutlinedTextFieldDefaults.colors(focusedTextColor = MaterialTheme.colorScheme.onBackground, unfocusedTextColor = MaterialTheme.colorScheme.onBackground, focusedBorderColor = MaterialTheme.colorScheme.primary)
+                        value = taskTitle, onValueChange = { taskTitle = it }, label = { Text("Título") },
+                        colors = OutlinedTextFieldDefaults.colors(focusedTextColor = MaterialTheme.colorScheme.onBackground, unfocusedTextColor = MaterialTheme.colorScheme.onBackground)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = taskCategory, onValueChange = { taskCategory = it }, label = { Text("Categoria (ex: Trabalho)") },
+                        colors = OutlinedTextFieldDefaults.colors(focusedTextColor = MaterialTheme.colorScheme.onBackground, unfocusedTextColor = MaterialTheme.colorScheme.onBackground)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = taskTags, onValueChange = { taskTags = it }, label = { Text("Etiquetas (separadas por vírgula)") },
+                        colors = OutlinedTextFieldDefaults.colors(focusedTextColor = MaterialTheme.colorScheme.onBackground, unfocusedTextColor = MaterialTheme.colorScheme.onBackground)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     
-                    // NOVO: Seletor de Data
-                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         TextButton(onClick = { showDatePicker = true }) {
                             Icon(Icons.Default.DateRange, contentDescription = null, tint = LumiereGold)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = taskDueDate?.let { SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date(it)) } ?: "Sem data",
-                                color = LumiereGold
-                            )
-                        }
-                        if (taskDueDate != null) {
-                            IconButton(onClick = { taskDueDate = null }) {
-                                Icon(Icons.Default.Clear, contentDescription = "Limpar data", tint = Color.Gray)
-                            }
+                            Text(taskDueDate?.let { SimpleDateFormat("dd MMM", Locale.getDefault()).format(Date(it)) } ?: "Sem data", color = LumiereGold)
                         }
                     }
 
@@ -179,10 +214,14 @@ fun TaskScreen(viewModel: TaskViewModel) {
             confirmButton = {
                 TextButton(onClick = {
                     if (taskTitle.isNotBlank()) {
-                        viewModel.addTask(taskTitle, priority = taskPriority, dueDate = taskDueDate)
-                        taskTitle = ""; taskPriority = 1; taskDueDate = null; showDialog = false
+                        if (taskToEdit == null) {
+                            viewModel.addTask(taskTitle, taskCategory.ifBlank { null }, taskTags.ifBlank { null }, taskPriority, taskDueDate)
+                        } else {
+                            viewModel.updateTask(taskToEdit!!.copy(title = taskTitle, category = taskCategory.ifBlank { null }, tags = taskTags.ifBlank { null }, priority = taskPriority, dueDate = taskDueDate))
+                        }
+                        showDialog = false
                     }
-                }) { Text("Adicionar", color = MaterialTheme.colorScheme.primary) }
+                }) { Text("Guardar", color = MaterialTheme.colorScheme.primary) }
             },
             dismissButton = { TextButton(onClick = { showDialog = false }) { Text("Cancelar", color = MaterialTheme.colorScheme.onSurfaceVariant) } },
             containerColor = MaterialTheme.colorScheme.surface
@@ -191,7 +230,7 @@ fun TaskScreen(viewModel: TaskViewModel) {
 
     // DIALOG: DatePicker
     if (showDatePicker) {
-        val datePickerState = rememberDatePickerState()
+        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = taskDueDate)
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
@@ -201,22 +240,17 @@ fun TaskScreen(viewModel: TaskViewModel) {
                 }) { Text("OK", color = LumiereGold) }
             },
             dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") } }
-        ) {
-            DatePicker(state = datePickerState)
-        }
+        ) { DatePicker(state = datePickerState) }
     }
 
-    // DIALOG: Apagar Tarefa
+    // DIALOG: Confirmar Eliminação
     if (taskToDelete != null) {
         AlertDialog(
             onDismissRequest = { taskToDelete = null },
             title = { Text("Apagar Tarefa", color = Color.Red) },
-            text = { Text("Tens a certeza que queres apagar '${taskToDelete?.title}'?", color = MaterialTheme.colorScheme.onBackground) },
+            text = { Text("Tens a certeza que queres apagar '${taskToDelete?.title}'? Esta ação não pode ser desfeita.", color = MaterialTheme.colorScheme.onBackground) },
             confirmButton = {
-                TextButton(onClick = {
-                    taskToDelete?.let { viewModel.deleteTask(it) }
-                    taskToDelete = null
-                }) { Text("Apagar", color = Color.Red) }
+                TextButton(onClick = { viewModel.deleteTask(taskToDelete!!); taskToDelete = null }) { Text("Apagar", color = Color.Red) }
             },
             dismissButton = { TextButton(onClick = { taskToDelete = null }) { Text("Cancelar", color = MaterialTheme.colorScheme.onSurfaceVariant) } },
             containerColor = MaterialTheme.colorScheme.surface
@@ -233,8 +267,6 @@ fun TaskItem(task: Task, onTaskClick: () -> Unit, onTaskLongClick: () -> Unit) {
         else -> Color.Green
     }
 
-    val isOverdue = !task.isCompleted && task.dueDate != null && task.dueDate < System.currentTimeMillis()
-
     Card(
         modifier = Modifier.fillMaxWidth().combinedClickable(onClick = onTaskClick, onLongClick = onTaskLongClick),
         colors = CardDefaults.cardColors(containerColor = LumiereDarkGray),
@@ -246,8 +278,7 @@ fun TaskItem(task: Task, onTaskClick: () -> Unit, onTaskLongClick: () -> Unit) {
             
             Icon(
                 imageVector = if (task.isCompleted) Icons.Default.CheckCircle else Icons.Default.DateRange,
-                contentDescription = null,
-                tint = if (task.isCompleted) Color.Green else LumiereGold
+                contentDescription = null, tint = if (task.isCompleted) Color.Green else LumiereGold
             )
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -257,14 +288,15 @@ fun TaskItem(task: Task, onTaskClick: () -> Unit, onTaskLongClick: () -> Unit) {
                     fontWeight = FontWeight.Bold, fontSize = 16.sp,
                     textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None
                 )
-                // Mostrar data se existir
+                // Mostrar Categoria e Etiquetas
+                if (!task.category.isNullOrBlank() || !task.tags.isNullOrBlank()) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (!task.category.isNullOrBlank()) Text(task.category!!, color = LumiereGold, fontSize = 12.sp)
+                        if (!task.tags.isNullOrBlank()) Text(task.tags!!, color = Color.Gray, fontSize = 12.sp)
+                    }
+                }
                 if (task.dueDate != null) {
-                    Text(
-                        text = SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date(task.dueDate)),
-                        color = if (isOverdue) Color.Red else MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 12.sp,
-                        fontWeight = if (isOverdue) FontWeight.Bold else FontWeight.Normal
-                    )
+                    Text(SimpleDateFormat("dd MMM", Locale.getDefault()).format(Date(task.dueDate)), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                 }
             }
         }
@@ -284,15 +316,4 @@ fun SummaryCard(modifier: Modifier = Modifier, title: String, count: String, col
             Text(count, color = MaterialTheme.colorScheme.onBackground, fontSize = 28.sp, fontWeight = FontWeight.Bold)
         }
     }
-}
-
-// Função auxiliar para calcular o fim do dia
-fun getEndOfDay(timestamp: Long): Long {
-    val calendar = Calendar.getInstance()
-    calendar.timeInMillis = timestamp
-    calendar.set(Calendar.HOUR_OF_DAY, 23)
-    calendar.set(Calendar.MINUTE, 59)
-    calendar.set(Calendar.SECOND, 59)
-    calendar.set(Calendar.MILLISECOND, 999)
-    return calendar.timeInMillis
 }
