@@ -18,7 +18,7 @@ import com.lumiere.app.ui.viewmodel.TaskViewModelFactory
 class MainActivity : ComponentActivity() {
 
     private val database by lazy { AppDatabase.getDatabase(this) }
-    private val repository by lazy { TaskRepository(database.taskDao()) }
+    private val repository by lazy { TaskRepository(database.taskDao(), database.subtaskDao(), database.projectDao(), database.taskHistoryDao()) }
     private val viewModel: TaskViewModel by viewModels {
         TaskViewModelFactory(repository)
     }

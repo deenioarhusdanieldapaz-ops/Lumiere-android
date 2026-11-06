@@ -4,14 +4,15 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.lumiere.app.data.local.dao.TaskDao
-import com.lumiere.app.data.local.entity.Project
-import com.lumiere.app.data.local.entity.Subtask
-import com.lumiere.app.data.local.entity.Task
+import com.lumiere.app.data.local.dao.*
+import com.lumiere.app.data.local.entity.*
 
-@Database(entities = [Task::class, Project::class, Subtask::class], version = 5, exportSchema = false)
+@Database(entities = [Task::class, Project::class, Subtask::class, TaskHistory::class], version = 6, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun taskDao(): TaskDao
+    abstract fun subtaskDao(): SubtaskDao
+    abstract fun projectDao(): ProjectDao
+    abstract fun taskHistoryDao(): TaskHistoryDao
 
     companion object {
         @Volatile
@@ -24,7 +25,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "lumiere_database"
                 )
-                .fallbackToDestructiveMigration() // Apaga dados antigos porque mudámos o esquema
+                .fallbackToDestructiveMigration()
                 .build()
                 INSTANCE = instance
                 instance

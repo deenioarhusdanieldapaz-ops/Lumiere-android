@@ -3,31 +3,36 @@ package com.lumiere.app.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.lumiere.app.data.local.entity.Task
+import com.lumiere.app.data.local.entity.*
 import com.lumiere.app.data.repository.TaskRepository
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
 class TaskViewModel(private val repository: TaskRepository) : ViewModel() {
     val tasks: StateFlow<List<Task>> = repository.allTasks
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val projects: StateFlow<List<Project>> = repository.allProjects
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun getSubtasks(taskId: Long): StateFlow<List<Subtask>> = repository.getSubtasks(taskId)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun getHistory(taskId: Long): StateFlow<List<TaskHistory>> = repository.getHistory(taskId)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun addTask(task: Task) {
         viewModelScope.launch {
-            repository.insertTask(task)
+            val id = repository.insertTask(task)
+            repository.insertHistory(TaskHistory(taskId = id, action = "Tarefa Criada"))
         }
     }
 
     fun updateTask(task: Task) {
         viewModelScope.launch {
             repository.updateTask(task.copy(updatedAt = System.currentTimeMillis()))
+            repository.insertHistory(TaskHistory(taskId = task.id, action = "Tarefa Editada"))
         }
     }
 
@@ -35,6 +40,7 @@ class TaskViewModel(private val repository: TaskRepository) : ViewModel() {
         viewModelScope.launch {
             val newStatus = if (task.isCompleted) 0 else 2
             repository.updateTask(task.copy(status = newStatus, updatedAt = System.currentTimeMillis()))
+            repository.insertHistory(TaskHistory(taskId = task.id, action = if (newStatus == 2) "Concluída" else "Reaberta"))
             
             if (newStatus == 2 && task.recurrenceRule != null && task.recurrenceRule != "NONE") {
                 createNextRecurringTask(task)
@@ -55,38 +61,46 @@ class TaskViewModel(private val repository: TaskRepository) : ViewModel() {
         }
 
         val newTask = task.copy(id = 0, status = 0, dueDate = calendar.timeInMillis, createdAt = System.currentTimeMillis(), updatedAt = System.currentTimeMillis())
-        repository.insertTask(newTask)
+        val newId = repository.insertTask(newTask)
+        repository.insertHistory(TaskHistory(taskId = newId, action = "Gerada por Recorrência"))
     }
 
     fun duplicateTask(task: Task) {
-        viewModelScope.launch { repository.insertTask(task.copy(id = 0, title = "${task.title} (Cópia)", status = 0)) }
+        viewModelScope.launch {
+            val newTask = task.copy(id = 0, title = "${task.title} (Cópia)", status = 0)
+            val newId = repository.insertTask(newTask)
+            repository.insertHistory(TaskHistory(taskId = newId, action = "Tarefa Duplicada"))
+        }
     }
 
     fun archiveTask(task: Task) {
-        viewModelScope.launch { repository.updateTask(task.copy(status = 4)) }
+        viewModelScope.launch {
+            repository.updateTask(task.copy(status = 4))
+            repository.insertHistory(TaskHistory(taskId = task.id, action = "Arquivada"))
+        }
     }
 
     fun deleteTask(task: Task) {
         viewModelScope.launch { repository.deleteTask(task) }
     }
 
-
     fun cancelTask(task: Task, reason: String) {
         viewModelScope.launch {
             repository.updateTask(task.copy(status = 3, cancellationReason = reason, timerStartedAt = null, updatedAt = System.currentTimeMillis()))
+            repository.insertHistory(TaskHistory(taskId = task.id, action = "Cancelada: $reason"))
         }
     }
 
     fun resumeTask(task: Task) {
         viewModelScope.launch {
             repository.updateTask(task.copy(status = 0, cancellationReason = null, updatedAt = System.currentTimeMillis()))
+            repository.insertHistory(TaskHistory(taskId = task.id, action = "Retomada"))
         }
     }
 
     fun toggleTimer(task: Task) {
         viewModelScope.launch {
             if (task.timerStartedAt != null) {
-                // Parar o cronómetro: calcular tempo decorrido
                 val elapsedMillis = System.currentTimeMillis() - task.timerStartedAt
                 val elapsedMinutes = (elapsedMillis / 60000).toInt()
                 repository.updateTask(task.copy(
@@ -94,14 +108,33 @@ class TaskViewModel(private val repository: TaskRepository) : ViewModel() {
                     timerStartedAt = null,
                     updatedAt = System.currentTimeMillis()
                 ))
+                repository.insertHistory(TaskHistory(taskId = task.id, action = "Cronómetro Parado (+$elapsedMinutes min)"))
             } else {
-                // Iniciar o cronómetro
-                repository.updateTask(task.copy(
-                    timerStartedAt = System.currentTimeMillis(),
-                    updatedAt = System.currentTimeMillis()
-                ))
+                repository.updateTask(task.copy(timerStartedAt = System.currentTimeMillis(), updatedAt = System.currentTimeMillis()))
+                repository.insertHistory(TaskHistory(taskId = task.id, action = "Cronómetro Iniciado"))
             }
         }
+    }
+
+    fun addSubtask(taskId: Long, title: String) {
+        viewModelScope.launch {
+            repository.insertSubtask(Subtask(taskId = taskId, title = title))
+            repository.insertHistory(TaskHistory(taskId = taskId, action = "Subtarefa Adicionada: $title"))
+        }
+    }
+
+    fun toggleSubtask(subtask: Subtask) {
+        viewModelScope.launch {
+            repository.updateSubtask(subtask.copy(isCompleted = !subtask.isCompleted))
+        }
+    }
+
+    fun deleteSubtask(subtask: Subtask) {
+        viewModelScope.launch { repository.deleteSubtask(subtask) }
+    }
+
+    fun addProject(name: String) {
+        viewModelScope.launch { repository.insertProject(Project(name = name)) }
     }
 }
 
