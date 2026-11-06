@@ -1,7 +1,8 @@
 package com.lumiere.app.ui.screens
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -34,6 +35,9 @@ fun TaskScreen(viewModel: TaskViewModel) {
     val tasks by viewModel.tasks.collectAsStateWithLifecycle()
     var showDialog by remember { mutableStateOf(false) }
     var taskTitle by remember { mutableStateOf("") }
+    var taskPriority by remember { mutableStateOf(1) } // 1=Baixa, 2=Média, 3=Alta
+
+    var taskToDelete by remember { mutableStateOf<Task?>(null) }
 
     val completedTasks = tasks.count { it.isCompleted }
     val pendingTasks = tasks.count { !it.isCompleted }
@@ -50,17 +54,12 @@ fun TaskScreen(viewModel: TaskViewModel) {
                 onClick = { showDialog = true },
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Nova Tarefa")
-            }
+            ) { Icon(Icons.Default.Add, contentDescription = "Nova Tarefa") }
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp),
+            modifier = Modifier.fillMaxSize().padding(paddingValues).padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
@@ -72,18 +71,8 @@ fun TaskScreen(viewModel: TaskViewModel) {
 
             item {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    SummaryCard(
-                        modifier = Modifier.weight(1f),
-                        title = "Tarefas de Hoje",
-                        count = pendingTasks.toString(),
-                        icon = { Icon(Icons.Default.DateRange, contentDescription = null, tint = LumiereGold) }
-                    )
-                    SummaryCard(
-                        modifier = Modifier.weight(1f),
-                        title = "Concluídas",
-                        count = completedTasks.toString(),
-                        icon = { Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color.Green) }
-                    )
+                    SummaryCard(Modifier.weight(1f), "Tarefas de Hoje", pendingTasks.toString(), LumiereGold)
+                    SummaryCard(Modifier.weight(1f), "Concluídas", completedTasks.toString(), Color.Green)
                 }
             }
 
@@ -99,22 +88,12 @@ fun TaskScreen(viewModel: TaskViewModel) {
                 }
             }
 
-            item {
-                Text("Minhas Tarefas", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(top = 8.dp))
-            }
+            item { Text("Minhas Tarefas", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(top = 8.dp)) }
 
             if (tasks.isEmpty()) {
                 item {
-                    // NOVO ESTADO VAZIO (Mais elegante)
-                    Card(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
-                        colors = CardDefaults.cardColors(containerColor = LumiereDarkGray),
-                        shape = RoundedCornerShape(16.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(32.dp).fillMaxWidth(),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
+                    Card(modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp), colors = CardDefaults.cardColors(containerColor = LumiereDarkGray), shape = RoundedCornerShape(16.dp)) {
+                        Column(modifier = Modifier.padding(32.dp).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(Icons.Default.CheckCircle, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(64.dp))
                             Spacer(modifier = Modifier.height(16.dp))
                             Text("Ainda não tem tarefas", color = MaterialTheme.colorScheme.onBackground, fontSize = 20.sp, fontWeight = FontWeight.Bold)
@@ -125,26 +104,17 @@ fun TaskScreen(viewModel: TaskViewModel) {
                 }
             } else {
                 items(tasks) { task ->
-                    TaskItem(task = task, onTaskClick = { viewModel.toggleTaskCompletion(task) })
+                    TaskItem(
+                        task = task,
+                        onTaskClick = { viewModel.toggleTaskCompletion(task) },
+                        onTaskLongClick = { taskToDelete = task } // Abre o aviso de apagar
+                    )
                 }
             }
 
-            // NOVO: Cartão da Inteligência Lumière (Mockup)
             item {
-                Card(
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.Transparent)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .background(
-                                brush = Brush.horizontalGradient(
-                                    colors = listOf(Color(0xFF2A200F), LumiereDarkGray)
-                                )
-                            )
-                            .padding(20.dp)
-                    ) {
+                Card(modifier = Modifier.fillMaxWidth().padding(top = 8.dp), shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
+                    Box(modifier = Modifier.background(brush = Brush.horizontalGradient(colors = listOf(Color(0xFF2A200F), LumiereDarkGray))).padding(20.dp)) {
                         Column {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Default.Star, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(20.dp))
@@ -154,62 +124,87 @@ fun TaskScreen(viewModel: TaskViewModel) {
                             Spacer(modifier = Modifier.height(8.dp))
                             Text("Você tem $pendingTasks tarefas em risco de atraso. Vamos organizar o seu dia?", color = MaterialTheme.colorScheme.onBackground, fontSize = 14.sp)
                             Spacer(modifier = Modifier.height(12.dp))
-                            TextButton(
-                                onClick = { /* Ação futura */ },
-                                colors = ButtonDefaults.textButtonColors(contentColor = LumiereGold)
-                            ) {
-                                Text("Ver Recomendações →")
-                            }
+                            TextButton(onClick = { /* Ação futura */ }) { Text("Ver Recomendações →", color = LumiereGold) }
                         }
                     }
                 }
             }
-            
             item { Spacer(modifier = Modifier.height(80.dp)) }
         }
     }
 
+    // DIALOG: Criar Tarefa
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
             title = { Text("Nova Tarefa", color = MaterialTheme.colorScheme.primary) },
             text = {
-                OutlinedTextField(
-                    value = taskTitle,
-                    onValueChange = { taskTitle = it },
-                    label = { Text("Título da Tarefa") },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = MaterialTheme.colorScheme.onBackground,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
-                        focusedBorderColor = MaterialTheme.colorScheme.primary
+                Column {
+                    OutlinedTextField(
+                        value = taskTitle,
+                        onValueChange = { taskTitle = it },
+                        label = { Text("Título") },
+                        colors = OutlinedTextFieldDefaults.colors(focusedTextColor = MaterialTheme.colorScheme.onBackground, unfocusedTextColor = MaterialTheme.colorScheme.onBackground, focusedBorderColor = MaterialTheme.colorScheme.primary)
                     )
-                )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Prioridade:", color = MaterialTheme.colorScheme.onBackground, fontSize = 14.sp)
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                        FilterChip(selected = taskPriority == 1, onClick = { taskPriority = 1 }, label = { Text("Baixa") })
+                        FilterChip(selected = taskPriority == 2, onClick = { taskPriority = 2 }, label = { Text("Média") })
+                        FilterChip(selected = taskPriority == 3, onClick = { taskPriority = 3 }, label = { Text("Alta") })
+                    }
+                }
             },
             confirmButton = {
                 TextButton(onClick = {
                     if (taskTitle.isNotBlank()) {
-                        viewModel.addTask(taskTitle)
-                        taskTitle = ""
-                        showDialog = false
+                        viewModel.addTask(taskTitle, priority = taskPriority)
+                        taskTitle = ""; taskPriority = 1; showDialog = false
                     }
                 }) { Text("Adicionar", color = MaterialTheme.colorScheme.primary) }
             },
-            dismissButton = {
-                TextButton(onClick = { showDialog = false }) { Text("Cancelar", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            dismissButton = { TextButton(onClick = { showDialog = false }) { Text("Cancelar", color = MaterialTheme.colorScheme.onSurfaceVariant) } },
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    }
+
+    // DIALOG: Apagar Tarefa
+    if (taskToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { taskToDelete = null },
+            title = { Text("Apagar Tarefa", color = Color.Red) },
+            text = { Text("Tens a certeza que queres apagar '${taskToDelete?.title}'?", color = MaterialTheme.colorScheme.onBackground) },
+            confirmButton = {
+                TextButton(onClick = {
+                    taskToDelete?.let { viewModel.deleteTask(it) }
+                    taskToDelete = null
+                }) { Text("Apagar", color = Color.Red) }
             },
+            dismissButton = { TextButton(onClick = { taskToDelete = null }) { Text("Cancelar", color = MaterialTheme.colorScheme.onSurfaceVariant) } },
             containerColor = MaterialTheme.colorScheme.surface
         )
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun TaskItem(task: Task, onTaskClick: () -> Unit) {
+fun TaskItem(task: Task, onTaskClick: () -> Unit, onTaskLongClick: () -> Unit) {
+    val priorityColor = when(task.priority) {
+        3 -> Color.Red
+        2 -> LumiereGold
+        else -> Color.Green
+    }
+
     Card(
-        modifier = Modifier.fillMaxWidth().clickable { onTaskClick() },
+        modifier = Modifier.fillMaxWidth().combinedClickable(onClick = onTaskClick, onLongClick = onTaskLongClick),
         colors = CardDefaults.cardColors(containerColor = LumiereDarkGray),
         shape = RoundedCornerShape(12.dp)
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            // Indicador de Prioridade (uma barrinha vertical colorida)
+            Box(modifier = Modifier.width(4.dp).height(24.dp).background(priorityColor, RoundedCornerShape(2.dp)))
+            Spacer(modifier = Modifier.width(12.dp))
+            
             Icon(
                 imageVector = if (task.isCompleted) Icons.Default.CheckCircle else Icons.Default.DateRange,
                 contentDescription = null,
@@ -220,8 +215,7 @@ fun TaskItem(task: Task, onTaskClick: () -> Unit) {
                 Text(
                     text = task.title,
                     color = if (task.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold, fontSize = 16.sp,
                     textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None
                 )
                 if (task.description != null) {
@@ -233,11 +227,11 @@ fun TaskItem(task: Task, onTaskClick: () -> Unit) {
 }
 
 @Composable
-fun SummaryCard(modifier: Modifier = Modifier, title: String, count: String, icon: @Composable () -> Unit) {
+fun SummaryCard(modifier: Modifier = Modifier, title: String, count: String, color: Color) {
     Card(modifier = modifier, colors = CardDefaults.cardColors(containerColor = LumiereDarkGray), shape = RoundedCornerShape(16.dp)) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                icon()
+                Icon(Icons.Default.DateRange, contentDescription = null, tint = color)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(title, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
             }

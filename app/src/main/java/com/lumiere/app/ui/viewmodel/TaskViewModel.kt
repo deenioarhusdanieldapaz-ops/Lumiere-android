@@ -18,19 +18,22 @@ class TaskViewModel(private val repository: TaskRepository) : ViewModel() {
             initialValue = emptyList()
         )
 
-    fun addTask(title: String, description: String? = null) {
+    fun addTask(title: String, description: String? = null, priority: Int = 1) {
         viewModelScope.launch {
-            repository.insertTask(Task(title = title, description = description))
+            repository.insertTask(Task(title = title, description = description, priority = priority))
         }
     }
 
-    // NOVA FUNÇÃO: Alternar entre Concluída e Pendente
     fun toggleTaskCompletion(task: Task) {
         viewModelScope.launch {
-            repository.updateTask(task.copy(
-                isCompleted = !task.isCompleted,
-                updatedAt = System.currentTimeMillis()
-            ))
+            repository.updateTask(task.copy(isCompleted = !task.isCompleted, updatedAt = System.currentTimeMillis()))
+        }
+    }
+
+    // NOVA FUNÇÃO: Apagar tarefa
+    fun deleteTask(task: Task) {
+        viewModelScope.launch {
+            repository.deleteTask(task)
         }
     }
 }
