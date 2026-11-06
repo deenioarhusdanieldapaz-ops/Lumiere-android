@@ -70,6 +70,19 @@ class TaskViewModel(private val repository: TaskRepository) : ViewModel() {
         viewModelScope.launch { repository.deleteTask(task) }
     }
 
+
+    fun cancelTask(task: Task, reason: String) {
+        viewModelScope.launch {
+            repository.updateTask(task.copy(status = 3, cancellationReason = reason, timerStartedAt = null, updatedAt = System.currentTimeMillis()))
+        }
+    }
+
+    fun resumeTask(task: Task) {
+        viewModelScope.launch {
+            repository.updateTask(task.copy(status = 0, cancellationReason = null, updatedAt = System.currentTimeMillis()))
+        }
+    }
+
     fun toggleTimer(task: Task) {
         viewModelScope.launch {
             if (task.timerStartedAt != null) {
