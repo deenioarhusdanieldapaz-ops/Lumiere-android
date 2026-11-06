@@ -23,6 +23,16 @@ class TaskViewModel(private val repository: TaskRepository) : ViewModel() {
             repository.insertTask(Task(title = title, description = description))
         }
     }
+
+    // NOVA FUNÇÃO: Alternar entre Concluída e Pendente
+    fun toggleTaskCompletion(task: Task) {
+        viewModelScope.launch {
+            repository.updateTask(task.copy(
+                isCompleted = !task.isCompleted,
+                updatedAt = System.currentTimeMillis()
+            ))
+        }
+    }
 }
 
 class TaskViewModelFactory(private val repository: TaskRepository) : ViewModelProvider.Factory {
