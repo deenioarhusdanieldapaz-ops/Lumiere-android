@@ -23,6 +23,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lumiere.app.data.local.entity.Task
 import com.lumiere.app.ui.theme.LumiereDarkGray
 import com.lumiere.app.ui.theme.LumiereGold
+import com.lumiere.app.ui.theme.LumiereIcons
 import com.lumiere.app.ui.viewmodel.TaskViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -125,7 +126,7 @@ fun TaskScreen(viewModel: TaskViewModel) {
                 
                 ListItem(
                     headlineContent = { Text("Editar Tarefa", color = MaterialTheme.colorScheme.onSurface) },
-                    leadingContent = { Icon(Icons.Default.Edit, contentDescription = null, tint = LumiereGold) },
+                    leadingContent = { Icon(LumiereIcons.Edit, contentDescription = null, tint = LumiereGold) },
                     modifier = Modifier.clickable {
                         taskToEdit = taskMenu
                         taskTitle = taskMenu!!.title
@@ -161,7 +162,7 @@ fun TaskScreen(viewModel: TaskViewModel) {
 
                 ListItem(
                     headlineContent = { Text("Eliminar", color = Color.Red) },
-                    leadingContent = { Icon(Icons.Default.Delete, contentDescription = null, tint = Color.Red) },
+                    leadingContent = { Icon(LumiereIcons.Delete, contentDescription = null, tint = Color.Red) },
                     modifier = Modifier.clickable {
                         taskToDelete = taskMenu
                         taskMenu = null
