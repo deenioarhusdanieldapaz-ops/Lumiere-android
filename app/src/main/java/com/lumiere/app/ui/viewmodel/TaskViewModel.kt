@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.util.Calendar
 
 class TaskViewModel(private val repository: TaskRepository) : ViewModel() {
     val tasks: StateFlow<List<Task>> = repository.allTasks
@@ -18,9 +19,9 @@ class TaskViewModel(private val repository: TaskRepository) : ViewModel() {
             initialValue = emptyList()
         )
 
-    fun addTask(title: String, category: String?, tags: String?, priority: Int, dueDate: Long?) {
+    fun addTask(task: Task) {
         viewModelScope.launch {
-            repository.insertTask(Task(title = title, category = category, tags = tags, priority = priority, dueDate = dueDate))
+            repository.insertTask(task)
         }
     }
 
@@ -34,26 +35,39 @@ class TaskViewModel(private val repository: TaskRepository) : ViewModel() {
         viewModelScope.launch {
             val newStatus = if (task.isCompleted) 0 else 2
             repository.updateTask(task.copy(status = newStatus, updatedAt = System.currentTimeMillis()))
+            
+            if (newStatus == 2 && task.recurrenceRule != null && task.recurrenceRule != "NONE") {
+                createNextRecurringTask(task)
+            }
         }
+    }
+
+    private suspend fun createNextRecurringTask(task: Task) {
+        val calendar = Calendar.getInstance()
+        val baseDate = task.dueDate ?: System.currentTimeMillis()
+        calendar.timeInMillis = baseDate
+
+        when (task.recurrenceRule) {
+            "DAILY" -> calendar.add(Calendar.DAY_OF_YEAR, 1)
+            "WEEKLY" -> calendar.add(Calendar.WEEK_OF_YEAR, 1)
+            "MONTHLY" -> calendar.add(Calendar.MONTH, 1)
+            "YEARLY" -> calendar.add(Calendar.YEAR, 1)
+        }
+
+        val newTask = task.copy(id = 0, status = 0, dueDate = calendar.timeInMillis, createdAt = System.currentTimeMillis(), updatedAt = System.currentTimeMillis())
+        repository.insertTask(newTask)
     }
 
     fun duplicateTask(task: Task) {
-        viewModelScope.launch {
-            val newTask = task.copy(id = 0, title = "${task.title} (Cópia)", status = 0, createdAt = System.currentTimeMillis())
-            repository.insertTask(newTask)
-        }
+        viewModelScope.launch { repository.insertTask(task.copy(id = 0, title = "${task.title} (Cópia)", status = 0)) }
     }
 
     fun archiveTask(task: Task) {
-        viewModelScope.launch {
-            repository.updateTask(task.copy(status = 4)) // 4 = Arquivada
-        }
+        viewModelScope.launch { repository.updateTask(task.copy(status = 4)) }
     }
 
     fun deleteTask(task: Task) {
-        viewModelScope.launch {
-            repository.deleteTask(task)
-        }
+        viewModelScope.launch { repository.deleteTask(task) }
     }
 }
 
