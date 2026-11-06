@@ -58,6 +58,8 @@ fun TaskScreen(viewModel: TaskViewModel) {
     var taskToEdit by remember { mutableStateOf<Task?>(null) }
     var taskMenu by remember { mutableStateOf<Task?>(null) }
     var taskToDelete by remember { mutableStateOf<Task?>(null) }
+    var taskToCancel by remember { mutableStateOf<Task?>(null) }
+    var cancelReason by remember { mutableStateOf("") }
     var taskDetails by remember { mutableStateOf<Task?>(null) }
 
     // Dados do formulário
@@ -250,6 +252,23 @@ fun TaskScreen(viewModel: TaskViewModel) {
                     modifier = Modifier.clickable { viewModel.archiveTask(taskMenu!!); taskMenu = null },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                 )
+
+                if (taskMenu!!.status == 3) {
+                    ListItem(
+                        headlineContent = { Text("Retomar Tarefa", color = MaterialTheme.colorScheme.onSurface) },
+                        leadingContent = { Icon(Icons.Default.Refresh, contentDescription = null, tint = LumiereGold) },
+                        modifier = Modifier.clickable { viewModel.resumeTask(taskMenu!!); taskMenu = null },
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                    )
+                } else if (taskMenu!!.status != 2) {
+                    ListItem(
+                        headlineContent = { Text("Cancelar Tarefa", color = Color.Red) },
+                        leadingContent = { Icon(Icons.Default.Close, contentDescription = null, tint = Color.Red) },
+                        modifier = Modifier.clickable { taskToCancel = taskMenu; taskMenu = null },
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                    )
+                }
+
                 ListItem(
                     headlineContent = { Text("Eliminar", color = Color.Red) },
                     leadingContent = { Icon(LumiereIcons.Delete, contentDescription = null, tint = Color.Red) },
@@ -467,6 +486,38 @@ Text("Urgência: ${if(urgency==1) "Baixa" else if(urgency==2) "Média" else "Alt
         }
     }
 
+
+    // DIALOG: Motivo de Cancelamento
+    if (taskToCancel != null) {
+        AlertDialog(
+            onDismissRequest = { taskToCancel = null; cancelReason = "" },
+            title = { Text("Cancelar Tarefa", color = Color.Red) },
+            text = {
+                Column {
+                    Text("Porque estás a cancelar '${taskToCancel?.title}'?", color = MaterialTheme.colorScheme.onBackground)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = cancelReason,
+                        onValueChange = { cancelReason = it },
+                        label = { Text("Motivo (ex: Falta de tempo)") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (cancelReason.isNotBlank()) {
+                        viewModel.cancelTask(taskToCancel!!, cancelReason)
+                        taskToCancel = null
+                        cancelReason = ""
+                    }
+                }) { Text("Confirmar", color = Color.Red) }
+            },
+            dismissButton = { TextButton(onClick = { taskToCancel = null; cancelReason = "" }) { Text("Voltar", color = LumiereGold) } },
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    }
+
     // DIALOG: Confirmar Eliminação
     if (taskToDelete != null) {
         AlertDialog(
@@ -497,6 +548,7 @@ fun TaskItem(task: Task, onTaskClick: () -> Unit, onTaskLongClick: () -> Unit, o
     }
 
     val cardColor = when {
+        task.status == 3 -> LumiereDarkGray.copy(alpha = 0.3f) // Muito transparente se cancelada
         isOverdue -> Color(0xFF3E1A1A)
         task.isCompleted -> LumiereDarkGray.copy(alpha = 0.5f)
         else -> LumiereDarkGray
