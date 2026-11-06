@@ -318,7 +318,7 @@ fun TaskScreen(viewModel: TaskViewModel) {
                             color = LumiereGold
                         )
                     }
-                    DropdownMenu(expanded = expandedRecurrence, onDismissRequest = { expandedRecurrence = false }, containerColor = LumiereDarkGray) {
+                    DropdownMenu(expanded = expandedRecurrence, onDismissRequest = { expandedRecurrence = false }, modifier = Modifier.background(LumiereDarkGray)) {
                         listOf("NONE" to "Nunca", "DAILY" to "Diariamente", "WEEKLY" to "Semanalmente", "MONTHLY" to "Mensalmente", "YEARLY" to "Anualmente").forEach { (rule, label) ->
                             DropdownMenuItem(text = { Text(label, color = MaterialTheme.colorScheme.onBackground) }, onClick = { taskRecurrence = rule; expandedRecurrence = false })
                         }
