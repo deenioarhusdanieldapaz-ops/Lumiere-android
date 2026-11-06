@@ -18,6 +18,7 @@ data class Task(
     val estimatedDurationMinutes: Int? = null, // Estimativa
     val timeReservedMinutes: Int? = null,      // Tempo reservado
     val actualDurationMinutes: Int = 0,        // Tempo real (Cronómetro)
+    val timerStartedAt: Long? = null,          // Timestamp de quando o cronómetro começou
     val urgency: Int = 1,                      // 1=Baixa, 2=Média, 3=Alta
     val importance: Int = 1,                   // 1=Baixa, 2=Média, 3=Alta
     val energy: Int = 1,                       // 1=Baixa, 2=Média, 3=Alta
