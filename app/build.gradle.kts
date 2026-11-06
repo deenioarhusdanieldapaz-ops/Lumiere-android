@@ -5,6 +5,16 @@ plugins {
 }
 
 android {
+
+    signingConfigs {
+        create("release") {
+            storeFile = file("../signing.keystore")
+            storePassword = "XwMHqt9HCJ2C"
+            keyAlias = "my-key-alias"
+            keyPassword = "XwMHqt9HCJ2C"
+        }
+    }
+
     namespace = "com.lumiere.app"
     compileSdk = 34
 
@@ -17,7 +27,11 @@ android {
     }
 
     buildTypes {
+        getByName("debug") {
+            signingConfig = signingConfigs.getByName("release")
+        }
         release {
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
