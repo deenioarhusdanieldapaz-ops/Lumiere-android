@@ -142,7 +142,7 @@ fun TaskScreen(viewModel: TaskViewModel) {
                 
                 ListItem(
                     headlineContent = { Text("Duplicar", color = MaterialTheme.colorScheme.onSurface) },
-                    leadingContent = { Icon(Icons.Default.ContentCopy, contentDescription = null, tint = LumiereGold) },
+                    leadingContent = { Icon(LumiereIcons.Copy, contentDescription = null, tint = LumiereGold) },
                     modifier = Modifier.clickable {
                         viewModel.duplicateTask(taskMenu!!)
                         taskMenu = null
@@ -152,7 +152,7 @@ fun TaskScreen(viewModel: TaskViewModel) {
 
                 ListItem(
                     headlineContent = { Text("Arquivar", color = MaterialTheme.colorScheme.onSurface) },
-                    leadingContent = { Icon(Icons.Default.Archive, contentDescription = null, tint = LumiereGold) },
+                    leadingContent = { Icon(LumiereIcons.Archive, contentDescription = null, tint = LumiereGold) },
                     modifier = Modifier.clickable {
                         viewModel.archiveTask(taskMenu!!)
                         taskMenu = null
