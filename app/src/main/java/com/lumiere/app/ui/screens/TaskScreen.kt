@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
@@ -442,32 +443,92 @@ Text("Urgência: ${if(urgency==1) "Baixa" else if(urgency==2) "Média" else "Alt
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TaskItem(task: Task, onTaskClick: () -> Unit, onTaskLongClick: () -> Unit, onInfoClick: () -> Unit) {
+    val isOverdue = !task.isCompleted && task.dueDate != null && task.dueDate < System.currentTimeMillis()
+    
+    // Cores e textos de Prioridade
+    val priorityColor = when(task.priority) {
+        3 -> Color.Red
+        2 -> LumiereGold
+        else -> Color.Green
+    }
+    val priorityText = when(task.priority) {
+        3 -> "Alta"
+        2 -> "Média"
+        else -> "Baixa"
+    }
+
+    // Fundo do cartão: Vermelho se atrasado, transparente se concluído, normal se pendente
+    val cardColor = when {
+        isOverdue -> Color(0xFF3E1A1A)
+        task.isCompleted -> LumiereDarkGray.copy(alpha = 0.5f)
+        else -> LumiereDarkGray
+    }
+    
+    // Borda vermelha se estiver atrasado
+    val borderStroke = if (isOverdue) androidx.compose.foundation.BorderStroke(1.dp, Color.Red) else null
+
     Card(
         modifier = Modifier.fillMaxWidth().combinedClickable(onClick = onTaskClick, onLongClick = onTaskLongClick),
-        colors = CardDefaults.cardColors(containerColor = LumiereDarkGray),
-        shape = RoundedCornerShape(12.dp)
+        colors = CardDefaults.cardColors(containerColor = cardColor),
+        shape = RoundedCornerShape(12.dp),
+        border = borderStroke
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            // Barrinha lateral de Prioridade
+            Box(modifier = Modifier.width(4.dp).height(48.dp).background(priorityColor, RoundedCornerShape(2.dp)))
+            Spacer(modifier = Modifier.width(12.dp))
+            
+            // Ícone de Estado
             Icon(
-                imageVector = if (task.isCompleted) Icons.Default.CheckCircle else Icons.Default.DateRange,
-                contentDescription = null, tint = if (task.isCompleted) Color.Green else LumiereGold
+                imageVector = if (task.isCompleted) Icons.Default.CheckCircle else if (isOverdue) Icons.Default.Warning else Icons.Default.DateRange,
+                contentDescription = null, 
+                tint = if (task.isCompleted) Color.Green else if (isOverdue) Color.Red else LumiereGold
             )
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(12.dp))
+            
             Column(modifier = Modifier.weight(1f)) {
+                // Título
                 Text(
                     text = task.title,
                     color = if (task.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Bold, fontSize = 16.sp,
                     textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None
                 )
-                if (!task.context.isNullOrBlank()) {
-                    Text("Contexto: ${task.context}", color = Color.Gray, fontSize = 12.sp)
+                
+                Spacer(modifier = Modifier.height(6.dp))
+                
+                // Badges (Categoria, Contexto, Prioridade)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    if (!task.category.isNullOrBlank()) {
+                        Text(task.category!!, color = LumiereGold, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
+                    if (!task.context.isNullOrBlank()) {
+                        Text("@${task.context}", color = Color.Gray, fontSize = 11.sp)
+                    }
+                    Surface(color = priorityColor.copy(alpha = 0.2f), shape = RoundedCornerShape(4.dp)) {
+                        Text(priorityText, color = priorityColor, fontSize = 10.sp, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp))
+                    }
+                }
+                
+                // Data e Hora
+                if (task.dueDate != null) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.DateRange, contentDescription = null, tint = if (isOverdue) Color.Red else Color.Gray, modifier = Modifier.size(12.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date(task.dueDate)),
+                            color = if (isOverdue) Color.Red else Color.Gray,
+                            fontSize = 11.sp
+                        )
+                    }
                 }
             }
-            // O Ícone de Info isolado
+            
+            // Ícone de Info
             if (!task.instructions.isNullOrBlank() || !task.links.isNullOrBlank() || !task.completionCriteria.isNullOrBlank()) {
-                IconButton(onClick = onInfoClick) {
-                    Icon(Icons.Default.Info, contentDescription = "Ver Detalhes", tint = LumiereGold)
+                IconButton(onClick = onInfoClick) { 
+                    Icon(Icons.Default.Info, contentDescription = "Ver Detalhes", tint = LumiereGold) 
                 }
             }
         }
