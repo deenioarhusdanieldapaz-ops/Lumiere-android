@@ -10,8 +10,11 @@ RUN_ID=$(gh run list --workflow="build-apk.yml" --limit 1 --json databaseId -q '
 
 gh run watch $RUN_ID
 
-if [ $? -ne 0 ]; then
-    echo "❌ A compilação falhou! Verifica o GitHub Actions."
+# Verificação à prova de bala
+CONCLUSION=$(gh run view $RUN_ID --json conclusion -q '.conclusion')
+if [ "$CONCLUSION" != "success" ]; then
+    echo "❌ A compilação falhou na Cloud! O APK não foi gerado."
+    echo "Verifica os erros em: https://github.com/deenioarhusdanieldapaz-ops/Lumiere-android/actions"
     exit 1
 fi
 
@@ -20,7 +23,12 @@ rm -rf temp-apk
 mkdir -p temp-apk
 gh run download $RUN_ID -n debug-apk -D temp-apk
 
+if [ ! -f temp-apk/app-debug.apk ]; then
+    echo "❌ O ficheiro APK não foi encontrado."
+    exit 1
+fi
+
 echo "📱 4. A copiar para a pasta Downloads..."
 cp temp-apk/app-debug.apk /sdcard/Download/lumiere-m01.apk
 
-echo "✅ APK pronto! Abre o teu Gestor de Ficheiros e toca no 'lumiere-m01.apk' na pasta Downloads para atualizar."
+echo "✅ APK pronto! Vai à pasta Downloads e instala/atualiza o lumiere-m01.apk."
