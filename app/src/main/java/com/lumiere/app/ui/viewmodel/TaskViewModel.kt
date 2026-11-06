@@ -69,8 +69,6 @@ class TaskViewModel(private val repository: TaskRepository) : ViewModel() {
     fun deleteTask(task: Task) {
         viewModelScope.launch { repository.deleteTask(task) }
     }
-}
-
 
     fun toggleTimer(task: Task) {
         viewModelScope.launch {
@@ -92,7 +90,6 @@ class TaskViewModel(private val repository: TaskRepository) : ViewModel() {
             }
         }
     }
-
 }
 
 class TaskViewModelFactory(private val repository: TaskRepository) : ViewModelProvider.Factory {
