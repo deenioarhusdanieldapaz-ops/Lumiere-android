@@ -1,6 +1,6 @@
 package com.lumiere.app.ui.screens
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -16,9 +16,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.lumiere.app.data.local.entity.Task
 import com.lumiere.app.ui.theme.LumiereDarkGray
 import com.lumiere.app.ui.theme.LumiereGold
 import com.lumiere.app.ui.viewmodel.TaskViewModel
@@ -60,25 +62,13 @@ fun TaskScreen(viewModel: TaskViewModel) {
         ) {
             item {
                 Column(modifier = Modifier.padding(top = 16.dp)) {
-                    Text(
-                        text = "Olá!",
-                        color = MaterialTheme.colorScheme.onBackground,
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "Vamos fazer hoje ainda melhor.",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 16.sp
-                    )
+                    Text("Olá!", color = MaterialTheme.colorScheme.onBackground, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+                    Text("Vamos fazer hoje ainda melhor.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 16.sp)
                 }
             }
 
             item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     SummaryCard(
                         modifier = Modifier.weight(1f),
                         title = "Tarefas de Hoje",
@@ -96,14 +86,8 @@ fun TaskScreen(viewModel: TaskViewModel) {
 
             if (pendingTasks > 0) {
                 item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFF3E1A1A))
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
+                    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFF3E1A1A))) {
+                        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.Info, contentDescription = null, tint = Color.Red)
                             Spacer(modifier = Modifier.width(12.dp))
                             Text("Atenção: $pendingTasks tarefas pendentes", color = Color.White)
@@ -113,57 +97,16 @@ fun TaskScreen(viewModel: TaskViewModel) {
             }
 
             item {
-                Text(
-                    text = "Minhas Tarefas",
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
+                Text("Minhas Tarefas", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(top = 8.dp))
             }
 
             if (tasks.isEmpty()) {
                 item {
-                    Text(
-                        text = "Ainda não tem tarefas. Clica no + para começar.",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(vertical = 24.dp)
-                    )
+                    Text("Ainda não tem tarefas. Clica no + para começar.", color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(vertical = 24.dp))
                 }
             } else {
                 items(tasks) { task ->
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = LumiereDarkGray),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = if (task.isCompleted) Icons.Default.CheckCircle else Icons.Default.DateRange,
-                                contentDescription = null,
-                                tint = if (task.isCompleted) Color.Green else LumiereGold
-                            )
-                            Spacer(modifier = Modifier.width(16.dp))
-                            Column {
-                                Text(
-                                    text = task.title,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 16.sp
-                                )
-                                if (task.description != null) {
-                                    Text(
-                                        text = task.description,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        fontSize = 14.sp
-                                    )
-                                }
-                            }
-                        }
-                    }
+                    TaskItem(task = task, onTaskClick = { viewModel.toggleTaskCompletion(task) })
                 }
             }
             
@@ -194,14 +137,10 @@ fun TaskScreen(viewModel: TaskViewModel) {
                         taskTitle = ""
                         showDialog = false
                     }
-                }) {
-                    Text("Adicionar", color = MaterialTheme.colorScheme.primary)
-                }
+                }) { Text("Adicionar", color = MaterialTheme.colorScheme.primary) }
             },
             dismissButton = {
-                TextButton(onClick = { showDialog = false }) {
-                    Text("Cancelar", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
+                TextButton(onClick = { showDialog = false }) { Text("Cancelar", color = MaterialTheme.colorScheme.onSurfaceVariant) }
             },
             containerColor = MaterialTheme.colorScheme.surface
         )
@@ -209,20 +148,48 @@ fun TaskScreen(viewModel: TaskViewModel) {
 }
 
 @Composable
-fun SummaryCard(modifier: Modifier = Modifier, title: String, count: String, icon: @Composable () -> Unit) {
+fun TaskItem(task: Task, onTaskClick: () -> Unit) {
     Card(
-        modifier = modifier,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onTaskClick() }, // AQUI: O clique na tarefa
         colors = CardDefaults.cardColors(containerColor = LumiereDarkGray),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(12.dp)
     ) {
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = if (task.isCompleted) Icons.Default.CheckCircle else Icons.Default.DateRange,
+                contentDescription = null,
+                tint = if (task.isCompleted) Color.Green else LumiereGold
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column {
+                Text(
+                    text = task.title,
+                    color = if (task.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None // Risca o texto se concluída
+                )
+                if (task.description != null) {
+                    Text(task.description, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SummaryCard(modifier: Modifier = Modifier, title: String, count: String, icon: @Composable () -> Unit) {
+    Card(modifier = modifier, colors = CardDefaults.cardColors(containerColor = LumiereDarkGray), shape = RoundedCornerShape(16.dp)) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 icon()
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(text = title, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+                Text(title, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
             }
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = count, color = MaterialTheme.colorScheme.onBackground, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+            Text(count, color = MaterialTheme.colorScheme.onBackground, fontSize = 28.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
