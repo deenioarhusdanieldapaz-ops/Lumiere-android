@@ -18,9 +18,9 @@ class TaskViewModel(private val repository: TaskRepository) : ViewModel() {
             initialValue = emptyList()
         )
 
-    fun addTask(title: String, description: String? = null, priority: Int = 1) {
+    fun addTask(title: String, description: String? = null, priority: Int = 1, dueDate: Long? = null) {
         viewModelScope.launch {
-            repository.insertTask(Task(title = title, description = description, priority = priority))
+            repository.insertTask(Task(title = title, description = description, priority = priority, dueDate = dueDate))
         }
     }
 
@@ -30,7 +30,6 @@ class TaskViewModel(private val repository: TaskRepository) : ViewModel() {
         }
     }
 
-    // NOVA FUNÇÃO: Apagar tarefa
     fun deleteTask(task: Task) {
         viewModelScope.launch {
             repository.deleteTask(task)
