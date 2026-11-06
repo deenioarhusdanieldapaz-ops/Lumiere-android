@@ -12,8 +12,8 @@ android {
         applicationId = "com.lumiere.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = System.getenv("GITHUB_RUN_NUMBER")?.toInt() ?: 1
+        versionName = "1.0." + (System.getenv("GITHUB_RUN_NUMBER") ?: "1")
     }
 
     buildTypes {

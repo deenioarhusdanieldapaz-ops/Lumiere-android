@@ -25,7 +25,7 @@ fun TaskScreen(viewModel: TaskViewModel) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("M01 — Tarefas", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold) },
+                title = { Text("Minhas Tarefas", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         },
