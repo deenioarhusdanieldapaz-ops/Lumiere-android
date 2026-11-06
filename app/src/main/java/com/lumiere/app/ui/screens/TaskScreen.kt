@@ -27,19 +27,48 @@ import com.lumiere.app.ui.theme.LumiereDarkGray
 import com.lumiere.app.ui.theme.LumiereGold
 import com.lumiere.app.ui.theme.LumiereIcons
 import com.lumiere.app.ui.viewmodel.TaskViewModel
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun TaskScreen(viewModel: TaskViewModel) {
     val tasks by viewModel.tasks.collectAsStateWithLifecycle()
     
+    // ESTADOS ELEVADOS (Para não perder dados ao fechar o painel)
     var showSheet by remember { mutableStateOf(false) }
     var taskToEdit by remember { mutableStateOf<Task?>(null) }
     var taskMenu by remember { mutableStateOf<Task?>(null) }
     var taskToDelete by remember { mutableStateOf<Task?>(null) }
+    var taskDetails by remember { mutableStateOf<Task?>(null) }
+
+    // Dados do formulário
+    var title by remember { mutableStateOf("") }
+    var category by remember { mutableStateOf("") }
+    var urgency by remember { mutableIntStateOf(1) }
+    var importance by remember { mutableIntStateOf(1) }
+    var energy by remember { mutableIntStateOf(1) }
+    var context by remember { mutableStateOf("") }
+    var estimatedDuration by remember { mutableStateOf("") }
+    var timeReserved by remember { mutableStateOf("") }
+    var instructions by remember { mutableStateOf("") }
+    var links by remember { mutableStateOf("") }
+    var completionCriteria by remember { mutableStateOf("") }
+
+    fun prepareSheet(task: Task?) {
+        taskToEdit = task
+        title = task?.title ?: ""
+        category = task?.category ?: ""
+        urgency = task?.urgency ?: 1
+        importance = task?.importance ?: 1
+        energy = task?.energy ?: 1
+        context = task?.context ?: ""
+        estimatedDuration = task?.estimatedDurationMinutes?.toString() ?: ""
+        timeReserved = task?.timeReservedMinutes?.toString() ?: ""
+        instructions = task?.instructions ?: ""
+        links = task?.links ?: ""
+        completionCriteria = task?.completionCriteria ?: ""
+        showSheet = true
+    }
 
     val completedTasks = tasks.count { it.isCompleted }
     val pendingTasks = tasks.count { !it.isCompleted }
@@ -53,7 +82,7 @@ fun TaskScreen(viewModel: TaskViewModel) {
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { taskToEdit = null; showSheet = true },
+                onClick = { prepareSheet(null) },
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) { Icon(Icons.Default.Add, contentDescription = "Nova Tarefa") }
@@ -95,7 +124,8 @@ fun TaskScreen(viewModel: TaskViewModel) {
                     TaskItem(
                         task = task,
                         onTaskClick = { viewModel.toggleTaskCompletion(task) },
-                        onTaskLongClick = { taskMenu = task }
+                        onTaskLongClick = { taskMenu = task },
+                        onInfoClick = { taskDetails = task } // AQUI: Abre os detalhes
                     )
                 }
             }
@@ -104,7 +134,7 @@ fun TaskScreen(viewModel: TaskViewModel) {
         }
     }
 
-    // MODAL: Menu de Contexto
+    // MODAL: Menu de Contexto (Long Press)
     if (taskMenu != null) {
         ModalBottomSheet(onDismissRequest = { taskMenu = null }, containerColor = LumiereDarkGray) {
             Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
@@ -112,7 +142,7 @@ fun TaskScreen(viewModel: TaskViewModel) {
                 ListItem(
                     headlineContent = { Text("Editar Tarefa", color = MaterialTheme.colorScheme.onSurface) },
                     leadingContent = { Icon(LumiereIcons.Edit, contentDescription = null, tint = LumiereGold) },
-                    modifier = Modifier.clickable { taskToEdit = taskMenu; showSheet = true; taskMenu = null },
+                    modifier = Modifier.clickable { prepareSheet(taskMenu); taskMenu = null },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                 )
                 ListItem(
@@ -137,16 +167,104 @@ fun TaskScreen(viewModel: TaskViewModel) {
         }
     }
 
-    // MODAL: Criar / Editar Tarefa (Com Ponto 1 e 2)
-    if (showSheet) {
-        TaskEditSheet(
-            taskToEdit = taskToEdit,
-            onDismiss = { showSheet = false },
-            onSave = { task ->
-                if (taskToEdit == null) viewModel.addTask(task) else viewModel.updateTask(task)
-                showSheet = false
-            }
+    // MODAL: Detalhes da Tarefa (Para o Ícone ⓘ)
+    if (taskDetails != null) {
+        AlertDialog(
+            onDismissRequest = { taskDetails = null },
+            title = { Text("Detalhes da Tarefa", color = LumiereGold) },
+            text = {
+                Column {
+                    Text(taskDetails!!.title, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    if (!taskDetails!!.instructions.isNullOrBlank()) {
+                        Text("Instruções:", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Text(taskDetails!!.instructions!!, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    if (!taskDetails!!.links.isNullOrBlank()) {
+                        Text("Links:", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Text(taskDetails!!.links!!, color = Color.Cyan)
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    if (!taskDetails!!.completionCriteria.isNullOrBlank()) {
+                        Text("Critério de Conclusão:", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Text(taskDetails!!.completionCriteria!!, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    if (taskDetails!!.instructions.isNullOrBlank() && taskDetails!!.links.isNullOrBlank() && taskDetails!!.completionCriteria.isNullOrBlank()) {
+                        Text("Nenhum detalhe extra guardado.", color = Color.Gray)
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { taskDetails = null }) { Text("Fechar", color = LumiereGold) } },
+            containerColor = MaterialTheme.colorScheme.surface
         )
+    }
+
+    // MODAL: Criar / Editar Tarefa (Elevado)
+    if (showSheet) {
+        ModalBottomSheet(onDismissRequest = { showSheet = false }, containerColor = LumiereDarkGray) {
+            Column(modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState()).fillMaxWidth()) {
+                Text(if (taskToEdit == null) "Nova Tarefa" else "Editar Tarefa", color = LumiereGold, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Título") }, modifier = Modifier.fillMaxWidth())
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(value = category, onValueChange = { category = it }, label = { Text("Categoria") }, modifier = Modifier.weight(1f))
+                    OutlinedTextField(value = context, onValueChange = { context = it }, label = { Text("Contexto (ex: Casa)") }, modifier = Modifier.weight(1f))
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(value = estimatedDuration, onValueChange = { estimatedDuration = it }, label = { Text("Estimativa (min)") }, modifier = Modifier.weight(1f))
+                    OutlinedTextField(value = timeReserved, onValueChange = { timeReserved = it }, label = { Text("Reservado (min)") }, modifier = Modifier.weight(1f))
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text("Urgência: ${if(urgency==1) "Baixa" else if(urgency==2) "Média" else "Alta"}", color = MaterialTheme.colorScheme.onSurface)
+                Slider(value = urgency.toFloat(), onValueChange = { urgency = it.toInt() }, valueRange = 1f..3f, steps = 1)
+                
+                Text("Importância: ${if(importance==1) "Baixa" else if(importance==2) "Média" else "Alta"}", color = MaterialTheme.colorScheme.onSurface)
+                Slider(value = importance.toFloat(), onValueChange = { importance = it.toInt() }, valueRange = 1f..3f, steps = 1)
+
+                Text("Energia Necessária: ${if(energy==1) "Baixa" else if(energy==2) "Média" else "Alta"}", color = MaterialTheme.colorScheme.onSurface)
+                Slider(value = energy.toFloat(), onValueChange = { energy = it.toInt() }, valueRange = 1f..3f, steps = 1)
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("Anexos e Contexto", color = LumiereGold, fontWeight = FontWeight.Bold)
+                OutlinedTextField(value = instructions, onValueChange = { instructions = it }, label = { Text("Instruções / Notas") }, modifier = Modifier.fillMaxWidth(), minLines = 2)
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(value = links, onValueChange = { links = it }, label = { Text("Links (ex: https://...)") }, modifier = Modifier.fillMaxWidth())
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(value = completionCriteria, onValueChange = { completionCriteria = it }, label = { Text("Critério de Conclusão") }, modifier = Modifier.fillMaxWidth())
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                Button(
+                    onClick = {
+                        val task = (taskToEdit ?: Task(title = "")).copy(
+                            title = title,
+                            category = category.ifBlank { null },
+                            urgency = urgency,
+                            importance = importance,
+                            energy = energy,
+                            context = context.ifBlank { null },
+                            estimatedDurationMinutes = estimatedDuration.toIntOrNull(),
+                            timeReservedMinutes = timeReserved.toIntOrNull(),
+                            instructions = instructions.ifBlank { null },
+                            links = links.ifBlank { null },
+                            completionCriteria = completionCriteria.ifBlank { null }
+                        )
+                        if (taskToEdit == null) viewModel.addTask(task) else viewModel.updateTask(task)
+                        showSheet = false
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = LumiereGold)
+                ) { Text("Guardar", color = Color.Black) }
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+        }
     }
 
     // DIALOG: Confirmar Eliminação
@@ -162,88 +280,9 @@ fun TaskScreen(viewModel: TaskViewModel) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TaskEditSheet(taskToEdit: Task?, onDismiss: () -> Unit, onSave: (Task) -> Unit) {
-    var title by remember { mutableStateOf(taskToEdit?.title ?: "") }
-    var category by remember { mutableStateOf(taskToEdit?.category ?: "") }
-    var urgency by remember { mutableIntStateOf(taskToEdit?.urgency ?: 1) }
-    var importance by remember { mutableIntStateOf(taskToEdit?.importance ?: 1) }
-    var energy by remember { mutableIntStateOf(taskToEdit?.energy ?: 1) }
-    var context by remember { mutableStateOf(taskToEdit?.context ?: "") }
-    var estimatedDuration by remember { mutableStateOf(taskToEdit?.estimatedDurationMinutes?.toString() ?: "") }
-    var timeReserved by remember { mutableStateOf(taskToEdit?.timeReservedMinutes?.toString() ?: "") }
-    var instructions by remember { mutableStateOf(taskToEdit?.instructions ?: "") }
-    var links by remember { mutableStateOf(taskToEdit?.links ?: "") }
-    var completionCriteria by remember { mutableStateOf(taskToEdit?.completionCriteria ?: "") }
-
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = LumiereDarkGray) {
-        Column(modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState()).fillMaxWidth()) {
-            Text(if (taskToEdit == null) "Nova Tarefa" else "Editar Tarefa", color = LumiereGold, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Título") }, modifier = Modifier.fillMaxWidth())
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(value = category, onValueChange = { category = it }, label = { Text("Categoria") }, modifier = Modifier.weight(1f))
-                OutlinedTextField(value = context, onValueChange = { context = it }, label = { Text("Contexto (ex: Casa)") }, modifier = Modifier.weight(1f))
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(value = estimatedDuration, onValueChange = { estimatedDuration = it }, label = { Text("Estimativa (min)") }, modifier = Modifier.weight(1f))
-                OutlinedTextField(value = timeReserved, onValueChange = { timeReserved = it }, label = { Text("Reservado (min)") }, modifier = Modifier.weight(1f))
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text("Urgência: ${if(urgency==1) "Baixa" else if(urgency==2) "Média" else "Alta"}", color = MaterialTheme.colorScheme.onSurface)
-            Slider(value = urgency.toFloat(), onValueChange = { urgency = it.toInt() }, valueRange = 1f..3f, steps = 1)
-            
-            Text("Importância: ${if(importance==1) "Baixa" else if(importance==2) "Média" else "Alta"}", color = MaterialTheme.colorScheme.onSurface)
-            Slider(value = importance.toFloat(), onValueChange = { importance = it.toInt() }, valueRange = 1f..3f, steps = 1)
-
-            Text("Energia Necessária: ${if(energy==1) "Baixa" else if(energy==2) "Média" else "Alta"}", color = MaterialTheme.colorScheme.onSurface)
-            Slider(value = energy.toFloat(), onValueChange = { energy = it.toInt() }, valueRange = 1f..3f, steps = 1)
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            Text("Anexos e Contexto", color = LumiereGold, fontWeight = FontWeight.Bold)
-            OutlinedTextField(value = instructions, onValueChange = { instructions = it }, label = { Text("Instruções / Notas") }, modifier = Modifier.fillMaxWidth(), minLines = 2)
-            Spacer(modifier = Modifier.height(8.dp))
-            OutlinedTextField(value = links, onValueChange = { links = it }, label = { Text("Links (ex: https://...)") }, modifier = Modifier.fillMaxWidth())
-            Spacer(modifier = Modifier.height(8.dp))
-            OutlinedTextField(value = completionCriteria, onValueChange = { completionCriteria = it }, label = { Text("Critério de Conclusão") }, modifier = Modifier.fillMaxWidth())
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            Button(
-                onClick = {
-                    val task = (taskToEdit ?: Task(title = "")).copy(
-                        title = title,
-                        category = category.ifBlank { null },
-                        urgency = urgency,
-                        importance = importance,
-                        energy = energy,
-                        context = context.ifBlank { null },
-                        estimatedDurationMinutes = estimatedDuration.toIntOrNull(),
-                        timeReservedMinutes = timeReserved.toIntOrNull(),
-                        instructions = instructions.ifBlank { null },
-                        links = links.ifBlank { null },
-                        completionCriteria = completionCriteria.ifBlank { null }
-                    )
-                    onSave(task)
-                },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = LumiereGold)
-            ) { Text("Guardar", color = Color.Black) }
-            Spacer(modifier = Modifier.height(24.dp))
-        }
-    }
-}
-
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun TaskItem(task: Task, onTaskClick: () -> Unit, onTaskLongClick: () -> Unit) {
+fun TaskItem(task: Task, onTaskClick: () -> Unit, onTaskLongClick: () -> Unit, onInfoClick: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth().combinedClickable(onClick = onTaskClick, onLongClick = onTaskLongClick),
         colors = CardDefaults.cardColors(containerColor = LumiereDarkGray),
@@ -265,8 +304,11 @@ fun TaskItem(task: Task, onTaskClick: () -> Unit, onTaskLongClick: () -> Unit) {
                 if (!task.context.isNullOrBlank()) {
                     Text("Contexto: ${task.context}", color = Color.Gray, fontSize = 12.sp)
                 }
-                if (!task.instructions.isNullOrBlank()) {
-                    Icon(Icons.Default.Info, contentDescription = "Tem instruções", tint = LumiereGold, modifier = Modifier.size(14.dp))
+            }
+            // O Ícone de Info isolado
+            if (!task.instructions.isNullOrBlank() || !task.links.isNullOrBlank() || !task.completionCriteria.isNullOrBlank()) {
+                IconButton(onClick = onInfoClick) {
+                    Icon(Icons.Default.Info, contentDescription = "Ver Detalhes", tint = LumiereGold)
                 }
             }
         }
