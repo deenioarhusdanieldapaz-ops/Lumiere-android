@@ -9,7 +9,7 @@ import com.lumiere.app.data.local.entity.Project
 import com.lumiere.app.data.local.entity.Subtask
 import com.lumiere.app.data.local.entity.Task
 
-@Database(entities = [Task::class, Project::class, Subtask::class], version = 3, exportSchema = false)
+@Database(entities = [Task::class, Project::class, Subtask::class], version = 4, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun taskDao(): TaskDao
 

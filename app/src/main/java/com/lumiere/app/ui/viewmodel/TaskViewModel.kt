@@ -71,6 +71,30 @@ class TaskViewModel(private val repository: TaskRepository) : ViewModel() {
     }
 }
 
+
+    fun toggleTimer(task: Task) {
+        viewModelScope.launch {
+            if (task.timerStartedAt != null) {
+                // Parar o cronómetro: calcular tempo decorrido
+                val elapsedMillis = System.currentTimeMillis() - task.timerStartedAt
+                val elapsedMinutes = (elapsedMillis / 60000).toInt()
+                repository.updateTask(task.copy(
+                    actualDurationMinutes = task.actualDurationMinutes + elapsedMinutes,
+                    timerStartedAt = null,
+                    updatedAt = System.currentTimeMillis()
+                ))
+            } else {
+                // Iniciar o cronómetro
+                repository.updateTask(task.copy(
+                    timerStartedAt = System.currentTimeMillis(),
+                    updatedAt = System.currentTimeMillis()
+                ))
+            }
+        }
+    }
+
+}
+
 class TaskViewModelFactory(private val repository: TaskRepository) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(TaskViewModel::class.java)) {
