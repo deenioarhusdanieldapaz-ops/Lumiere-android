@@ -15,6 +15,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberTimePickerState
@@ -420,7 +421,7 @@ Text("Urgência: ${if(urgency==1) "Baixa" else if(urgency==2) "Média" else "Alt
                     }) { Text("OK", color = LumiereGold) }
                 },
                 dismissButton = { TextButton(onClick = { showTimePicker = false }) { Text("Cancelar") } },
-                colors = AlertDialogDefaults.colors(containerColor = LumiereDarkGray)
+                containerColor = LumiereDarkGray
             )
         }
     }
