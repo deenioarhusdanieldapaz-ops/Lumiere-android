@@ -15,6 +15,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.*
@@ -34,6 +35,10 @@ import com.lumiere.app.ui.theme.LumiereGold
 import com.lumiere.app.ui.theme.LumiereIcons
 import com.lumiere.app.ui.viewmodel.TaskViewModel
 import java.util.Calendar
+
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -415,7 +420,7 @@ Text("Urgência: ${if(urgency==1) "Baixa" else if(urgency==2) "Média" else "Alt
                     }) { Text("OK", color = LumiereGold) }
                 },
                 dismissButton = { TextButton(onClick = { showTimePicker = false }) { Text("Cancelar") } },
-                containerColor = LumiereDarkGray
+                colors = AlertDialogDefaults.colors(containerColor = LumiereDarkGray)
             )
         }
     }
