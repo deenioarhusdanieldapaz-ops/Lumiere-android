@@ -9,7 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -104,7 +104,7 @@ fun TaskScreen(viewModel: TaskViewModel) {
                             modifier = Modifier.padding(16.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(Icons.Default.Warning, contentDescription = null, tint = Color.Red)
+                            Icon(Icons.Default.Info, contentDescription = null, tint = Color.Red)
                             Spacer(modifier = Modifier.width(12.dp))
                             Text("Atenção: $pendingTasks tarefas pendentes", color = Color.White)
                         }
