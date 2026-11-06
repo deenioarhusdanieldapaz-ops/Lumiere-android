@@ -49,6 +49,9 @@ fun TaskScreen(viewModel: TaskViewModel) {
     
     // ESTADOS ELEVADOS (Para não perder dados ao fechar o painel)
     var showSheet by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
+    var activeFilter by remember { mutableStateOf("ALL") } // ALL, TODAY, OVERDUE, COMPLETED
+
     var taskToEdit by remember { mutableStateOf<Task?>(null) }
     var taskMenu by remember { mutableStateOf<Task?>(null) }
     var taskToDelete by remember { mutableStateOf<Task?>(null) }
@@ -129,7 +132,29 @@ fun TaskScreen(viewModel: TaskViewModel) {
                 }
             }
 
+            
+            item {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    label = { Text("Pesquisar tarefas...") },
+                    modifier = Modifier.fillMaxWidth(),
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = LumiereGold) },
+                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = LumiereGold)
+                )
+            }
+            
+            item {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    FilterChip(selected = activeFilter == "ALL", onClick = { activeFilter = "ALL" }, label = { Text("Todas") })
+                    FilterChip(selected = activeFilter == "TODAY", onClick = { activeFilter = "TODAY" }, label = { Text("Hoje") })
+                    FilterChip(selected = activeFilter == "OVERDUE", onClick = { activeFilter = "OVERDUE" }, label = { Text("Atrasadas") })
+                    FilterChip(selected = activeFilter == "COMPLETED", onClick = { activeFilter = "COMPLETED" }, label = { Text("Concluídas") })
+                }
+            }
+
             item { Text("Minhas Tarefas", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(top = 8.dp)) }
+
 
             if (tasks.isEmpty()) {
                 item {
@@ -142,7 +167,18 @@ fun TaskScreen(viewModel: TaskViewModel) {
                     }
                 }
             } else {
-                items(tasks) { task ->
+                
+                val filteredTasks = tasks.filter { task ->
+                    val matchesSearch = task.title.contains(searchQuery, ignoreCase = true)
+                    val matchesFilter = when(activeFilter) {
+                        "TODAY" -> !task.isCompleted && task.dueDate != null && task.dueDate >= System.currentTimeMillis() && task.dueDate <= getEndOfDay(System.currentTimeMillis())
+                        "OVERDUE" -> !task.isCompleted && task.dueDate != null && task.dueDate < System.currentTimeMillis()
+                        "COMPLETED" -> task.isCompleted
+                        else -> true
+                    }
+                    matchesSearch && matchesFilter
+                }
+                items(filteredTasks) { task ->
                     TaskItem(
                         task = task,
                         onTaskClick = { viewModel.toggleTaskCompletion(task) },
@@ -442,7 +478,7 @@ Text("Urgência: ${if(urgency==1) "Baixa" else if(urgency==2) "Média" else "Alt
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun TaskItem(task: Task, onTaskClick: () -> Unit, onTaskLongClick: () -> Unit, onInfoClick: () -> Unit) {
+fun TaskItem(task: Task, onTaskClick: () -> Unit, onTaskLongClick: () -> Unit, onInfoClick: () -> Unit, onTimerClick: () -> Unit) {
     val isOverdue = !task.isCompleted && task.dueDate != null && task.dueDate < System.currentTimeMillis()
     
     // Cores e textos de Prioridade
@@ -510,6 +546,17 @@ fun TaskItem(task: Task, onTaskClick: () -> Unit, onTaskLongClick: () -> Unit, o
                     }
                 }
                 
+                // Tempo Registado
+                if (task.actualDurationMinutes > 0 || task.timerStartedAt != null) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Refresh, contentDescription = null, tint = if (task.timerStartedAt != null) Color.Green else Color.Gray, modifier = Modifier.size(12.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        val displayTime = if (task.timerStartedAt != null) "${task.actualDurationMinutes} min (a contar...)" else "${task.actualDurationMinutes} min"
+                        Text(displayTime, color = if (task.timerStartedAt != null) Color.Green else Color.Gray, fontSize = 11.sp)
+                    }
+                }
+                
                 // Data e Hora
                 if (task.dueDate != null) {
                     Spacer(modifier = Modifier.height(4.dp))
@@ -525,6 +572,15 @@ fun TaskItem(task: Task, onTaskClick: () -> Unit, onTaskLongClick: () -> Unit, o
                 }
             }
             
+
+            // Botão de Cronómetro
+            IconButton(onClick = onTimerClick) {
+                Icon(
+                    imageVector = if (task.timerStartedAt != null) Icons.Default.Close else Icons.Default.PlayArrow,
+                    contentDescription = "Cronómetro",
+                    tint = if (task.timerStartedAt != null) Color.Red else LumiereGold
+                )
+            }
             // Ícone de Info
             if (!task.instructions.isNullOrBlank() || !task.links.isNullOrBlank() || !task.completionCriteria.isNullOrBlank()) {
                 IconButton(onClick = onInfoClick) { 
@@ -548,4 +604,14 @@ fun SummaryCard(modifier: Modifier = Modifier, title: String, count: String, col
             Text(count, color = MaterialTheme.colorScheme.onBackground, fontSize = 28.sp, fontWeight = FontWeight.Bold)
         }
     }
+}
+
+fun getEndOfDay(timestamp: Long): Long {
+    val calendar = Calendar.getInstance()
+    calendar.timeInMillis = timestamp
+    calendar.set(Calendar.HOUR_OF_DAY, 23)
+    calendar.set(Calendar.MINUTE, 59)
+    calendar.set(Calendar.SECOND, 59)
+    calendar.set(Calendar.MILLISECOND, 999)
+    return calendar.timeInMillis
 }
