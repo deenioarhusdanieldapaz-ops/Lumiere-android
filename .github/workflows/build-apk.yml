@@ -25,9 +25,15 @@ jobs:
         gradle-version: 8.2
 
     - name: Run Unit Tests
+      env:
+        LUMIERE_STORE_PASSWORD: ${{ secrets.LUMIERE_STORE_PASSWORD }}
+        LUMIERE_KEY_PASSWORD: ${{ secrets.LUMIERE_KEY_PASSWORD }}
       run: gradle testDebugUnitTest
 
     - name: Build with Gradle
+      env:
+        LUMIERE_STORE_PASSWORD: ${{ secrets.LUMIERE_STORE_PASSWORD }}
+        LUMIERE_KEY_PASSWORD: ${{ secrets.LUMIERE_KEY_PASSWORD }}
       run: gradle assembleDebug
 
     - name: Upload APK
