@@ -53,7 +53,7 @@ import java.util.Locale
 @Composable
 fun TaskScreen(viewModel: TaskViewModel) {
     val tasks by viewModel.tasks.collectAsStateWithLifecycle()
-    val context = LocalContext.current
+    val appContext = LocalContext.current
     
     val filePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -344,7 +344,7 @@ fun TaskScreen(viewModel: TaskViewModel) {
                 }
                 if (!taskDetails!!.links.isNullOrBlank()) {
                     Text("Links:", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                    val context = LocalContext.current
+                    val appContext = LocalContext.current
                     Text(
                         text = taskDetails!!.links!!,
                         color = Color.Cyan,
@@ -352,7 +352,7 @@ fun TaskScreen(viewModel: TaskViewModel) {
                         modifier = Modifier.clickable {
                             try {
                                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(taskDetails!!.links))
-                                context.startActivity(intent)
+                                appContext.startActivity(intent)
                             } catch (e: Exception) { }
                         }
                     )
@@ -365,13 +365,16 @@ fun TaskScreen(viewModel: TaskViewModel) {
                         color = Color.Cyan,
                         textDecoration = TextDecoration.Underline,
                         modifier = Modifier.clickable {
-                            try {
-                                val intent = Intent(Intent.ACTION_VIEW).apply {
-                                    setDataAndType(Uri.parse(taskDetails!!.attachmentUri), "*/*")
-                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                }
-                                context.startActivity(intent)
-                            } catch (e: Exception) { }
+                            val uriString = taskDetails?.attachmentUri
+                            if (uriString != null) {
+                                try {
+                                    val intent = Intent(Intent.ACTION_VIEW).apply {
+                                        setDataAndType(Uri.parse(uriString), "*/*")
+                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    }
+                                    appContext.startActivity(intent)
+                                } catch (e: Exception) { }
+                            }
                         }
                     )
                     Spacer(modifier = Modifier.height(8.dp))
