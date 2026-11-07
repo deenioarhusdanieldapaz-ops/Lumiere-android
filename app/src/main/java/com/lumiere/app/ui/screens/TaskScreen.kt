@@ -998,11 +998,6 @@ fun TaskItem(task: Task, onToggleComplete: () -> Unit, onOpenDetails: () -> Unit
                         tint = if (task.timerStartedAt != null) Color.Red else LumiereGold
                     )
                 }
-                if (!task.instructions.isNullOrBlank() || !task.links.isNullOrBlank() || !task.completionCriteria.isNullOrBlank()) {
-                    IconButton(onClick = onInfoClick, modifier = Modifier.size(32.dp)) { 
-                        Icon(Icons.Default.Info, contentDescription = "Ver Detalhes", tint = LumiereGold) 
-                    }
-                }
             }
         }
     }
