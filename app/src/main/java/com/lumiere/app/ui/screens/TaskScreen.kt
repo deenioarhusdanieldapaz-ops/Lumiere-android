@@ -281,53 +281,6 @@ fun TaskScreen(viewModel: TaskViewModel) {
         }
     }
 
-    // MODAL: Detalhes da Tarefa (Para o Ícone ⓘ)
-    if (taskDetails != null) {
-        AlertDialog(
-            onDismissRequest = { taskDetails = null },
-            title = { Text("Detalhes da Tarefa", color = LumiereGold) },
-            text = {
-                Column {
-                    Text(taskDetails!!.title, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                    Spacer(modifier = Modifier.height(16.dp))
-                    if (!taskDetails!!.instructions.isNullOrBlank()) {
-                        Text("Instruções:", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        Text(taskDetails!!.instructions!!, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-                    if (!taskDetails!!.links.isNullOrBlank()) {
-                        Text("Links:", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        val context = LocalContext.current
-                        Text(
-                            text = taskDetails!!.links!!,
-                            color = Color.Cyan,
-                            textDecoration = TextDecoration.Underline,
-                            modifier = Modifier.clickable {
-                                try {
-                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(taskDetails!!.links))
-                                    context.startActivity(intent)
-                                } catch (e: Exception) {
-                                    // Ignorar se o link for inválido
-                                }
-                            }
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-                    if (!taskDetails!!.completionCriteria.isNullOrBlank()) {
-                        Text("Critério de Conclusão:", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        Text(taskDetails!!.completionCriteria!!, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    if (taskDetails!!.instructions.isNullOrBlank() && taskDetails!!.links.isNullOrBlank() && taskDetails!!.completionCriteria.isNullOrBlank()) {
-                        Text("Nenhum detalhe extra guardado.", color = Color.Gray)
-                    }
-                }
-            },
-            confirmButton = { TextButton(onClick = { taskDetails = null }) { Text("Fechar", color = LumiereGold) } },
-            containerColor = MaterialTheme.colorScheme.surface
-        )
-    }
-
-
     // MODAL: Detalhes da Tarefa (Subtarefas e Histórico)
     if (taskDetails != null) {
         val subtasks by viewModel.getSubtasks(taskDetails!!.id).collectAsStateWithLifecycle(initialValue = emptyList())
@@ -338,6 +291,35 @@ fun TaskScreen(viewModel: TaskViewModel) {
             Column(modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState()).fillMaxWidth()) {
                 Text(taskDetails!!.title, color = LumiereGold, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(16.dp))
+
+                // Instruções, Links e Critérios
+                if (!taskDetails!!.instructions.isNullOrBlank()) {
+                    Text("Instruções:", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text(taskDetails!!.instructions!!, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+                if (!taskDetails!!.links.isNullOrBlank()) {
+                    Text("Links:", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    val context = LocalContext.current
+                    Text(
+                        text = taskDetails!!.links!!,
+                        color = Color.Cyan,
+                        textDecoration = TextDecoration.Underline,
+                        modifier = Modifier.clickable {
+                            try {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(taskDetails!!.links))
+                                context.startActivity(intent)
+                            } catch (e: Exception) { }
+                        }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+                if (!taskDetails!!.completionCriteria.isNullOrBlank()) {
+                    Text("Critério de Conclusão:", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text(taskDetails!!.completionCriteria!!, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                
+                Divider(modifier = Modifier.padding(vertical = 16.dp), color = Color.Gray)
 
                 // Secção de Subtarefas
                 Text("Subtarefas", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 16.sp)
