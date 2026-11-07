@@ -54,13 +54,13 @@ import java.util.Locale
 fun TaskScreen(viewModel: TaskViewModel) {
     val tasks by viewModel.tasks.collectAsStateWithLifecycle()
     val appContext = LocalContext.current
-    var taskAttachmentUri by remember { mutableStateOf<String?>(null) }
+    var taskAttachmentUris by remember { mutableStateOf<List<String>>(emptyList()) }
     
     val filePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        if (uri != null) {
-            taskAttachmentUri = uri.toString()
+        contract = ActivityResultContracts.GetMultipleContents()
+    ) { uris: List<Uri>? ->
+        if (uris != null) {
+            taskAttachmentUris = uris.map { it.toString() }
         }
     }
     val projects by viewModel.projects.collectAsStateWithLifecycle()
@@ -125,7 +125,7 @@ fun TaskScreen(viewModel: TaskViewModel) {
                 onClick = { 
                     taskToEdit = null
                     title = ""; category = ""; context = ""; taskDueDate = null; taskPriority = 1; taskRecurrence = "NONE"
-                    urgency = 1; importance = 1; energy = 1; estimatedDuration = ""; timeReserved = ""; instructions = ""; links = ""; completionCriteria = ""; taskAttachmentUri = null
+                    urgency = 1; importance = 1; energy = 1; estimatedDuration = ""; timeReserved = ""; instructions = ""; links = ""; completionCriteria = ""; taskAttachmentUris = emptyList()
                     showSheet = true 
                 },
                 containerColor = MaterialTheme.colorScheme.primary,
@@ -281,7 +281,7 @@ fun TaskScreen(viewModel: TaskViewModel) {
                     instructions = taskMenu!!.instructions ?: ""
                     links = taskMenu!!.links ?: ""
                     completionCriteria = taskMenu!!.completionCriteria ?: ""
-                        taskAttachmentUri = taskMenu!!.attachmentUri
+                        taskAttachmentUris = taskMenu!!.attachmentUris?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
                     showSheet = true; taskMenu = null 
                 },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent)
@@ -345,7 +345,7 @@ fun TaskScreen(viewModel: TaskViewModel) {
                 if (!taskDetails!!.links.isNullOrBlank()) {
                     Text("Links:", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     val appContext = LocalContext.current
-    var taskAttachmentUri by remember { mutableStateOf<String?>(null) }
+    var taskAttachmentUris by remember { mutableStateOf<List<String>>(emptyList()) }
                     Text(
                         text = taskDetails!!.links!!,
                         color = Color.Cyan,
@@ -359,15 +359,15 @@ fun TaskScreen(viewModel: TaskViewModel) {
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                 }
-                if (!taskDetails!!.attachmentUri.isNullOrBlank()) {
-                    Text("Anexo:", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                    Text(
-                        text = "📎 Abrir Ficheiro Anexado",
-                        color = Color.Cyan,
-                        textDecoration = TextDecoration.Underline,
-                        modifier = Modifier.clickable {
-                            val uriString = taskDetails?.attachmentUri
-                            if (uriString != null) {
+                if (!taskDetails!!.attachmentUris.isNullOrBlank()) {
+                    Text("Anexos:", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    val uriList = taskDetails!!.attachmentUris!!.split(",")
+                    uriList.forEachIndexed { index, uriString ->
+                        Text(
+                            text = "📎 Abrir Ficheiro ${index + 1}",
+                            color = Color.Cyan,
+                            textDecoration = TextDecoration.Underline,
+                            modifier = Modifier.clickable {
                                 try {
                                     val intent = Intent(Intent.ACTION_VIEW).apply {
                                         setDataAndType(Uri.parse(uriString), "*/*")
@@ -376,8 +376,9 @@ fun TaskScreen(viewModel: TaskViewModel) {
                                     appContext.startActivity(intent)
                                 } catch (e: Exception) { }
                             }
-                        }
-                    )
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                    }
                     Spacer(modifier = Modifier.height(8.dp))
                 }
 
@@ -689,13 +690,27 @@ Text("Urgência: ${if(urgency==1) "Baixa" else if(urgency==2) "Média" else "Alt
                 OutlinedTextField(value = links, onValueChange = { links = it }, label = { Text("Links (ex: https://...)") }, modifier = Modifier.fillMaxWidth())
                 Spacer(modifier = Modifier.height(8.dp))
                 
-                OutlinedButton(onClick = { filePickerLauncher.launch("*/*") }, modifier = Modifier.fillMaxWidth()) {
-                    Icon(Icons.Default.Add, contentDescription = null, tint = LumiereGold)
+                OutlinedButton(
+                    onClick = { 
+                        if (taskAttachmentUris.size < 10) {
+                            filePickerLauncher.launch("*/*") 
+                        }
+                    }, 
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = taskAttachmentUris.size < 10
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null, tint = if (taskAttachmentUris.size < 10) LumiereGold else Color.Gray)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(if (taskAttachmentUri != null) "Ficheiro Anexado" else "Anexar Ficheiro (Imagem/PDF)", color = LumiereGold)
+                    Text(
+                        text = if (taskAttachmentUris.isEmpty()) "Anexar Ficheiros (Máx 10)" else "${taskAttachmentUris.size} Ficheiros Anexados",
+                        color = if (taskAttachmentUris.size < 10) LumiereGold else Color.Gray
+                    )
                 }
-                taskAttachmentUri?.let { uriString ->
-                    Text(uriString, color = Color.Gray, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
+                if (taskAttachmentUris.isNotEmpty()) {
+                    Text("Ficheiros selecionados:", color = Color.Gray, fontSize = 10.sp, modifier = Modifier.padding(top = 4.dp))
+                    taskAttachmentUris.forEachIndexed { index, uri ->
+                        Text("${index + 1}. $uri", color = Color.Gray, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(value = completionCriteria, onValueChange = { completionCriteria = it }, label = { Text("Critério de Conclusão") }, modifier = Modifier.fillMaxWidth())
