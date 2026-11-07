@@ -916,7 +916,7 @@ fun TaskItem(task: Task, onToggleComplete: () -> Unit, onOpenDetails: () -> Unit
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = if (isCompleted) Icons.Default.CheckCircle else Icons.Default.Assignment,
+                    imageVector = if (isCompleted) Icons.Default.CheckCircle else LumiereIcons.Tag,
                     contentDescription = null,
                     tint = priorityColor,
                     modifier = Modifier.size(28.dp)
@@ -939,7 +939,7 @@ fun TaskItem(task: Task, onToggleComplete: () -> Unit, onOpenDetails: () -> Unit
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (!task.category.isNullOrBlank()) {
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.background(Color(0xFF332A1D), RoundedCornerShape(12.dp)).padding(horizontal = 8.dp, vertical = 4.dp)) {
-                             Icon(Icons.Default.Work, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(12.dp))
+                             Icon(LumiereIcons.Work, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(12.dp))
                              Spacer(modifier = Modifier.width(4.dp))
                              Text(task.category!!, color = LumiereGold, fontSize = 11.sp, maxLines=1)
                         }
@@ -993,7 +993,7 @@ fun TaskItem(task: Task, onToggleComplete: () -> Unit, onOpenDetails: () -> Unit
             Spacer(modifier = Modifier.width(12.dp))
             
             // Ações (Separadas por linha vertical)
-            VerticalDivider(color = Color(0xFF444444), modifier = Modifier.height(48.dp))
+            Box(modifier = Modifier.width(1.dp).height(48.dp).background(Color(0xFF444444)))
             Spacer(modifier = Modifier.width(12.dp))
             
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
