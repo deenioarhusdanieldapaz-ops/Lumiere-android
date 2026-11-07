@@ -693,8 +693,8 @@ Text("Urgência: ${if(urgency==1) "Baixa" else if(urgency==2) "Média" else "Alt
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(if (taskAttachmentUri != null) "Ficheiro Anexado" else "Anexar Ficheiro (Imagem/PDF)", color = LumiereGold)
                 }
-                if (taskAttachmentUri != null) {
-                    Text(taskAttachmentUri, color = Color.Gray, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
+                taskAttachmentUri?.let { uriString ->
+                    Text(uriString, color = Color.Gray, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(value = completionCriteria, onValueChange = { completionCriteria = it }, label = { Text("Critério de Conclusão") }, modifier = Modifier.fillMaxWidth())
@@ -720,7 +720,6 @@ Text("Urgência: ${if(urgency==1) "Baixa" else if(urgency==2) "Média" else "Alt
                             instructions = instructions.ifBlank { null },
                             links = links.ifBlank { null },
                             completionCriteria = completionCriteria.ifBlank { null },
-                            attachmentUri = taskAttachmentUri,
                             attachmentUri = taskAttachmentUri
                         )
                         if (taskToEdit == null) viewModel.addTask(task) else viewModel.updateTask(task)
