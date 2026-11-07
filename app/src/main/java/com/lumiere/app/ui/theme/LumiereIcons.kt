@@ -48,6 +48,17 @@ object LumiereIcons {
         }.build()
     }
 
+    
+    val Folder: ImageVector by lazy {
+        ImageVector.Builder(name = "Folder", defaultWidth = 24.dp, defaultHeight = 24.dp, viewportWidth = 24f, viewportHeight = 24f).apply {
+            path(fill = SolidColor(Color.Black)) {
+                moveTo(10f, 4f); horizontalLineTo(4f); curveTo(2.9f, 4f, 2.01f, 4.9f, 2.01f, 6f); lineTo(2f, 18f)
+                curveTo(2f, 19.1f, 2.9f, 20f, 4f, 20f); horizontalLineToRelative(16f); curveTo(21.1f, 20f, 22f, 19.1f, 22f, 18f)
+                verticalLineTo(8f); curveTo(22f, 6.9f, 21.1f, 6f, 20f, 6f); horizontalLineToRelative(-8f); lineToRelative(-2f, -2f); close()
+            }
+        }.build()
+    }
+
     val Delete: ImageVector by lazy {
         ImageVector.Builder(name = "Delete", defaultWidth = 24.dp, defaultHeight = 24.dp, viewportWidth = 24f, viewportHeight = 24f).apply {
             path(fill = SolidColor(Color.Black)) {
