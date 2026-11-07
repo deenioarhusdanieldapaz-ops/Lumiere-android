@@ -75,10 +75,12 @@ fun TaskScreen(viewModel: TaskViewModel) {
     var taskDueDate by remember { mutableStateOf<Long?>(null) }
     var taskPriority by remember { mutableIntStateOf(1) }
     var selectedProjectId by remember { mutableStateOf<Long?>(null) }
+    var blockedByTaskId by remember { mutableStateOf<Long?>(null) }
     var taskRecurrence by remember { mutableStateOf("NONE") }
     var expandedRecurrence by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showProjectsSheet by remember { mutableStateOf(false) }
+    var showStatsSheet by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     var instructions by remember { mutableStateOf("") }
     var links by remember { mutableStateOf("") }
@@ -95,6 +97,9 @@ fun TaskScreen(viewModel: TaskViewModel) {
                 actions = {
                     IconButton(onClick = { showProjectsSheet = true }) {
                         Icon(LumiereIcons.Folder, contentDescription = "Projetos", tint = LumiereGold)
+                    }
+                    IconButton(onClick = { showStatsSheet = true }) {
+                        Icon(Icons.Default.Info, contentDescription = "Estatísticas", tint = LumiereGold)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
@@ -444,6 +449,49 @@ fun TaskScreen(viewModel: TaskViewModel) {
         }
     }
 
+
+    // MODAL: Estatísticas
+    if (showStatsSheet) {
+        val totalTasks = tasks.size
+        val completed = tasks.count { it.isCompleted }
+        val overdue = tasks.count { !it.isCompleted && it.dueDate != null && it.dueDate < System.currentTimeMillis() }
+        val totalMinutes = tasks.sumOf { it.actualDurationMinutes }
+        val hours = totalMinutes / 60
+        val minutes = totalMinutes % 60
+
+        ModalBottomSheet(onDismissRequest = { showStatsSheet = false }, containerColor = LumiereDarkGray) {
+            Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
+                Text("Estatísticas do M01", color = LumiereGold, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("Total", color = Color.Gray, fontSize = 12.sp)
+                        Text("$totalTasks", color = MaterialTheme.colorScheme.onBackground, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("Concluídas", color = Color.Green, fontSize = 12.sp)
+                        Text("$completed", color = Color.Green, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("Atrasadas", color = Color.Red, fontSize = 12.sp)
+                        Text("$overdue", color = Color.Red, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                Divider(color = Color.Gray)
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                Text("Tempo Total Investido", color = LumiereGold, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("${hours}h ${minutes}m", color = MaterialTheme.colorScheme.onBackground, fontSize = 32.sp, fontWeight = FontWeight.Bold)
+                
+                Spacer(modifier = Modifier.height(32.dp))
+            }
+        }
+    }
+
     // MODAL: Criar / Editar Tarefa (Elevado)
     if (showSheet) {
         ModalBottomSheet(onDismissRequest = { showSheet = false }, containerColor = LumiereDarkGray) {
@@ -452,6 +500,26 @@ fun TaskScreen(viewModel: TaskViewModel) {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Título") }, modifier = Modifier.fillMaxWidth())
+                Spacer(modifier = Modifier.height(8.dp))
+                var expandedBlocker by remember { mutableStateOf(false) }
+                val availableBlockers = tasks.filter { it.id != taskToEdit?.id && !it.isCompleted }
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedButton(onClick = { expandedBlocker = true }, modifier = Modifier.fillMaxWidth()) {
+                        Icon(Icons.Default.Lock, contentDescription = null, tint = if(blockedByTaskId != null) Color.Red else LumiereGold, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = tasks.find { it.id == blockedByTaskId }?.title ?: "Sem bloqueio",
+                            color = if(blockedByTaskId != null) Color.Red else LumiereGold
+                        )
+                    }
+                    DropdownMenu(expanded = expandedBlocker, onDismissRequest = { expandedBlocker = false }, modifier = Modifier.background(LumiereDarkGray)) {
+                        DropdownMenuItem(text = { Text("Sem bloqueio", color = MaterialTheme.colorScheme.onBackground) }, onClick = { blockedByTaskId = null; expandedBlocker = false })
+                        availableBlockers.forEach { t ->
+                            DropdownMenuItem(text = { Text(t.title, color = MaterialTheme.colorScheme.onBackground) }, onClick = { blockedByTaskId = t.id; expandedBlocker = false })
+                        }
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -564,6 +632,7 @@ Text("Urgência: ${if(urgency==1) "Baixa" else if(urgency==2) "Média" else "Alt
                             context = context.ifBlank { null },
                             dueDate = taskDueDate,
                             projectId = selectedProjectId,
+                            blockedByTaskId = blockedByTaskId,
                             priority = taskPriority,
                             recurrenceRule = taskRecurrence,
                             estimatedDurationMinutes = estimatedDuration.toIntOrNull(),
@@ -738,6 +807,15 @@ fun TaskItem(task: Task, onTaskClick: () -> Unit, onTaskLongClick: () -> Unit, o
                 )
                 
                 Spacer(modifier = Modifier.height(6.dp))
+                
+                                if (task.blockedByTaskId != null) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Lock, contentDescription = null, tint = Color.Red, modifier = Modifier.size(12.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Bloqueada", color = Color.Red, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
                 
                 // Badges (Categoria, Contexto, Prioridade)
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
