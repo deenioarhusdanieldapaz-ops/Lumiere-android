@@ -106,4 +106,8 @@ dependencies {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+
+    // Compatibilidade JUnit 4 (para Robolectric)
+    testImplementation("junit:junit:4.13.2")
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.10.2")
 }
