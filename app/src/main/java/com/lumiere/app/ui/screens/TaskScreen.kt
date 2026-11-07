@@ -720,6 +720,7 @@ Text("Urgência: ${if(urgency==1) "Baixa" else if(urgency==2) "Média" else "Alt
                             instructions = instructions.ifBlank { null },
                             links = links.ifBlank { null },
                             completionCriteria = completionCriteria.ifBlank { null },
+                            attachmentUri = taskAttachmentUri,
                             attachmentUri = taskAttachmentUri
                         )
                         if (taskToEdit == null) viewModel.addTask(task) else viewModel.updateTask(task)
