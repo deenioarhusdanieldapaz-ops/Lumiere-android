@@ -49,6 +49,7 @@ import java.util.Locale
 @Composable
 fun TaskScreen(viewModel: TaskViewModel) {
     val tasks by viewModel.tasks.collectAsStateWithLifecycle()
+    val projects by viewModel.projects.collectAsStateWithLifecycle()
     
     // ESTADOS ELEVADOS (Para não perder dados ao fechar o painel)
     var showSheet by remember { mutableStateOf(false) }
@@ -325,6 +326,87 @@ fun TaskScreen(viewModel: TaskViewModel) {
         )
     }
 
+
+    // MODAL: Detalhes da Tarefa (Subtarefas e Histórico)
+    if (taskDetails != null) {
+        val subtasks by viewModel.getSubtasks(taskDetails!!.id).collectAsStateWithLifecycle(initialValue = emptyList())
+        val history by viewModel.getHistory(taskDetails!!.id).collectAsStateWithLifecycle(initialValue = emptyList())
+        var newSubtaskTitle by remember { mutableStateOf("") }
+
+        ModalBottomSheet(onDismissRequest = { taskDetails = null }, containerColor = LumiereDarkGray) {
+            Column(modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState()).fillMaxWidth()) {
+                Text(taskDetails!!.title, color = LumiereGold, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Secção de Subtarefas
+                Text("Subtarefas", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedTextField(
+                        value = newSubtaskTitle,
+                        onValueChange = { newSubtaskTitle = it },
+                        label = { Text("Nova subtarefa...") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    IconButton(onClick = { 
+                        if (newSubtaskTitle.isNotBlank()) {
+                            viewModel.addSubtask(taskDetails!!.id, newSubtaskTitle)
+                            newSubtaskTitle = ""
+                        }
+                    }) {
+                        Icon(Icons.Default.Add, contentDescription = "Adicionar", tint = LumiereGold)
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                if (subtasks.isEmpty()) {
+                    Text("Sem subtarefas.", color = Color.Gray, fontSize = 12.sp)
+                } else {
+                    subtasks.forEach { subtask ->
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().clickable { viewModel.toggleSubtask(subtask) }) {
+                            Checkbox(
+                                checked = subtask.isCompleted,
+                                onCheckedChange = { viewModel.toggleSubtask(subtask) },
+                                colors = CheckboxDefaults.colors(checkedColor = LumiereGold)
+                            )
+                            Text(
+                                text = subtask.title,
+                                color = if (subtask.isCompleted) Color.Gray else MaterialTheme.colorScheme.onBackground,
+                                textDecoration = if (subtask.isCompleted) TextDecoration.LineThrough else TextDecoration.None,
+                                modifier = Modifier.weight(1f)
+                            )
+                            IconButton(onClick = { viewModel.deleteSubtask(subtask) }) {
+                                Icon(Icons.Default.Delete, contentDescription = "Apagar", tint = Color.Red, modifier = Modifier.size(16.dp))
+                            }
+                        }
+                    }
+                }
+
+                Divider(modifier = Modifier.padding(vertical = 16.dp), color = Color.Gray)
+
+                // Secção de Histórico
+                Text("Histórico", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Spacer(modifier = Modifier.height(8.dp))
+                if (history.isEmpty()) {
+                    Text("Sem histórico.", color = Color.Gray, fontSize = 12.sp)
+                } else {
+                    history.forEach { h ->
+                        Text(
+                            text = "${SimpleDateFormat("dd/MM HH:mm", Locale.getDefault()).format(Date(h.timestamp))} - ${h.action}",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(vertical = 2.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+        }
+    }
+
     // MODAL: Criar / Editar Tarefa (Elevado)
     if (showSheet) {
         ModalBottomSheet(onDismissRequest = { showSheet = false }, containerColor = LumiereDarkGray) {
@@ -338,6 +420,26 @@ fun TaskScreen(viewModel: TaskViewModel) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(value = category, onValueChange = { category = it }, label = { Text("Categoria") }, modifier = Modifier.weight(1f))
                     OutlinedTextField(value = context, onValueChange = { context = it }, label = { Text("Contexto (ex: Casa)") }, modifier = Modifier.weight(1f))
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Seletor de Projetos
+                var expandedProject by remember { mutableStateOf(false) }
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedButton(onClick = { expandedProject = true }, modifier = Modifier.fillMaxWidth()) {
+                        Icon(Icons.Default.Folder, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = projects.find { it.id == selectedProjectId }?.name ?: "Sem Projeto",
+                            color = LumiereGold
+                        )
+                    }
+                    DropdownMenu(expanded = expandedProject, onDismissRequest = { expandedProject = false }, modifier = Modifier.background(LumiereDarkGray)) {
+                        DropdownMenuItem(text = { Text("Sem Projeto", color = MaterialTheme.colorScheme.onBackground) }, onClick = { selectedProjectId = null; expandedProject = false })
+                        projects.forEach { proj ->
+                            DropdownMenuItem(text = { Text(proj.name, color = MaterialTheme.colorScheme.onBackground) }, onClick = { selectedProjectId = proj.id; expandedProject = false })
+                        }
+                    }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -424,6 +526,7 @@ Text("Urgência: ${if(urgency==1) "Baixa" else if(urgency==2) "Média" else "Alt
                             energy = energy,
                             context = context.ifBlank { null },
                             dueDate = taskDueDate,
+                            projectId = selectedProjectId,
                             priority = taskPriority,
                             recurrenceRule = taskRecurrence,
                             estimatedDurationMinutes = estimatedDuration.toIntOrNull(),
@@ -613,6 +716,16 @@ fun TaskItem(task: Task, onTaskClick: () -> Unit, onTaskLongClick: () -> Unit, o
                 }
                 
                 Spacer(modifier = Modifier.height(4.dp))
+
+                // Motivo do Cancelamento
+                if (task.status == 3) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Close, contentDescription = null, tint = Color.Red, modifier = Modifier.size(12.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(task.cancellationReason ?: "Cancelada", color = Color.Red, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
 
                 // Data e Hora / Cronómetro
                 Row(verticalAlignment = Alignment.CenterVertically) {
