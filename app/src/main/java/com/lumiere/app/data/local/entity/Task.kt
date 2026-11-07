@@ -30,6 +30,7 @@ data class Task(
     val links: String? = null,                 // Links ou referências
     val completionCriteria: String? = null,    // Critério para dar como concluída
     val cancellationReason: String? = null,    // Motivo do cancelamento
+    val attachmentUri: String? = null,         // URI do ficheiro anexado
     
     // Estado e Organização
     val status: Int = 0, // 0=Pendente, 1=Em Progresso, 2=Concluída, 3=Cancelada, 4=Arquivada
