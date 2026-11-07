@@ -16,6 +16,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.InputChip
+import androidx.compose.material3.InputChipDefaults
 import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.TimePicker
@@ -54,7 +56,8 @@ fun TaskScreen(viewModel: TaskViewModel) {
     // ESTADOS ELEVADOS (Para não perder dados ao fechar o painel)
     var showSheet by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
-    var activeFilter by remember { mutableStateOf("ALL") } // ALL, TODAY, OVERDUE, COMPLETED
+    var activeFilter by remember { mutableStateOf("ALL") }
+    var selectedProjectFilter by remember { mutableStateOf<Long?>(null) } // ALL, TODAY, OVERDUE, COMPLETED
 
     var taskToEdit by remember { mutableStateOf<Task?>(null) }
     var taskMenu by remember { mutableStateOf<Task?>(null) }
@@ -171,6 +174,22 @@ fun TaskScreen(viewModel: TaskViewModel) {
                 }
             }
 
+            
+            if (selectedProjectFilter != null) {
+                item {
+                    val projName = projects.find { it.id == selectedProjectFilter }?.name ?: "Projeto"
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
+                        InputChip(
+                            selected = true,
+                            onClick = { selectedProjectFilter = null },
+                            label = { Text(projName, color = LumiereGold) },
+                            trailingIcon = { Icon(Icons.Default.Close, contentDescription = "Limpar filtro", tint = LumiereGold, modifier = Modifier.size(16.dp)) },
+                            colors = InputChipDefaults.inputChipColors(selectedContainerColor = LumiereGold.copy(alpha = 0.2f))
+                        )
+                    }
+                }
+            }
+            
             item { Text("Minhas Tarefas", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(top = 8.dp)) }
 
 
@@ -194,7 +213,8 @@ fun TaskScreen(viewModel: TaskViewModel) {
                         "COMPLETED" -> task.isCompleted
                         else -> true
                     }
-                    matchesSearch && matchesFilter
+                    val matchesProject = selectedProjectFilter == null || task.projectId == selectedProjectFilter
+                    matchesSearch && matchesFilter && matchesProject
                 }
                 items(filteredTasks) { task ->
                     TaskItem(
@@ -437,9 +457,24 @@ fun TaskScreen(viewModel: TaskViewModel) {
                     Text("Ainda não tens projetos criados.", color = Color.Gray, fontSize = 12.sp)
                 } else {
                     projects.forEach { proj ->
+                        val projTasks = tasks.filter { it.projectId == proj.id }
+                        val total = projTasks.size
+                        val done = projTasks.count { it.isCompleted }
+                        
                         ListItem(
                             headlineContent = { Text(proj.name, color = MaterialTheme.colorScheme.onSurface) },
+                            supportingContent = { 
+                                Text(
+                                    text = if(total == 0) "Sem tarefas" else "$done de $total tarefas concluídas",
+                                    color = if(done == total && total > 0) Color.Green else Color.Gray,
+                                    fontSize = 12.sp
+                                )
+                            },
                             leadingContent = { Icon(LumiereIcons.Folder, contentDescription = null, tint = LumiereGold) },
+                            modifier = Modifier.clickable {
+                                selectedProjectFilter = proj.id
+                                showProjectsSheet = false
+                            },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                         )
                     }
