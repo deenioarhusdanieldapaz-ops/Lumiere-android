@@ -79,7 +79,7 @@ class TaskRepositoryIntegrationTest {
         val updated = task.copy(id = id, title = "Modificada")
         repository.updateTask(updated)
 
-        val tasks = repository.allActiveTasks().first()
+        val tasks = repository.allTasks.first()
         assertEquals("Modificada", tasks[0].title)
     }
 }
