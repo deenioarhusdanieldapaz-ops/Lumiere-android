@@ -1,12 +1,9 @@
 name: "CodeQL Security Scan"
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
   schedule:
     - cron: '30 2 * * 1' # Corre todas as segundas-feiras às 02:30
+  workflow_dispatch: # Permite correr manualmente quando quisermos
 
 jobs:
   analyze:
@@ -25,7 +22,7 @@ jobs:
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v3
       with:
-        languages: 'java-kotlin' # O CodeQL usa o motor Java para ler Kotlin
+        languages: 'java-kotlin'
 
     - name: Setup JDK 17
       uses: actions/setup-java@v4
