@@ -97,17 +97,11 @@ dependencies {
     testImplementation("app.cash.turbine:turbine:1.1.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
 
-    // ============ FASE 2 - Testes de Integracao (Robolectric + Room) ============
-    testImplementation("org.robolectric:robolectric:4.11.1")
-    testImplementation("androidx.test:core:1.5.0")
-    testImplementation("androidx.test.ext:junit:1.1.5")
-    testImplementation("androidx.room:room-testing:2.6.1")
+    // Compatibilidade JUnit 4 (para Robolectric)
+    testImplementation("junit:junit:4.13.2")
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.10.2")
 }
 
 tasks.withType<Test> {
     useJUnitPlatform()
-
-    // Compatibilidade JUnit 4 (para Robolectric)
-    testImplementation("junit:junit:4.13.2")
-    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.10.2")
 }
