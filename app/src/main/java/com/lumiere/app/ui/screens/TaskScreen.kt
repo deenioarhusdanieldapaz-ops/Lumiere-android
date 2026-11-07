@@ -95,6 +95,8 @@ fun TaskScreen(viewModel: TaskViewModel) {
     var expandedRecurrence by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showProjectsSheet by remember { mutableStateOf(false) }
+    var showSearchBar by remember { mutableStateOf(false) }
+    var showFilterMenu by remember { mutableStateOf(false) }
     var showStatsSheet by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     var instructions by remember { mutableStateOf("") }
@@ -110,6 +112,22 @@ fun TaskScreen(viewModel: TaskViewModel) {
             TopAppBar(
                 title = { Text("M01 — Tarefas", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold) },
                 actions = {
+                    IconButton(onClick = { showSearchBar = !showSearchBar }) {
+                        Icon(LumiereIcons.Search, contentDescription = "Pesquisar", tint = LumiereGold)
+                    }
+                    Box {
+                        IconButton(onClick = { showFilterMenu = true }) {
+                            Icon(LumiereIcons.Filter, contentDescription = "Filtros", tint = LumiereGold)
+                        }
+                        DropdownMenu(expanded = showFilterMenu, onDismissRequest = { showFilterMenu = false }, modifier = Modifier.background(LumiereDarkGray)) {
+                            listOf("ALL" to "Todas", "TODAY" to "Hoje", "OVERDUE" to "Atrasadas", "COMPLETED" to "Concluídas").forEach { (filter, label) ->
+                                DropdownMenuItem(
+                                    text = { Text(label, color = if (activeFilter == filter) LumiereGold else MaterialTheme.colorScheme.onBackground) },
+                                    onClick = { activeFilter = filter; showFilterMenu = false }
+                                )
+                            }
+                        }
+                    }
                     IconButton(onClick = { showProjectsSheet = true }) {
                         Icon(LumiereIcons.Folder, contentDescription = "Projetos", tint = LumiereGold)
                     }
@@ -146,9 +164,13 @@ fun TaskScreen(viewModel: TaskViewModel) {
             }
 
             item {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    SummaryCard(Modifier.weight(1f), "Pendentes", pendingTasks.toString(), LumiereGold)
+                val todayEnd = getEndOfDay(System.currentTimeMillis())
+                val tasksForToday = tasks.filter { !it.isCompleted && it.dueDate != null && it.dueDate in System.currentTimeMillis()..todayEnd }
+                val tasksOverdue = tasks.filter { !it.isCompleted && it.dueDate != null && it.dueDate < System.currentTimeMillis() }
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SummaryCard(Modifier.weight(1f), "Hoje", tasksForToday.size.toString(), LumiereGold)
                     SummaryCard(Modifier.weight(1f), "Concluídas", completedTasks.toString(), Color.Green)
+                    SummaryCard(Modifier.weight(1f), "Atrasadas", tasksOverdue.size.toString(), Color.Red)
                 }
             }
 
@@ -156,33 +178,29 @@ fun TaskScreen(viewModel: TaskViewModel) {
             if (tasksOverdue.isNotEmpty()) {
                 item {
                     Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFF3E1A1A))) {
-                        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.Info, contentDescription = null, tint = Color.Red)
                             Spacer(modifier = Modifier.width(12.dp))
-                            Text("Atenção: ${tasksOverdue.size} tarefas atrasadas", color = Color.White)
+                            Text("Atenção: ${tasksOverdue.size} tarefas atrasadas", color = Color.White, modifier = Modifier.weight(1f))
+                            TextButton(onClick = { activeFilter = "OVERDUE" }) {
+                                Text("Ver detalhes >", color = LumiereGold, fontSize = 12.sp)
+                            }
                         }
                     }
                 }
             }
 
             
-            item {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    label = { Text("Pesquisar tarefas...") },
-                    modifier = Modifier.fillMaxWidth(),
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = LumiereGold) },
-                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = LumiereGold)
-                )
-            }
-            
-            item {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    FilterChip(selected = activeFilter == "ALL", onClick = { activeFilter = "ALL" }, label = { Text("Todas") })
-                    FilterChip(selected = activeFilter == "TODAY", onClick = { activeFilter = "TODAY" }, label = { Text("Hoje") })
-                    FilterChip(selected = activeFilter == "OVERDUE", onClick = { activeFilter = "OVERDUE" }, label = { Text("Atrasadas") })
-                    FilterChip(selected = activeFilter == "COMPLETED", onClick = { activeFilter = "COMPLETED" }, label = { Text("Concluídas") })
+            if (showSearchBar) {
+                item {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        label = { Text("Pesquisar tarefas...") },
+                        modifier = Modifier.fillMaxWidth(),
+                        leadingIcon = { Icon(LumiereIcons.Search, contentDescription = null, tint = LumiereGold) },
+                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = LumiereGold)
+                    )
                 }
             }
 
@@ -231,9 +249,9 @@ fun TaskScreen(viewModel: TaskViewModel) {
                 items(filteredTasks) { task ->
                     TaskItem(
                         task = task,
-                        onTaskClick = { viewModel.toggleTaskCompletion(task) },
-                        onTaskLongClick = { taskMenu = task },
-                        onInfoClick = { taskDetails = task },
+                        onToggleComplete = { viewModel.toggleTaskCompletion(task) },
+                        onOpenDetails = { taskDetails = task },
+                        onMenuClick = { taskMenu = task },
                         onTimerClick = { viewModel.toggleTimer(task) }
                     )
                 }
@@ -839,7 +857,7 @@ Text("Urgência: ${if(urgency==1) "Baixa" else if(urgency==2) "Média" else "Alt
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun TaskItem(task: Task, onTaskClick: () -> Unit, onTaskLongClick: () -> Unit, onInfoClick: () -> Unit, onTimerClick: () -> Unit) {
+fun TaskItem(task: Task, onToggleComplete: () -> Unit, onOpenDetails: () -> Unit, onMenuClick: () -> Unit, onTimerClick: () -> Unit) {
     val isOverdue = !task.isCompleted && task.dueDate != null && task.dueDate < System.currentTimeMillis()
     
     val priorityColor = when(task.priority) {
