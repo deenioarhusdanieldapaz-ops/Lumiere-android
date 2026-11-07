@@ -1,3 +1,10 @@
+import java.util.Properties
+
+val localProps = Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -9,9 +16,9 @@ android {
     signingConfigs {
         create("release") {
             storeFile = file("../signing.keystore")
-            storePassword = "XwMHqt9HCJ2C"
+            storePassword = localProps.getProperty("LUMIERE_STORE_PASSWORD")
             keyAlias = "my-key-alias"
-            keyPassword = "XwMHqt9HCJ2C"
+            keyPassword = localProps.getProperty("LUMIERE_KEY_PASSWORD")
         }
     }
 
@@ -49,6 +56,12 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.4"
     }
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 dependencies {
@@ -76,4 +89,15 @@ dependencies {
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
     ksp("androidx.room:room-compiler:$roomVersion")
+
+    // ============ FASE 1 - Testes Unitarios ============
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:1.9.22")
+    testImplementation("io.mockk:mockk:1.13.10")
+    testImplementation("app.cash.turbine:turbine:1.1.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
 }
