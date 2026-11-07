@@ -54,6 +54,7 @@ import java.util.Locale
 fun TaskScreen(viewModel: TaskViewModel) {
     val tasks by viewModel.tasks.collectAsStateWithLifecycle()
     val appContext = LocalContext.current
+    var taskAttachmentUri by remember { mutableStateOf<String?>(null) }
     
     val filePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -99,8 +100,7 @@ fun TaskScreen(viewModel: TaskViewModel) {
     var instructions by remember { mutableStateOf("") }
     var links by remember { mutableStateOf("") }
     var completionCriteria by remember { mutableStateOf("") }
-    var taskAttachmentUri by remember { mutableStateOf<String?>(null) }
-
+    
     
     val completedTasks = tasks.count { it.isCompleted }
     val pendingTasks = tasks.count { !it.isCompleted }
@@ -345,6 +345,7 @@ fun TaskScreen(viewModel: TaskViewModel) {
                 if (!taskDetails!!.links.isNullOrBlank()) {
                     Text("Links:", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     val appContext = LocalContext.current
+    var taskAttachmentUri by remember { mutableStateOf<String?>(null) }
                     Text(
                         text = taskDetails!!.links!!,
                         color = Color.Cyan,
