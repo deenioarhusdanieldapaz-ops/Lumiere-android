@@ -78,6 +78,7 @@ fun TaskScreen(viewModel: TaskViewModel) {
     var taskRecurrence by remember { mutableStateOf("NONE") }
     var expandedRecurrence by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
+    var showProjectsSheet by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     var instructions by remember { mutableStateOf("") }
     var links by remember { mutableStateOf("") }
@@ -91,6 +92,11 @@ fun TaskScreen(viewModel: TaskViewModel) {
         topBar = {
             TopAppBar(
                 title = { Text("M01 — Tarefas", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold) },
+                actions = {
+                    IconButton(onClick = { showProjectsSheet = true }) {
+                        Icon(LumiereIcons.Folder, contentDescription = "Projetos", tint = LumiereGold)
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         },
@@ -382,6 +388,54 @@ fun TaskScreen(viewModel: TaskViewModel) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 12.sp,
                             modifier = Modifier.padding(vertical = 2.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+        }
+    }
+
+
+    // MODAL: Gestão de Projetos
+    if (showProjectsSheet) {
+        var newProjectName by remember { mutableStateOf("") }
+        ModalBottomSheet(onDismissRequest = { showProjectsSheet = false }, containerColor = LumiereDarkGray) {
+            Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
+                Text("Gestão de Projetos", color = LumiereGold, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedTextField(
+                        value = newProjectName,
+                        onValueChange = { newProjectName = it },
+                        label = { Text("Nome do novo projeto") },
+                        modifier = Modifier.weight(1f),
+                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = LumiereGold)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    IconButton(onClick = {
+                        if (newProjectName.isNotBlank()) {
+                            viewModel.addProject(newProjectName)
+                            newProjectName = ""
+                        }
+                    }) {
+                        Icon(Icons.Default.Add, contentDescription = "Criar Projeto", tint = LumiereGold)
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("Os teus projetos:", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                if (projects.isEmpty()) {
+                    Text("Ainda não tens projetos criados.", color = Color.Gray, fontSize = 12.sp)
+                } else {
+                    projects.forEach { proj ->
+                        ListItem(
+                            headlineContent = { Text(proj.name, color = MaterialTheme.colorScheme.onSurface) },
+                            leadingContent = { Icon(LumiereIcons.Folder, contentDescription = null, tint = LumiereGold) },
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                         )
                     }
                 }
