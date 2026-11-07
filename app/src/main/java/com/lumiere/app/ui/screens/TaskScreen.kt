@@ -1,6 +1,8 @@
 package com.lumiere.app.ui.screens
 
 import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import android.net.Uri
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -51,6 +53,15 @@ import java.util.Locale
 @Composable
 fun TaskScreen(viewModel: TaskViewModel) {
     val tasks by viewModel.tasks.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            taskAttachmentUri = uri.toString()
+        }
+    }
     val projects by viewModel.projects.collectAsStateWithLifecycle()
     
     // ESTADOS ELEVADOS (Para não perder dados ao fechar o painel)
@@ -88,6 +99,7 @@ fun TaskScreen(viewModel: TaskViewModel) {
     var instructions by remember { mutableStateOf("") }
     var links by remember { mutableStateOf("") }
     var completionCriteria by remember { mutableStateOf("") }
+    var taskAttachmentUri by remember { mutableStateOf<String?>(null) }
 
     
     val completedTasks = tasks.count { it.isCompleted }
@@ -113,7 +125,7 @@ fun TaskScreen(viewModel: TaskViewModel) {
                 onClick = { 
                     taskToEdit = null
                     title = ""; category = ""; context = ""; taskDueDate = null; taskPriority = 1; taskRecurrence = "NONE"
-                    urgency = 1; importance = 1; energy = 1; estimatedDuration = ""; timeReserved = ""; instructions = ""; links = ""; completionCriteria = ""
+                    urgency = 1; importance = 1; energy = 1; estimatedDuration = ""; timeReserved = ""; instructions = ""; links = ""; completionCriteria = ""; taskAttachmentUri = null
                     showSheet = true 
                 },
                 containerColor = MaterialTheme.colorScheme.primary,
@@ -269,6 +281,7 @@ fun TaskScreen(viewModel: TaskViewModel) {
                     instructions = taskMenu!!.instructions ?: ""
                     links = taskMenu!!.links ?: ""
                     completionCriteria = taskMenu!!.completionCriteria ?: ""
+                        taskAttachmentUri = taskMenu!!.attachmentUri
                     showSheet = true; taskMenu = null 
                 },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent)
@@ -345,6 +358,25 @@ fun TaskScreen(viewModel: TaskViewModel) {
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                 }
+                if (!taskDetails!!.attachmentUri.isNullOrBlank()) {
+                    Text("Anexo:", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text(
+                        text = "📎 Abrir Ficheiro Anexado",
+                        color = Color.Cyan,
+                        textDecoration = TextDecoration.Underline,
+                        modifier = Modifier.clickable {
+                            try {
+                                val intent = Intent(Intent.ACTION_VIEW).apply {
+                                    setDataAndType(Uri.parse(taskDetails!!.attachmentUri), "*/*")
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                }
+                                context.startActivity(intent)
+                            } catch (e: Exception) { }
+                        }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
                 if (!taskDetails!!.completionCriteria.isNullOrBlank()) {
                     Text("Critério de Conclusão:", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     Text(taskDetails!!.completionCriteria!!, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -652,6 +684,16 @@ Text("Urgência: ${if(urgency==1) "Baixa" else if(urgency==2) "Média" else "Alt
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(value = links, onValueChange = { links = it }, label = { Text("Links (ex: https://...)") }, modifier = Modifier.fillMaxWidth())
                 Spacer(modifier = Modifier.height(8.dp))
+                
+                OutlinedButton(onClick = { filePickerLauncher.launch("*/*") }, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Default.Add, contentDescription = null, tint = LumiereGold)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(if (taskAttachmentUri != null) "Ficheiro Anexado" else "Anexar Ficheiro (Imagem/PDF)", color = LumiereGold)
+                }
+                if (taskAttachmentUri != null) {
+                    Text(taskAttachmentUri, color = Color.Gray, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
+                }
+                Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(value = completionCriteria, onValueChange = { completionCriteria = it }, label = { Text("Critério de Conclusão") }, modifier = Modifier.fillMaxWidth())
                 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -674,7 +716,8 @@ Text("Urgência: ${if(urgency==1) "Baixa" else if(urgency==2) "Média" else "Alt
                             timeReservedMinutes = timeReserved.toIntOrNull(),
                             instructions = instructions.ifBlank { null },
                             links = links.ifBlank { null },
-                            completionCriteria = completionCriteria.ifBlank { null }
+                            completionCriteria = completionCriteria.ifBlank { null },
+                            attachmentUri = taskAttachmentUri
                         )
                         if (taskToEdit == null) viewModel.addTask(task) else viewModel.updateTask(task)
                         showSheet = false
