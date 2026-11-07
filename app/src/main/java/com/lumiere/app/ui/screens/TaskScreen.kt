@@ -74,6 +74,7 @@ fun TaskScreen(viewModel: TaskViewModel) {
     var timeReserved by remember { mutableStateOf("") }
     var taskDueDate by remember { mutableStateOf<Long?>(null) }
     var taskPriority by remember { mutableIntStateOf(1) }
+    var selectedProjectId by remember { mutableStateOf<Long?>(null) }
     var taskRecurrence by remember { mutableStateOf("NONE") }
     var expandedRecurrence by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
@@ -427,7 +428,7 @@ fun TaskScreen(viewModel: TaskViewModel) {
                 var expandedProject by remember { mutableStateOf(false) }
                 Box(modifier = Modifier.fillMaxWidth()) {
                     OutlinedButton(onClick = { expandedProject = true }, modifier = Modifier.fillMaxWidth()) {
-                        Icon(Icons.Default.Folder, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(16.dp))
+                        Icon(LumiereIcons.Folder, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = projects.find { it.id == selectedProjectId }?.name ?: "Sem Projeto",
