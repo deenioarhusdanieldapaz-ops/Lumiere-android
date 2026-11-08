@@ -19,6 +19,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lumiere.app.data.local.entity.Habit
+import com.lumiere.app.data.local.entity.HabitCheckIn
 import com.lumiere.app.ui.theme.LumiereDarkGray
 import com.lumiere.app.ui.theme.LumiereGold
 import com.lumiere.app.ui.viewmodel.HabitViewModel
@@ -177,7 +178,20 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
             } else {
                 // LISTA REAL DE HÁBITOS
                 habits.forEach { habit ->
-                    HabitItem(habit = habit, onCheckIn = { /* Lógica de check-in virá a seguir */ })
+                    val todayCheckIns by viewModel.getCheckInsForHabit(habit.id).collectAsState(initial = emptyList())
+                    val isCompletedToday = todayCheckIns.any { 
+                        val cal = java.util.Calendar.getInstance().apply { timeInMillis = it.timestamp }
+                        val today = java.util.Calendar.getInstance()
+                        cal.get(java.util.Calendar.YEAR) == today.get(java.util.Calendar.YEAR) &&
+                        cal.get(java.util.Calendar.DAY_OF_YEAR) == today.get(java.util.Calendar.DAY_OF_YEAR)
+                    }
+                    HabitItem(
+                        habit = habit, 
+                        isCompletedToday = isCompletedToday,
+                        onCheckIn = { 
+                            viewModel.addCheckIn(com.lumiere.app.data.local.entity.HabitCheckIn(habitId = habit.id))
+                        }
+                    )
                 }
             }
             
@@ -287,7 +301,7 @@ fun MetricTile(modifier: Modifier, value: String, label: String, color: Color) {
 }
 
 @Composable
-fun HabitItem(habit: Habit, onCheckIn: () -> Unit) {
+fun HabitItem(habit: Habit, isCompletedToday: Boolean = false, onCheckIn: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         colors = CardDefaults.cardColors(containerColor = LumiereDarkGray),
@@ -313,15 +327,27 @@ fun HabitItem(habit: Habit, onCheckIn: () -> Unit) {
                 }
             }
             
-            // Botão de Check-in (Estado Pendente)
-            OutlinedButton(
-                onClick = onCheckIn,
-                border = BorderStroke(1.dp, LumiereGold),
-                shape = RoundedCornerShape(20.dp)
-            ) {
-                Icon(Icons.Default.Refresh, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(16.dp))
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Registar", color = LumiereGold, fontSize = 12.sp)
+            // Botão de Check-in (Estado Dinâmico)
+            if (isCompletedToday) {
+                Button(
+                    onClick = { },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32)),
+                    shape = RoundedCornerShape(20.dp)
+                ) {
+                    Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Cumprido", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                }
+            } else {
+                OutlinedButton(
+                    onClick = onCheckIn,
+                    border = BorderStroke(1.dp, LumiereGold),
+                    shape = RoundedCornerShape(20.dp)
+                ) {
+                    Icon(Icons.Default.PlayArrow, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Registar", color = LumiereGold, fontSize = 12.sp)
+                }
             }
         }
     }
