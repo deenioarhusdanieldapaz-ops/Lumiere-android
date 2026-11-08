@@ -43,6 +43,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.lumiere.app.ui.utils.getCategoryIcon
 import com.lumiere.app.data.local.entity.Task
 import com.lumiere.app.ui.theme.LumiereDarkGray
 import com.lumiere.app.ui.theme.LumiereGold
@@ -837,27 +838,6 @@ fun TaskScreen(viewModel: TaskViewModel, onOpenDrawer: () -> Unit = {}) {
     }
 }
 
-
-fun getCategoryIcon(categoryName: String?): androidx.compose.ui.graphics.vector.ImageVector {
-    if (categoryName == null) return LumiereIcons.Tag
-    val name = categoryName.lowercase()
-    return when {
-        name.contains("trabalho") || name.contains("escrit") || name.contains("reuni") -> LumiereIcons.Work
-        name.contains("estud") || name.contains("curso") || name.contains("aula") -> LumiereIcons.School
-        name.contains("saúd") || name.contains("saud") || name.contains("médic") || name.contains("medic") || name.contains("trein") -> LumiereIcons.Favorite
-        name.contains("financ") || name.contains("dinheir") || name.contains("salári") || name.contains("salari") -> LumiereIcons.Money
-        name.contains("casa") || name.contains("lar") -> LumiereIcons.Home
-        name.contains("pessoal") || name.contains("eu") -> LumiereIcons.Person
-        name.contains("compra") || name.contains("mercado") || name.contains("supermercado") -> LumiereIcons.ShoppingCart
-        name.contains("exerc") || name.contains("ginás") || name.contains("ginas") || name.contains("corrid") -> LumiereIcons.Fitness
-        name.contains("comid") || name.contains("restaur") || name.contains("almoç") -> LumiereIcons.Restaurant
-        name.contains("viag") || name.contains("avião") || name.contains("aviao") -> LumiereIcons.Flight
-        name.contains("program") || name.contains("códig") || name.contains("codig") -> LumiereIcons.Code
-        name.contains("músic") || name.contains("music") -> LumiereIcons.Music
-        name.contains("filme") || name.contains("séri") || name.contains("seri") -> LumiereIcons.Movie
-        else -> LumiereIcons.Tag
-    }
-}
 
 @Composable
 fun TimerBadge(task: Task, priorityColor: Color) {

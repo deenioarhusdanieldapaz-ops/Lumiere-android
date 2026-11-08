@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lumiere.app.ui.utils.getCategoryIcon
 import com.lumiere.app.data.local.entity.Habit
 import com.lumiere.app.data.local.entity.HabitCheckIn
 import com.lumiere.app.ui.theme.LumiereDarkGray
@@ -406,19 +407,6 @@ fun HabitItem(habit: Habit, isCompletedToday: Boolean = false, onCheckIn: () -> 
                 }
             }
         }
-    }
-}
-
-fun getCategoryIcon(categoryName: String?): androidx.compose.ui.graphics.vector.ImageVector {
-    if (categoryName == null) return androidx.compose.material.icons.Icons.Default.Star
-    val name = categoryName.lowercase()
-    return when {
-        name.contains("saúd") || name.contains("saud") || name.contains("médic") || name.contains("agua") -> androidx.compose.material.icons.Icons.Default.Favorite
-        name.contains("exerc") || name.contains("ginás") || name.contains("ginas") || name.contains("corrid") -> com.lumiere.app.ui.theme.LumiereIcons.Fitness
-        name.contains("estud") || name.contains("curso") || name.contains("aula") -> com.lumiere.app.ui.theme.LumiereIcons.School
-        name.contains("trabalho") || name.contains("escrit") -> com.lumiere.app.ui.theme.LumiereIcons.Work
-        name.contains("leitur") || name.contains("livro") -> com.lumiere.app.ui.theme.LumiereIcons.Notes
-        else -> androidx.compose.material.icons.Icons.Default.Star
     }
 }
 
