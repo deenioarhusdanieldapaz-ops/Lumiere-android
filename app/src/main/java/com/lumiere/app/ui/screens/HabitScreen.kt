@@ -26,6 +26,8 @@ import com.lumiere.app.ui.viewmodel.HabitViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
+    val habits by viewModel.habits.collectAsState()
+
     // Dica #4: State Hoisting (Elevação de Estado)
     var showCreateSheet by remember { mutableStateOf(false) }
     var newHabitName by remember { mutableStateOf("") }
@@ -130,76 +132,52 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                 Text("Ver todos →", color = LumiereGold, fontSize = 12.sp)
             }
 
-            // ESTADO VAZIO PREMIUM
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Box(
-                    modifier = Modifier.size(120.dp).background(LumiereGold.copy(alpha = 0.05f), CircleShape),
-                    contentAlignment = Alignment.Center
+            // LISTA DE HÁBITOS OU ESTADO VAZIO
+            if (habits.isEmpty()) {
+                // ESTADO VAZIO PREMIUM
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(Icons.Default.Star, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(80.dp))
-                }
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                Text("Bem-vindo ao Módulo", color = Color.White, fontSize = 24.sp, textAlign = TextAlign.Center)
-                Text("Hábitos!", color = LumiereGold, fontSize = 32.sp, fontWeight = FontWeight.Bold)
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                Text(
-                    "Comece agora a criar os seus hábitos e construa uma vida mais equilibrada.",
-                    color = Color.Gray,
-                    fontSize = 14.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(horizontal = 24.dp)
-                )
-                
-                Spacer(modifier = Modifier.height(32.dp))
-                
-                // ABRE O FORMULÁRIO DE CRIAÇÃO
-                Button(
-                    onClick = { showCreateSheet = true },
-                    modifier = Modifier.fillMaxWidth(0.9f).height(56.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = LumiereGold),
-                    shape = RoundedCornerShape(28.dp)
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = null, tint = Color.Black)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Criar Meu Primeiro Hábito", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                }
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                OutlinedButton(
-                    onClick = { /* Ação do tutorial */ },
-                    modifier = Modifier.fillMaxWidth(0.9f).height(56.dp),
-                    border = BorderStroke(1.dp, LumiereGold),
-                    shape = RoundedCornerShape(28.dp)
-                ) {
-                    Icon(Icons.Default.PlayArrow, contentDescription = null, tint = LumiereGold)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Ver Tutorial", color = LumiereGold, fontSize = 16.sp)
-                }
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                Card(
-                    modifier = Modifier.fillMaxWidth(0.9f),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E)),
-                    shape = RoundedCornerShape(16.dp),
-                    border = BorderStroke(1.dp, Color(0xFF4A3F38))
-                ) {
-                    Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Info, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(24.dp))
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Column {
-                            Text("Dica da Lumière", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                            Text("Pequenos hábitos, grandes mudanças!", color = Color.Gray, fontSize = 12.sp)
-                        }
+                    Box(
+                        modifier = Modifier.size(120.dp).background(LumiereGold.copy(alpha = 0.05f), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Star, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(80.dp))
                     }
+                    
+                    Spacer(modifier = Modifier.height(24.dp))
+                    
+                    Text("Bem-vindo ao Módulo", color = Color.White, fontSize = 24.sp, textAlign = TextAlign.Center)
+                    Text("Hábitos!", color = LumiereGold, fontSize = 32.sp, fontWeight = FontWeight.Bold)
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Text(
+                        "Comece agora a criar os seus hábitos e construa uma vida mais equilibrada.",
+                        color = Color.Gray,
+                        fontSize = 14.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 24.dp)
+                    )
+                    
+                    Spacer(modifier = Modifier.height(32.dp))
+                    
+                    Button(
+                        onClick = { showCreateSheet = true },
+                        modifier = Modifier.fillMaxWidth(0.9f).height(56.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = LumiereGold),
+                        shape = RoundedCornerShape(28.dp)
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = null, tint = Color.Black)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Criar Meu Primeiro Hábito", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    }
+                }
+            } else {
+                // LISTA REAL DE HÁBITOS
+                habits.forEach { habit ->
+                    HabitItem(habit = habit, onCheckIn = { /* Lógica de check-in virá a seguir */ })
                 }
             }
             
@@ -207,7 +185,7 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
         }
     }
 
-    // MODAL: CRIAR HÁBITO
+    // MODAL: CRIAR HÁBITO    // MODAL: CRIAR HÁBITO
     if (showCreateSheet) {
         ModalBottomSheet(
             onDismissRequest = { showCreateSheet = false },
@@ -304,6 +282,47 @@ fun MetricTile(modifier: Modifier, value: String, label: String, color: Color) {
             Text(value, color = color, fontWeight = FontWeight.Bold, fontSize = 16.sp)
             Spacer(modifier = Modifier.height(2.dp))
             Text(label, color = Color.Gray, fontSize = 10.sp, maxLines = 1)
+        }
+    }
+}
+
+@Composable
+fun HabitItem(habit: Habit, onCheckIn: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = LumiereDarkGray),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Ícone (simplificado por agora)
+            Box(
+                modifier = Modifier.size(48.dp).background(Color(0xFF332A1D), RoundedCornerShape(12.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Default.Star, contentDescription = null, tint = LumiereGold)
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            
+            Column(modifier = Modifier.weight(1f)) {
+                Text(habit.name, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                if (habit.targetValue != null && habit.unit != null) {
+                    Text("Meta: ${habit.targetValue} ${habit.unit}", color = Color.Gray, fontSize = 12.sp)
+                }
+            }
+            
+            // Botão de Check-in (Estado Pendente)
+            OutlinedButton(
+                onClick = onCheckIn,
+                border = BorderStroke(1.dp, LumiereGold),
+                shape = RoundedCornerShape(20.dp)
+            ) {
+                Icon(Icons.Default.Refresh, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Registar", color = LumiereGold, fontSize = 12.sp)
+            }
         }
     }
 }
