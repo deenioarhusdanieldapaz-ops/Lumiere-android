@@ -77,6 +77,10 @@ class HabitViewModel(private val repository: HabitRepository) : ViewModel() {
         }
     }
 
+    fun deleteCheckIn(checkIn: HabitCheckIn) {
+        viewModelScope.launch { repository.deleteCheckIn(checkIn) }
+    }
+
     fun addFailureCheckIn(habitId: Long) {
         viewModelScope.launch {
             repository.insertCheckIn(

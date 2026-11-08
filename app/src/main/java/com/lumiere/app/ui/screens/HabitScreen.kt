@@ -12,6 +12,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.Switch
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,6 +55,11 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
     var newHabitTarget by remember { mutableStateOf("") }
     var newHabitUnit by remember { mutableStateOf("") }
     var newHabitInterval by remember { mutableStateOf("1") }
+    var restDaysState by remember { mutableIntStateOf(0) }
+    var reminderEnabled by remember { mutableStateOf(false) }
+    var durationMinutes by remember { mutableStateOf("") }
+    var completionCriteria by remember { mutableStateOf("") }
+    var isAdaptationPeriod by remember { mutableStateOf(false) }
     var selectedDays by remember { mutableStateOf(127) }
     var habitToEdit by remember { mutableStateOf<Habit?>(null) }
     var preferredTime by remember { mutableStateOf<Pair<Int, Int>?>(null) }
@@ -232,9 +238,11 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                 habits.forEach { habit ->
                     // Dica #8: Usa a lista global checkInsToday (evita flickering)
                     val isCompletedToday = checkInsToday.any { it.habitId == habit.id }
+                    val failureToday = checkInsToday.any { it.habitId == habit.id && it.type == "FAIL" }
                     HabitItem(
                         habit = habit,
                         isCompletedToday = isCompletedToday,
+                        failureToday = failureToday,
                         onCheckIn = {
                             val currentVal = viewModel.getTodayValueForHabit(habit.id, checkInsToday)
                             viewModel.addCheckInValue(habit.id, currentVal, habit.targetValue)
@@ -289,12 +297,18 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                 } else {
                     habitCheckIns.take(10).forEach { ci ->
                         val date = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.getDefault()).format(java.util.Date(ci.timestamp))
-                        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                             Text(date, color = Color.Gray, fontSize = 12.sp)
-                            if (ci.value != null) {
-                                Text("${ci.value} ${habit.unit ?: ""}", color = Color.White, fontSize = 12.sp)
-                            } else {
-                                Text("✓", color = Color(0xFF2E7D32), fontSize = 12.sp)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                if (ci.value != null) {
+                                    Text("${ci.value} ${habit.unit ?: ""}", color = Color.White, fontSize = 12.sp)
+                                } else {
+                                    Text("✓", color = Color(0xFF2E7D32), fontSize = 12.sp)
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                IconButton(onClick = { viewModel.deleteCheckIn(ci) }, modifier = Modifier.size(24.dp)) {
+                                    Icon(Icons.Default.Delete, contentDescription = "Apagar", tint = Color.Red, modifier = Modifier.size(16.dp))
+                                }
                             }
                         }
                     }
@@ -329,12 +343,18 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                 } else {
                     habitCheckIns.take(10).forEach { ci ->
                         val date = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.getDefault()).format(java.util.Date(ci.timestamp))
-                        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                             Text(date, color = Color.Gray, fontSize = 12.sp)
-                            if (ci.value != null) {
-                                Text("${ci.value} ${habit.unit ?: ""}", color = Color.White, fontSize = 12.sp)
-                            } else {
-                                Text("✓", color = Color(0xFF2E7D32), fontSize = 12.sp)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                if (ci.value != null) {
+                                    Text("${ci.value} ${habit.unit ?: ""}", color = Color.White, fontSize = 12.sp)
+                                } else {
+                                    Text("✓", color = Color(0xFF2E7D32), fontSize = 12.sp)
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                IconButton(onClick = { viewModel.deleteCheckIn(ci) }, modifier = Modifier.size(24.dp)) {
+                                    Icon(Icons.Default.Delete, contentDescription = "Apagar", tint = Color.Red, modifier = Modifier.size(16.dp))
+                                }
                             }
                         }
                     }
@@ -410,6 +430,55 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                     }
                 }
 
+                // GAVETA 3: METAS E DESCANSO
+                var isMetaOpen by remember { mutableStateOf(false) }
+                LumiereAccordion(title = "3. Metas e Descanso", isExpanded = isMetaOpen, onToggle = { isMetaOpen = !isMetaOpen }) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        LumiereNumberField(value = newHabitTarget, onValueChange = { newHabitTarget = it }, label = "Meta", modifier = Modifier.weight(1f))
+                        LumiereTextField(value = newHabitUnit, onValueChange = { newHabitUnit = it }, label = "Unidade", modifier = Modifier.weight(1f))
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Dias de Descanso", color = Color.Gray, fontSize = 12.sp)
+                    val weekDays = listOf("Seg" to 1, "Ter" to 2, "Qua" to 4, "Qui" to 8, "Sex" to 16, "Sáb" to 32, "Dom" to 64)
+                    val restDaysList = weekDays.filter { (restDaysState and it.second) != 0 }.map { it.first }
+                    LumiereCheckboxGroup(
+                        options = weekDays.map { it.first },
+                        selectedOptions = restDaysList,
+                        onToggle = { dayName ->
+                            val bit = weekDays.find { it.first == dayName }?.second ?: 0
+                            restDaysState = if ((restDaysState and bit) != 0) restDaysState - bit else restDaysState + bit
+                        }
+                    )
+                }
+
+                // GAVETA 4: PREFERÊNCIAS
+                var isPrefOpen by remember { mutableStateOf(false) }
+                LumiereAccordion(title = "4. Preferências", isExpanded = isPrefOpen, onToggle = { isPrefOpen = !isPrefOpen }) {
+                    LumiereTimePicker(
+                        selectedTime = preferredTime,
+                        onTimeSelected = { preferredTime = it },
+                        label = "Horário Preferencial"
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                        Text("Lembrete", color = Color.White, modifier = Modifier.weight(1f))
+                        Switch(checked = reminderEnabled, onCheckedChange = { reminderEnabled = it })
+                    }
+                }
+
+                // GAVETA 5: DURAÇÃO E CRITÉRIOS
+                var isCritOpen by remember { mutableStateOf(false) }
+                LumiereAccordion(title = "5. Duração e Critérios", isExpanded = isCritOpen, onToggle = { isCritOpen = !isCritOpen }) {
+                    LumiereNumberField(value = durationMinutes, onValueChange = { durationMinutes = it }, label = "Duração estimada (min)")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    LumiereTextArea(value = completionCriteria, onValueChange = { completionCriteria = it }, label = "Critério de Conclusão (ex: 20 flexões)")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                        Text("Período de Adaptação (não quebra streak)", color = Color.White, modifier = Modifier.weight(1f), fontSize = 12.sp)
+                        Switch(checked = isAdaptationPeriod, onCheckedChange = { isAdaptationPeriod = it })
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(24.dp))
                 
                 Button(
@@ -422,9 +491,13 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                                 frequencyType = newHabitFrequency,
                                 weeklyDays = selectedDays,
                                 intervalDays = newHabitInterval.toIntOrNull() ?: 1,
+                                restDays = restDaysState,
                                 targetValue = newHabitTarget.toIntOrNull(),
                                 unit = newHabitUnit.ifBlank { null },
-                                preferredTime = timeStr
+                                preferredTime = timeStr,
+                                durationMinutes = durationMinutes.toIntOrNull(),
+                                completionCriteria = completionCriteria.ifBlank { null },
+                                isAdaptationPeriod = isAdaptationPeriod
                             )
                             if (habitToEdit != null) {
                                 viewModel.updateHabit(habitToEdit!!.copy(
@@ -469,7 +542,7 @@ fun MetricTile(modifier: Modifier, value: String, label: String, color: Color) {
 }
 
 @Composable
-fun HabitItem(habit: Habit, isCompletedToday: Boolean = false, todayValue: Int = 0, onCheckIn: () -> Unit, onDelete: () -> Unit, onPause: () -> Unit, onResume: () -> Unit, onEdit: () -> Unit, onFail: () -> Unit, onOpenDetails: () -> Unit = {}) {
+fun HabitItem(habit: Habit, isCompletedToday: Boolean = false, failureToday: Boolean = false, todayValue: Int = 0, onCheckIn: () -> Unit, onDelete: () -> Unit, onPause: () -> Unit, onResume: () -> Unit, onEdit: () -> Unit, onFail: () -> Unit, onOpenDetails: () -> Unit = {}) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         colors = CardDefaults.cardColors(containerColor = LumiereDarkGray),
@@ -530,7 +603,18 @@ fun HabitItem(habit: Habit, isCompletedToday: Boolean = false, todayValue: Int =
             }
 
             // Botão de Check-in (Estado Dinâmico)
-            if (isCompletedToday) {
+            if (habit.status == 1) {
+                // Estado Pausado
+                Surface(color = Color.Gray.copy(alpha = 0.2f), shape = RoundedCornerShape(20.dp)) {
+                    Text("Pausado", color = Color.Gray, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+                }
+            } else if (failureToday) {
+                // Estado Falha
+                Surface(color = Color.Red.copy(alpha = 0.2f), shape = RoundedCornerShape(20.dp)) {
+                    Text("Falhou", color = Color.Red, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+                }
+            } else if (isCompletedToday) {
+                // Estado Cumprido
                 Button(
                     onClick = { },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32)),
@@ -541,6 +625,7 @@ fun HabitItem(habit: Habit, isCompletedToday: Boolean = false, todayValue: Int =
                     Text("Cumprido", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
             } else {
+                // Estado Pendente
                 OutlinedButton(
                     onClick = onCheckIn,
                     border = BorderStroke(1.dp, LumiereGold),
