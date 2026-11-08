@@ -75,43 +75,65 @@ class HabitViewModel(private val repository: HabitRepository) : ViewModel() {
     }
 
 
+    
     fun calculateStreak(habitId: Long): Int {
+        val habit = habits.value.find { it.id == habitId } ?: return 0
         val checkIns = allCheckIns.value.filter { it.habitId == habitId }.sortedByDescending { it.timestamp }
         if (checkIns.isEmpty()) return 0
 
-        val cal = Calendar.getInstance()
-        cal.set(Calendar.HOUR_OF_DAY, 0); cal.set(Calendar.MINUTE, 0); cal.set(Calendar.SECOND, 0); cal.set(Calendar.MILLISECOND, 0)
-        val todayStart = cal.timeInMillis
-
-        var foundToday = false
-        var foundYesterday = false
-
-        for (ci in checkIns) {
-            val ciCal = Calendar.getInstance().apply { timeInMillis = ci.timestamp }
-            ciCal.set(Calendar.HOUR_OF_DAY, 0); ciCal.set(Calendar.MINUTE, 0); ciCal.set(Calendar.SECOND, 0); ciCal.set(Calendar.MILLISECOND, 0)
-            
-            if (ciCal.timeInMillis == todayStart) foundToday = true
-            if (ciCal.timeInMillis == todayStart - 86400000L) foundYesterday = true
-            if (foundToday || foundYesterday) break
-        }
-
-        if (!foundToday && !foundYesterday) return 0
-
         var streak = 0
-        var expectedTime = if (foundToday) todayStart else todayStart - 86400000L
-        for (ci in checkIns) {
-            val ciCal = Calendar.getInstance().apply { timeInMillis = ci.timestamp }
-            ciCal.set(Calendar.HOUR_OF_DAY, 0); ciCal.set(Calendar.MINUTE, 0); ciCal.set(Calendar.SECOND, 0); ciCal.set(Calendar.MILLISECOND, 0)
-            
-            if (ciCal.timeInMillis == expectedTime) {
-                streak++
-                expectedTime -= 86400000L
-            } else if (ciCal.timeInMillis < expectedTime) {
-                break
+        val cal = Calendar.getInstance()
+        
+        // Começar no dia de hoje e voltar para trás
+        cal.set(Calendar.HOUR_OF_DAY, 0); cal.set(Calendar.MINUTE, 0); cal.set(Calendar.SECOND, 0); cal.set(Calendar.MILLISECOND, 0)
+        
+        var currentDay = cal.timeInMillis
+        var foundAny = false
+
+        // Loop pelos últimos 365 dias (limite de segurança)
+        for (i in 0..365) {
+            val dayOfWeek = cal.get(Calendar.DAY_OF_WEEK) // 1=Domingo, 2=Segunda...
+            // Converter para bitmask (Segunda=1, Domingo=64)
+            val dayBit = when (dayOfWeek) {
+                Calendar.MONDAY -> 1
+                Calendar.TUESDAY -> 2
+                Calendar.WEDNESDAY -> 4
+                Calendar.THURSDAY -> 8
+                Calendar.FRIDAY -> 16
+                Calendar.SATURDAY -> 32
+                Calendar.SUNDAY -> 64
+                else -> 0
             }
+            
+            val isRestDay = (habit.restDays and dayBit) != 0
+            val isExpectedDay = (habit.weeklyDays and dayBit) != 0
+            
+            val hasCheckInOnThisDay = checkIns.any { 
+                val ciCal = Calendar.getInstance().apply { timeInMillis = it.timestamp }
+                ciCal.set(Calendar.HOUR_OF_DAY, 0); ciCal.set(Calendar.MINUTE, 0); ciCal.set(Calendar.SECOND, 0); ciCal.set(Calendar.MILLISECOND, 0)
+                ciCal.timeInMillis == currentDay 
+            }
+
+            if (isExpectedDay && !isRestDay) {
+                if (hasCheckInOnThisDay) {
+                    streak++
+                    foundAny = true
+                } else if (i == 0) {
+                    // Se é hoje e ainda não há check-in, não quebra (o dia ainda não acabou)
+                    // Não faz nada, deixa o streak continuar para ontem
+                } else {
+                    // Falhou um dia esperado, quebra a sequência
+                    break
+                }
+            }
+            
+            // Avançar para o dia anterior
+            cal.add(Calendar.DAY_OF_YEAR, -1)
+            currentDay = cal.timeInMillis
         }
-        return streak
+        return if (foundAny) streak else 0
     }
+
 }
 
 class HabitViewModelFactory(private val repository: HabitRepository) : ViewModelProvider.Factory {

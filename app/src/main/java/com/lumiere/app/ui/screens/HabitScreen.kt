@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lumiere.app.ui.components.fields.*
 import com.lumiere.app.ui.utils.getCategoryIcon
 import com.lumiere.app.data.local.entity.Habit
 import com.lumiere.app.data.local.entity.HabitCheckIn
@@ -355,22 +356,10 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                 Text("Novo Hábito", color = LumiereGold, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(16.dp))
 
-                OutlinedTextField(
-                    value = newHabitName,
-                    onValueChange = { newHabitName = it },
-                    label = { Text("Nome do Hábito") },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = LumiereGold)
-                )
+                LumiereTextField(value = newHabitName, onValueChange = { newHabitName = it }, label = "Nome do Hábito")
                 Spacer(modifier = Modifier.height(8.dp))
 
-                OutlinedTextField(
-                    value = newHabitCategory,
-                    onValueChange = { newHabitCategory = it },
-                    label = { Text("Categoria (ex: Saúde)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = LumiereGold)
-                )
+                LumiereTextField(value = newHabitCategory, onValueChange = { newHabitCategory = it }, label = "Categoria (ex: Saúde)")
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text("Frequência", color = Color.Gray, fontSize = 12.sp)
@@ -381,20 +370,8 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(
-                        value = newHabitTarget,
-                        onValueChange = { newHabitTarget = it },
-                        label = { Text("Meta (ex: 8)") },
-                        modifier = Modifier.weight(1f),
-                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = LumiereGold)
-                    )
-                    OutlinedTextField(
-                        value = newHabitUnit,
-                        onValueChange = { newHabitUnit = it },
-                        label = { Text("Unidade (ex: copos)") },
-                        modifier = Modifier.weight(1f),
-                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = LumiereGold)
-                    )
+                    LumiereNumberField(value = newHabitTarget, onValueChange = { newHabitTarget = it }, label = "Meta", modifier = Modifier.weight(1f))
+                    LumiereTextField(value = newHabitUnit, onValueChange = { newHabitUnit = it }, label = "Unidade", modifier = Modifier.weight(1f))
                 }
                 
                 Spacer(modifier = Modifier.height(8.dp))

@@ -60,22 +60,22 @@ fun ComponentGalleryScreen(onBack: () -> Unit) {
         ) {
             // 1. SECÇÃO TEXTO
             SectionHeader("1. Texto")
-            LumiereTextField(value = txt, onValueChange = { txt = it }, label = "LumiereTextField")
-            LumiereTextArea(value = area, onValueChange = { area = it }, label = "LumiereTextArea")
-            LumierePasswordField(value = pwd, onValueChange = { pwd = it }, label = "LumierePasswordField")
-            LumiereMaskedField(value = masked, onValueChange = { masked = it }, label = "LumiereMaskedField", mask = "NIF")
+            LumiereTextField(value = txt, onValueChange = { txt = it }, label = "Campo de Texto")
+            LumiereTextArea(value = area, onValueChange = { area = it }, label = "Área de Texto")
+            LumierePasswordField(value = pwd, onValueChange = { pwd = it }, label = "Palavra-passe")
+            LumiereMaskedField(value = masked, onValueChange = { masked = it }, label = "NIF", mask = "NIF")
 
             // 2. SECÇÃO NÚMEROS
             SectionHeader("2. Números")
-            LumiereNumberField(value = num, onValueChange = { num = it }, label = "LumiereNumberField")
-            LumiereCurrencyField(value = curr, onValueChange = { curr = it }, label = "LumiereCurrencyField")
-            LumiereStepper(value = step, onValueChange = { step = it }, label = "LumiereStepper")
-            LumiereSliderField(value = slide, onValueChange = { slide = it }, label = "LumiereSliderField")
+            LumiereNumberField(value = num, onValueChange = { num = it }, label = "Número")
+            LumiereCurrencyField(value = curr, onValueChange = { curr = it }, label = "Valor (€)")
+            LumiereStepper(value = step, onValueChange = { step = it }, label = "Quantidade")
+            LumiereSliderField(value = slide, onValueChange = { slide = it }, label = "Nível")
             LumiereRatingBar(rating = rate, onRatingChange = { rate = it })
 
             // 3. SECÇÃO SELETORES
             SectionHeader("3. Seletores")
-            LumiereDropdown(label = "LumiereDropdown", options = LumiereCategories.names, selected = drop, onSelect = { drop = it })
+            LumiereDropdown(label = "Selecionar Categoria", options = LumiereCategories.names, selected = drop, onSelect = { drop = it })
             LumiereSegmentedControl(options = listOf("Opção 1", "Opção 2", "Opção 3"), selected = seg, onSelect = { seg = it })
             LumiereRadioGroup(options = listOf("Receita", "Despesa"), selected = radio, onSelect = { radio = it })
             LumiereCheckboxGroup(options = listOf("Seg", "Ter", "Qua", "Qui", "Sex"), selectedOptions = checks, onToggle = { 
@@ -89,12 +89,12 @@ fun ComponentGalleryScreen(onBack: () -> Unit) {
             // 5. SECÇÃO ESTRUTURAS
             SectionHeader("5. Estruturas")
             var isExpanded by remember { mutableStateOf(true) }
-            LumiereAccordion(title = "LumiereAccordion", isExpanded = isExpanded, onToggle = { isExpanded = !isExpanded }) {
+            LumiereAccordion(title = "Secção Expansível", isExpanded = isExpanded, onToggle = { isExpanded = !isExpanded }) {
                 Text("Conteúdo da gaveta expansível.", color = Color.Gray)
             }
-            LumiereSearchBar(query = search, onQueryChange = { search = it }, placeholder = "LumiereSearchBar")
+            LumiereSearchBar(query = search, onQueryChange = { search = it }, placeholder = "Pesquisar...")
             LumiereFilterChips(options = listOf("Todas", "Hoje", "Atrasadas"), selected = filter, onSelect = { filter = it })
-            LumiereProgressBar(progress = 0.65f, label = "LumiereProgressBar")
+            LumiereProgressBar(progress = 0.65f, label = "Progresso")
         }
     }
 }
