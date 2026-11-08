@@ -44,6 +44,7 @@ fun LumiereDropdown(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LumiereSegmentedControl(
     options: List<String>,
