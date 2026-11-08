@@ -21,6 +21,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lumiere.app.ui.components.fields.*
+import com.lumiere.app.ui.utils.LumiereCategories
 import com.lumiere.app.ui.utils.getCategoryIcon
 import com.lumiere.app.data.local.entity.Habit
 import com.lumiere.app.data.local.entity.HabitCheckIn
@@ -52,6 +53,7 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
     var newHabitFrequency by remember { mutableStateOf("DAILY") }
     var newHabitTarget by remember { mutableStateOf("") }
     var newHabitUnit by remember { mutableStateOf("") }
+    var newHabitInterval by remember { mutableStateOf("1") }
     var selectedDays by remember { mutableStateOf(127) }
     var habitToEdit by remember { mutableStateOf<Habit?>(null) }
     var preferredTime by remember { mutableStateOf<Pair<Int, Int>?>(null) }
@@ -323,7 +325,6 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
     }
 
     // MODAL: CRIAR HÁBITO
-    // MODAL: Detalhes do Hábito
     if (habitDetails != null) {
         val habit = habitDetails!!
         val habitCheckIns by viewModel.getCheckInsForHabit(habit.id).collectAsState(initial = emptyList())
@@ -390,55 +391,67 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
         }
     }
 
-    // MODAL: CRIAR HÁBITO
     if (showCreateSheet) {
         ModalBottomSheet(
             onDismissRequest = { showCreateSheet = false },
             containerColor = LumiereDarkGray
         ) {
             Column(modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState()).fillMaxWidth()) {
-                Text("Novo Hábito", color = LumiereGold, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Text(if (habitToEdit == null) "Novo Hábito" else "Editar Hábito", color = LumiereGold, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(16.dp))
 
-                LumiereTextField(value = newHabitName, onValueChange = { newHabitName = it }, label = "Nome do Hábito")
-                Spacer(modifier = Modifier.height(8.dp))
-
-                LumiereTextField(value = newHabitCategory, onValueChange = { newHabitCategory = it }, label = "Categoria (ex: Saúde)")
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text("Frequência", color = Color.Gray, fontSize = 12.sp)
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    FilterChip(selected = newHabitFrequency == "DAILY", onClick = { newHabitFrequency = "DAILY" }, label = { Text("Diário") })
-                    FilterChip(selected = newHabitFrequency == "WEEKLY", onClick = { newHabitFrequency = "WEEKLY" }, label = { Text("Semanal") })
+                // GAVETA 1: IDENTIFICAÇÃO
+                var isIdentOpen by remember { mutableStateOf(true) }
+                LumiereAccordion(title = "1. Identificação", isExpanded = isIdentOpen, onToggle = { isIdentOpen = !isIdentOpen }) {
+                    LumiereTextField(value = newHabitName, onValueChange = { newHabitName = it }, label = "Nome do Hábito")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    LumiereDropdown(
+                        label = "Selecionar Categoria",
+                        options = LumiereCategories.names,
+                        selected = newHabitCategory.ifBlank { null },
+                        onSelect = { newHabitCategory = it }
+                    )
                 }
-                Spacer(modifier = Modifier.height(8.dp))
 
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    LumiereNumberField(value = newHabitTarget, onValueChange = { newHabitTarget = it }, label = "Meta", modifier = Modifier.weight(1f))
-                    LumiereTextField(value = newHabitUnit, onValueChange = { newHabitUnit = it }, label = "Unidade", modifier = Modifier.weight(1f))
-                }
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Text("Dias da semana", color = Color.Gray, fontSize = 12.sp)
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    val days = listOf("S" to 1, "T" to 2, "Q" to 4, "Q" to 8, "S" to 16, "S" to 32, "D" to 64)
-                    days.forEach { (label, bit) ->
-                        val isSelected = (selectedDays and bit) != 0
-                        FilterChip(
-                            selected = isSelected,
-                            onClick = { selectedDays = if (isSelected) selectedDays - bit else selectedDays + bit },
-                            label = { Text(label, fontSize = 10.sp) }
+                // GAVETA 2: FREQUÊNCIA
+                var isFreqOpen by remember { mutableStateOf(true) }
+                LumiereAccordion(title = "2. Frequência", isExpanded = isFreqOpen, onToggle = { isFreqOpen = !isFreqOpen }) {
+                    Text("Tipo de Frequência", color = Color.Gray, fontSize = 12.sp)
+                    LumiereSegmentedControl(
+                        options = listOf("Diário", "Semanal", "Dias Escolhidos", "Intervalo"),
+                        selected = when(newHabitFrequency) {
+                            "DAILY" -> "Diário"
+                            "WEEKLY" -> "Semanal"
+                            "CUSTOM" -> "Dias Escolhidos"
+                            "INTERVAL" -> "Intervalo"
+                            else -> "Diário"
+                        },
+                        onSelect = { 
+                            newHabitFrequency = when(it) {
+                                "Diário" -> "DAILY"
+                                "Semanal" -> "WEEKLY"
+                                "Dias Escolhidos" -> "CUSTOM"
+                                "Intervalo" -> "INTERVAL"
+                                else -> "DAILY"
+                            }
+                        }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    if (newHabitFrequency == "INTERVAL") {
+                        LumiereNumberField(value = newHabitInterval, onValueChange = { newHabitInterval = it }, label = "A cada quantos dias?")
+                    } else if (newHabitFrequency == "CUSTOM") {
+                        val weekDays = listOf("Seg" to 1, "Ter" to 2, "Qua" to 4, "Qui" to 8, "Sex" to 16, "Sáb" to 32, "Dom" to 64)
+                        LumiereCheckboxGroup(
+                            options = weekDays.map { it.first },
+                            selectedOptions = weekDays.filter { (selectedDays and it.second) != 0 }.map { it.first },
+                            onToggle = { dayName ->
+                                val bit = weekDays.find { it.first == dayName }?.second ?: 0
+                                selectedDays = if ((selectedDays and bit) != 0) selectedDays - bit else selectedDays + bit
+                            }
                         )
                     }
                 }
-
-                Spacer(modifier = Modifier.height(8.dp))
-                LumiereTimePicker(
-                    selectedTime = preferredTime,
-                    onTimeSelected = { preferredTime = it },
-                    label = "Horário preferencial (opcional)"
-                )
 
                 Spacer(modifier = Modifier.height(24.dp))
                 
@@ -446,33 +459,26 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                     onClick = {
                         if (newHabitName.isNotBlank()) {
                             val timeStr = preferredTime?.let { String.format("%02d:%02d", it.first, it.second) }
+                            val habit = Habit(
+                                name = newHabitName,
+                                category = newHabitCategory.ifBlank { null },
+                                frequencyType = newHabitFrequency,
+                                weeklyDays = selectedDays,
+                                intervalDays = newHabitInterval.toIntOrNull() ?: 1,
+                                targetValue = newHabitTarget.toIntOrNull(),
+                                unit = newHabitUnit.ifBlank { null },
+                                preferredTime = timeStr
+                            )
                             if (habitToEdit != null) {
                                 viewModel.updateHabit(habitToEdit!!.copy(
-                                    name = newHabitName,
-                                    category = newHabitCategory.ifBlank { null },
-                                    frequencyType = newHabitFrequency,
-                                    weeklyDays = selectedDays,
-                                    targetValue = newHabitTarget.toIntOrNull(),
-                                    unit = newHabitUnit.ifBlank { null },
-                                    preferredTime = timeStr
+                                    name = habit.name, category = habit.category, frequencyType = habit.frequencyType,
+                                    weeklyDays = habit.weeklyDays, intervalDays = habit.intervalDays,
+                                    targetValue = habit.targetValue, unit = habit.unit, preferredTime = habit.preferredTime
                                 ))
                             } else {
-                                viewModel.addHabit(Habit(
-                                    name = newHabitName,
-                                    category = newHabitCategory.ifBlank { null },
-                                    frequencyType = newHabitFrequency,
-                                    weeklyDays = selectedDays,
-                                    targetValue = newHabitTarget.toIntOrNull(),
-                                    unit = newHabitUnit.ifBlank { null },
-                                    preferredTime = timeStr
-                                ))
+                                viewModel.addHabit(habit)
                             }
                             habitToEdit = null
-                            // Limpar os campos (State Hoisting)
-                            newHabitName = ""
-                            newHabitCategory = ""
-                            newHabitTarget = ""
-                            newHabitUnit = ""
                             showCreateSheet = false
                         }
                     },
