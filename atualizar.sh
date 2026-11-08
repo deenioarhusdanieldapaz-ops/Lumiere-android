@@ -10,11 +10,17 @@ RUN_ID=$(gh run list --workflow="build-apk.yml" --limit 1 --json databaseId -q '
 
 gh run watch $RUN_ID
 
-# Verificação à prova de bala
 CONCLUSION=$(gh run view $RUN_ID --json conclusion -q '.conclusion')
 if [ "$CONCLUSION" != "success" ]; then
-    echo "❌ A compilação falhou na Cloud! O APK não foi gerado."
-    echo "Verifica os erros em: https://github.com/deenioarhusdanieldapaz-ops/Lumiere-android/actions"
+    echo ""
+    echo "=========================================="
+    echo "❌ COMPILAÇÃO FALHOU — LOG DE ERRO:"
+    echo "=========================================="
+    # Extrai as linhas exatas do compilador Kotlin (ficheiro, linha e motivo)
+    gh run view $RUN_ID --log-failed 2>/dev/null | grep -E "e: file:///|Caused by|FAILURE: Build failed" | sed 's/^[0-9T:.-]*Z //'
+    echo ""
+    echo "=========================================="
+    echo "Ver log completo em: https://github.com/deenioarhusdanieldapaz-ops/Lumiere-android/actions/runs/$RUN_ID"
     exit 1
 fi
 

@@ -15,6 +15,7 @@ import com.lumiere.app.data.repository.HabitRepository
 import com.lumiere.app.ui.screens.TaskScreen
 import com.lumiere.app.ui.theme.LumiereTheme
 import com.lumiere.app.ui.viewmodel.TaskViewModel
+import com.lumiere.app.ui.viewmodel.TaskViewModelFactory
 import com.lumiere.app.ui.viewmodel.HabitViewModel
 import com.lumiere.app.ui.viewmodel.HabitViewModelFactory
 
