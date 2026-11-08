@@ -70,6 +70,7 @@ fun LumiereSearchBar(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LumiereFilterChips(
     options: List<String>,
