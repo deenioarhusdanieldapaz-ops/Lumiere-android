@@ -41,7 +41,7 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
     val endOfDay = cal.apply { set(java.util.Calendar.HOUR_OF_DAY, 23); set(java.util.Calendar.MINUTE, 59); set(java.util.Calendar.SECOND, 59); set(java.util.Calendar.MILLISECOND, 999) }.timeInMillis
     
     val checkInsToday = allCheckIns.filter { it.timestamp in startOfDay..endOfDay }
-    val completedToday = checkInsToday.size
+    val completedToday = checkInsToday.map { it.habitId }.distinct().size
     val totalHabits = habits.size
     val pendingToday = (totalHabits - completedToday).coerceAtLeast(0)
     val consistency = if (totalHabits > 0) (completedToday.toFloat() / totalHabits.toFloat()) * 100 else 0f
@@ -242,6 +242,17 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                         onDelete = { viewModel.deleteHabit(habit) },
                         onPause = { viewModel.pauseHabit(habit) },
                         onResume = { viewModel.resumeHabit(habit) },
+                        onEdit = { 
+                            habitToEdit = habit
+                            newHabitName = habit.name
+                            newHabitCategory = habit.category ?: ""
+                            newHabitFrequency = habit.frequencyType
+                            newHabitTarget = habit.targetValue?.toString() ?: ""
+                            newHabitUnit = habit.unit ?: ""
+                            selectedDays = habit.weeklyDays
+                            showCreateSheet = true
+                        },
+                        onFail = { viewModel.addFailureCheckIn(habit.id) },
                         todayValue = viewModel.getTodayValueForHabit(habit.id, checkInsToday),
                         onOpenDetails = { habitDetails = habit }
                     )
@@ -291,34 +302,7 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                 
                 Spacer(modifier = Modifier.height(24.dp))
                 
-                Button(
-                    onClick = {
-                        viewModel.addFailureCheckIn(habit.id)
-                        habitDetails = null
-                    },
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
-                ) {
-                    Text("Registar Falha Hoje", color = Color.White)
-                }
 
-                Button(
-                    onClick = {
-                        // Preencher o formulário com os dados existentes
-                        newHabitName = habit.name
-                        newHabitCategory = habit.category ?: ""
-                        newHabitFrequency = habit.frequencyType
-                        newHabitTarget = habit.targetValue?.toString() ?: ""
-                        newHabitUnit = habit.unit ?: ""
-                        selectedDays = habit.weeklyDays
-                        habitDetails = null
-                        showCreateSheet = true
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = LumiereGold)
-                ) {
-                    Text("Editar Hábito", color = Color.Black, fontWeight = FontWeight.Bold)
-                }
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
@@ -358,34 +342,7 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                 
                 Spacer(modifier = Modifier.height(24.dp))
                 
-                Button(
-                    onClick = {
-                        viewModel.addFailureCheckIn(habit.id)
-                        habitDetails = null
-                    },
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
-                ) {
-                    Text("Registar Falha Hoje", color = Color.White)
-                }
 
-                Button(
-                    onClick = {
-                        // Preencher o formulário com os dados existentes
-                        newHabitName = habit.name
-                        newHabitCategory = habit.category ?: ""
-                        newHabitFrequency = habit.frequencyType
-                        newHabitTarget = habit.targetValue?.toString() ?: ""
-                        newHabitUnit = habit.unit ?: ""
-                        selectedDays = habit.weeklyDays
-                        habitDetails = null
-                        showCreateSheet = true
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = LumiereGold)
-                ) {
-                    Text("Editar Hábito", color = Color.Black, fontWeight = FontWeight.Bold)
-                }
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
@@ -416,8 +373,8 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                 // GAVETA 2: FREQUÊNCIA
                 var isFreqOpen by remember { mutableStateOf(true) }
                 LumiereAccordion(title = "2. Frequência", isExpanded = isFreqOpen, onToggle = { isFreqOpen = !isFreqOpen }) {
-                    Text("Tipo de Frequência", color = Color.Gray, fontSize = 12.sp)
-                    LumiereSegmentedControl(
+                    LumiereDropdown(
+                        label = "Tipo de Frequência",
                         options = listOf("Diário", "Semanal", "Dias Escolhidos", "Intervalo"),
                         selected = when(newHabitFrequency) {
                             "DAILY" -> "Diário"
@@ -512,7 +469,7 @@ fun MetricTile(modifier: Modifier, value: String, label: String, color: Color) {
 }
 
 @Composable
-fun HabitItem(habit: Habit, isCompletedToday: Boolean = false, todayValue: Int = 0, onCheckIn: () -> Unit, onDelete: () -> Unit, onPause: () -> Unit, onResume: () -> Unit, onOpenDetails: () -> Unit = {}) {
+fun HabitItem(habit: Habit, isCompletedToday: Boolean = false, todayValue: Int = 0, onCheckIn: () -> Unit, onDelete: () -> Unit, onPause: () -> Unit, onResume: () -> Unit, onEdit: () -> Unit, onFail: () -> Unit, onOpenDetails: () -> Unit = {}) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         colors = CardDefaults.cardColors(containerColor = LumiereDarkGray),
@@ -546,6 +503,14 @@ fun HabitItem(habit: Habit, isCompletedToday: Boolean = false, todayValue: Int =
                     Icon(Icons.Default.MoreVert, contentDescription = "Opções", tint = Color.Gray)
                 }
                 DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }, modifier = Modifier.background(LumiereDarkGray)) {
+                    DropdownMenuItem(
+                        text = { Text("Editar Hábito", color = LumiereGold) },
+                        onClick = { onEdit(); showMenu = false }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Registar Falha", color = Color(0xFFFF9800)) },
+                        onClick = { onFail(); showMenu = false }
+                    )
                     if (habit.status == 0) {
                         DropdownMenuItem(
                             text = { Text("Pausar", color = LumiereGold) },
