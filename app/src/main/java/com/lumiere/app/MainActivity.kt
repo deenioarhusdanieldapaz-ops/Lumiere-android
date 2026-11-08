@@ -11,15 +11,19 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.lumiere.app.data.local.database.AppDatabase
 import com.lumiere.app.data.repository.TaskRepository
+import com.lumiere.app.data.repository.HabitRepository
 import com.lumiere.app.ui.screens.TaskScreen
 import com.lumiere.app.ui.theme.LumiereTheme
 import com.lumiere.app.ui.viewmodel.TaskViewModel
-import com.lumiere.app.ui.viewmodel.TaskViewModelFactory
+import com.lumiere.app.ui.viewmodel.HabitViewModel
+import com.lumiere.app.ui.viewmodel.HabitViewModelFactory
 
 class MainActivity : ComponentActivity() {
 
     private val database by lazy { AppDatabase.getDatabase(this) }
+    private val habitRepository by lazy { HabitRepository(database.habitDao(), database.habitCheckInDao(), database.habitExceptionDao()) }
     private val repository by lazy { TaskRepository(database.taskDao(), database.subtaskDao(), database.projectDao(), database.taskHistoryDao()) }
+    private val habitViewModel: HabitViewModel by viewModels { HabitViewModelFactory(habitRepository) }
     private val viewModel: TaskViewModel by viewModels {
         TaskViewModelFactory(repository)
     }
