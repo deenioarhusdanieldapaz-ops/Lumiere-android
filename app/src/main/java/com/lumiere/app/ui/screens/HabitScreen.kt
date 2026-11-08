@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -100,9 +101,73 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                 }
             }
             
-            // Placeholder para os próximos componentes
-            Text("Hábitos de Hoje (Em construção...)", color = LumiereGold, fontWeight = FontWeight.Bold)
+            // 1. INDICADORES COMPACTOS (4 cartões)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Concluídos
+                MetricTile(Modifier.weight(1f), "0", "Concluídos", Color.Green)
+                // Pendentes
+                MetricTile(Modifier.weight(1f), "0", "Pendentes", LumiereGold)
+                // Média
+                MetricTile(Modifier.weight(1f), "0%", "Média", Color(0xFF9C27B0))
+                // Metas
+                MetricTile(Modifier.weight(1f), "0/0", "Metas", Color(0xFFFF9800))
+            }
+
+            // 2. TÍTULO "HÁBITOS DE HOJE"
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Hábitos de Hoje", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text("Ver todos →", color = LumiereGold, fontSize = 12.sp)
+            }
+
+            // 3. LISTA DE HÁBITOS (Estado Vazio por agora)
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                colors = CardDefaults.cardColors(containerColor = LumiereDarkGray),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(32.dp).fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Star,
+                        contentDescription = null,
+                        tint = LumiereGold,
+                        modifier = Modifier.size(48.dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Nenhum hábito para hoje", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Cria o teu primeiro hábito para começar a construir consistência.", color = Color.Gray, fontSize = 12.sp)
+                }
+            }
+            
             Spacer(modifier = Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+fun MetricTile(modifier: Modifier, value: String, label: String, color: Color) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = LumiereDarkGray),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp).fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(value, color = color, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(label, color = Color.Gray, fontSize = 10.sp, maxLines = 1)
         }
     }
 }
