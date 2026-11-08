@@ -31,7 +31,6 @@ class HabitViewModel(private val repository: HabitRepository) : ViewModel() {
         viewModelScope.launch { repository.insertCheckIn(checkIn) }
     }
 
-
     fun addCheckInValue(habitId: Long, currentValue: Int, targetValue: Int?) {
         viewModelScope.launch {
             val newValue = currentValue + 1
@@ -56,9 +55,6 @@ class HabitViewModel(private val repository: HabitRepository) : ViewModel() {
     }
 
 
-    fun updateHabit(habit: Habit) {
-        viewModelScope.launch { repository.updateHabit(habit) }
-    }
 
     fun pauseHabit(habit: Habit) {
         viewModelScope.launch {
@@ -107,7 +103,6 @@ class HabitViewModel(private val repository: HabitRepository) : ViewModel() {
         
         return emptyMap()
     }
-
 
     
     fun calculateStreak(habitId: Long): Int {
