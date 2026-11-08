@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DrawerValue
@@ -62,6 +63,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             LumiereTheme {
                 var showHabits by remember { mutableStateOf(false) }
+                var showGallery by remember { mutableStateOf(false) }
                 val drawerState = rememberDrawerState(DrawerValue.Closed)
                 val scope = rememberCoroutineScope()
 
@@ -89,8 +91,15 @@ class MainActivity : ComponentActivity() {
                             NavigationDrawerItem(
                                 label = { Text("M02 — Hábitos", color = if (showHabits) LumiereGold else Color.White) },
                                 selected = showHabits,
-                                onClick = { showHabits = true; scope.launch { drawerState.close() } },
+                                onClick = { showHabits = true; showGallery = false; scope.launch { drawerState.close() } },
                                 icon = { Icon(Icons.Default.Star, contentDescription = null, tint = LumiereGold) }
+                            )
+                            Divider(color = Color.DarkGray, modifier = Modifier.padding(vertical = 8.dp))
+                            NavigationDrawerItem(
+                                label = { Text("🧪 Galeria (Dev)", color = if (showGallery) LumiereGold else Color.Gray) },
+                                selected = showGallery,
+                                onClick = { showGallery = true; showHabits = false; scope.launch { drawerState.close() } },
+                                icon = { Icon(Icons.Default.Info, contentDescription = null, tint = if (showGallery) LumiereGold else Color.Gray) }
                             )
                         }
                     },
@@ -100,7 +109,11 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colorScheme.background
                     ) {
-                        if (showHabits) {
+                        if (showGallery) {
+                            com.lumiere.app.ui.screens.ComponentGalleryScreen(
+                                onBack = { showGallery = false }
+                            )
+                        } else if (showHabits) {
                             HabitScreen(
                                 viewModel = habitViewModel,
                                 onOpenDrawer = { scope.launch { drawerState.open() } }
