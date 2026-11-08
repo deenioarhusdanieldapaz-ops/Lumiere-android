@@ -20,7 +20,7 @@ data class Habit(
     val preferredTime: String? = null, // Horário preferencial (ex: "08:00")
     val durationMinutes: Int? = null, // Duração estimada
     val completionCriteria: String? = null, // Critério de conclusão
-    val isAdaptationPeriod: Boolean = false // Período de adaptação
+    val isAdaptationPeriod: Boolean = false, // Período de adaptação
     val restDays: Int = 0, // Bitmask dos dias de descanso
     val status: Int = 0, // 0=Ativo, 1=Pausado, 2=Arquivado
     val startDate: Long = System.currentTimeMillis(),
