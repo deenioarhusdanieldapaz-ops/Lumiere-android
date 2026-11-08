@@ -56,7 +56,7 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun TaskScreen(viewModel: TaskViewModel) {
+fun TaskScreen(viewModel: TaskViewModel, onOpenDrawer: () -> Unit = {}) {
     val tasks by viewModel.tasks.collectAsStateWithLifecycle()
     val appContext = LocalContext.current
     var taskAttachmentUris by remember { mutableStateOf<List<String>>(emptyList()) }
@@ -117,6 +117,11 @@ fun TaskScreen(viewModel: TaskViewModel) {
         topBar = {
             TopAppBar(
                 title = { Text("M01 — Tarefas", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = onOpenDrawer) {
+                        Icon(Icons.Default.Menu, contentDescription = "Menu", tint = LumiereGold)
+                    }
+                },
                 actions = {
                     IconButton(onClick = { showSearchBar = !showSearchBar }) {
                         Icon(LumiereIcons.Search, contentDescription = "Pesquisar", tint = LumiereGold)
