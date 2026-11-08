@@ -45,7 +45,6 @@ class HabitViewModel(private val repository: HabitRepository) : ViewModel() {
         
         return emptyMap()
     }
-}
 
 
     fun calculateStreak(habitId: Long): Int {
@@ -85,6 +84,7 @@ class HabitViewModel(private val repository: HabitRepository) : ViewModel() {
         }
         return streak
     }
+}
 
 class HabitViewModelFactory(private val repository: HabitRepository) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
