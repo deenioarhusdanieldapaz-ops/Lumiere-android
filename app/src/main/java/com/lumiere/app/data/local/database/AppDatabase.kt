@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import com.lumiere.app.data.local.dao.*
 import com.lumiere.app.data.local.entity.*
 
-@Database(entities = [Task::class, Project::class, Subtask::class, TaskHistory::class], version = 8, exportSchema = false)
+@Database(entities = [Task::class, Project::class, Subtask::class, TaskHistory::class], version = 9, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun taskDao(): TaskDao
     abstract fun subtaskDao(): SubtaskDao

@@ -39,7 +39,8 @@ class TaskViewModel(private val repository: TaskRepository) : ViewModel() {
     fun toggleTaskCompletion(task: Task) {
         viewModelScope.launch {
             val newStatus = if (task.isCompleted) 0 else 2
-            repository.updateTask(task.copy(status = newStatus, updatedAt = System.currentTimeMillis()))
+            val newCompletedAt = if (newStatus == 2) System.currentTimeMillis() else null
+            repository.updateTask(task.copy(status = newStatus, completedAt = newCompletedAt, updatedAt = System.currentTimeMillis()))
             repository.insertHistory(TaskHistory(taskId = task.id, action = if (newStatus == 2) "Concluída" else "Reaberta"))
             
             if (newStatus == 2 && task.recurrenceRule != null && task.recurrenceRule != "NONE") {
@@ -86,14 +87,14 @@ class TaskViewModel(private val repository: TaskRepository) : ViewModel() {
 
     fun cancelTask(task: Task, reason: String) {
         viewModelScope.launch {
-            repository.updateTask(task.copy(status = 3, cancellationReason = reason, timerStartedAt = null, updatedAt = System.currentTimeMillis()))
+            repository.updateTask(task.copy(status = 3, cancellationReason = reason, timerStartedAt = null, completedAt = null, updatedAt = System.currentTimeMillis()))
             repository.insertHistory(TaskHistory(taskId = task.id, action = "Cancelada: $reason"))
         }
     }
 
     fun resumeTask(task: Task) {
         viewModelScope.launch {
-            repository.updateTask(task.copy(status = 0, cancellationReason = null, updatedAt = System.currentTimeMillis()))
+            repository.updateTask(task.copy(status = 0, cancellationReason = null, completedAt = null, updatedAt = System.currentTimeMillis()))
             repository.insertHistory(TaskHistory(taskId = task.id, action = "Retomada"))
         }
     }

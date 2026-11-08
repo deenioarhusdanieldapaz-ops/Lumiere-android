@@ -45,7 +45,8 @@ data class Task(
     
     // Sistema
     val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis()
+    val updatedAt: Long = System.currentTimeMillis(),
+    val completedAt: Long? = null
 ) {
     val isCompleted: Boolean
         get() = status == 2

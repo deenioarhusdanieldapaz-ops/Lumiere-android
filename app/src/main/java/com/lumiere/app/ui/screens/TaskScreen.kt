@@ -261,6 +261,7 @@ fun TaskScreen(viewModel: TaskViewModel) {
                 items(filteredTasks) { task ->
                     TaskItem(
                         task = task,
+                        blockerName = tasks.find { it.id == task.blockedByTaskId }?.title,
                         onToggleComplete = { viewModel.toggleTaskCompletion(task) },
                         onOpenDetails = { taskDetails = task },
                         onMenuClick = { taskMenu = task },
@@ -668,7 +669,7 @@ fun TaskScreen(viewModel: TaskViewModel) {
                     var expandedBlocker by remember { mutableStateOf(false) }
                     Box(modifier = Modifier.fillMaxWidth()) {
                         OutlinedButton(onClick = { expandedBlocker = true }, modifier = Modifier.fillMaxWidth()) {
-                            Icon(Icons.Default.Lock, contentDescription = null, tint = if(blockedByTaskId != null) Color.Red else LumiereGold, modifier = Modifier.size(16.dp))
+                            Icon(LumiereIcons.Lock, contentDescription = null, tint = if(blockedByTaskId != null) Color.Red else LumiereGold, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(tasks.find { it.id == blockedByTaskId }?.title ?: "Sem bloqueio", color = if(blockedByTaskId != null) Color.Red else LumiereGold)
                         }
@@ -845,77 +846,118 @@ fun TimerBadge(task: Task, priorityColor: Color) {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun TaskItem(task: Task, onToggleComplete: () -> Unit, onOpenDetails: () -> Unit, onMenuClick: () -> Unit, onTimerClick: () -> Unit) {
+fun TaskItem(task: Task, blockerName: String?, onToggleComplete: () -> Unit, onOpenDetails: () -> Unit, onMenuClick: () -> Unit, onTimerClick: () -> Unit) {
     val isOverdue = !task.isCompleted && task.dueDate != null && task.dueDate < System.currentTimeMillis()
     val isCompleted = task.isCompleted
+    val isCancelled = task.status == 3
+    val isBlocked = task.blockedByTaskId != null && !isCompleted && !isCancelled
+    val isRunning = task.timerStartedAt != null
     
-    val priorityColor = when(task.priority) {
-        3 -> Color(0xFFE53935) // Vermelho
-        2 -> LumiereGold        // Dourado
-        else -> Color(0xFF43A047) // Verde
-    }
+    val priorityColor = when(task.priority) { 3 -> Color(0xFFE53935); 2 -> LumiereGold; else -> Color(0xFF43A047) }
     val priorityText = when(task.priority) { 3 -> "Alta"; 2 -> "Média"; else -> "Baixa" }
     val priorityIcon = if (task.priority == 3) Icons.Default.Warning else Icons.Default.Info
-    
-    // A MÁGICA: O ícone agora depende da categoria!
     val categoryIcon = getCategoryIcon(task.category)
+
+    val cardColor = when {
+        isCancelled -> Color(0xFF1E1E1E).copy(alpha = 0.5f)
+        isOverdue -> Color(0xFF3E1A1A)
+        isCompleted -> LumiereDarkGray.copy(alpha = 0.4f)
+        isBlocked -> Color(0xFF1E1E1E)
+        else -> LumiereDarkGray
+    }
+    
+    val borderColor = when {
+        isOverdue && !isCompleted && !isCancelled -> Color.Red
+        isBlocked -> Color(0xFFB8860B)
+        else -> Color(0xFF333333)
+    }
+
+    val mainIconTint = when {
+        isCompleted -> Color.Green
+        isCancelled -> Color.Gray
+        isBlocked -> Color(0xFFB8860B)
+        isOverdue -> Color.Red
+        else -> priorityColor
+    }
+
+    val mainIcon = when {
+        isCompleted -> Icons.Default.CheckCircle
+        isCancelled -> LumiereIcons.Close
+        isBlocked -> LumiereIcons.Lock
+        isOverdue -> Icons.Default.Warning
+        isRunning -> Icons.Default.Refresh
+        else -> categoryIcon
+    }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .border(if (isCompleted) BorderStroke(0.dp, Color.Transparent) else BorderStroke(1.dp, Color(0xFF333333)), RoundedCornerShape(16.dp))
+            .border(BorderStroke(if (isOverdue && !isCompleted && !isCancelled) 1.5.dp else 1.dp, borderColor), RoundedCornerShape(16.dp))
             .combinedClickable(onClick = onOpenDetails, onLongClick = onMenuClick),
-        colors = CardDefaults.cardColors(containerColor = if (isCompleted) LumiereDarkGray.copy(alpha = 0.5f) else LumiereDarkGray),
+        colors = CardDefaults.cardColors(containerColor = cardColor),
         shape = RoundedCornerShape(16.dp)
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            // Ícone Inteligente da Categoria
             Box(
-                modifier = Modifier.size(52.dp).background(priorityColor.copy(alpha = 0.1f), RoundedCornerShape(14.dp)).border(1.dp, priorityColor.copy(alpha=0.3f), RoundedCornerShape(14.dp)).clickable { onToggleComplete() },
+                modifier = Modifier.size(52.dp).background(mainIconTint.copy(alpha = 0.1f), RoundedCornerShape(14.dp)).border(1.dp, mainIconTint.copy(alpha=0.3f), RoundedCornerShape(14.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = if (isCompleted) Icons.Default.CheckCircle else categoryIcon,
-                    contentDescription = null,
-                    tint = priorityColor,
-                    modifier = Modifier.size(28.dp)
-                )
+                Icon(imageVector = mainIcon, contentDescription = null, tint = mainIconTint, modifier = Modifier.size(28.dp))
             }
             Spacer(modifier = Modifier.width(16.dp))
 
-            // Conteúdo
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = task.title,
                     fontWeight = FontWeight.Bold, fontSize = 17.sp,
-                    color = if (isCompleted) Color.Gray else Color.White,
+                    color = if (isCompleted || isCancelled) Color.Gray else Color.White,
                     textDecoration = if (isCompleted) TextDecoration.LineThrough else TextDecoration.None,
                     maxLines = 1, overflow = TextOverflow.Ellipsis
                 )
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (!task.category.isNullOrBlank()) {
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.background(Color(0xFF332A1D), RoundedCornerShape(12.dp)).padding(horizontal = 8.dp, vertical = 4.dp)) {
+                    if (!task.category.isNullOrBlank() && !isCancelled) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.background(Color(0xFF332A1D), RoundedCornerShape(20.dp)).padding(horizontal = 10.dp, vertical = 4.dp)) {
                              Icon(categoryIcon, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(12.dp))
                              Spacer(modifier = Modifier.width(4.dp))
-                             Text(task.category!!, color = LumiereGold, fontSize = 11.sp, maxLines=1)
+                             Text(task.category!!, color = LumiereGold, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines=1)
                         }
                     }
-                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.background(priorityColor.copy(alpha=0.15f), RoundedCornerShape(12.dp)).padding(horizontal = 8.dp, vertical = 4.dp)) {
-                        Icon(priorityIcon, contentDescription = null, tint = priorityColor, modifier = Modifier.size(12.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(priorityText, color = priorityColor, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines=1)
+                    if (!isCancelled) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.background(priorityColor.copy(alpha=0.15f), RoundedCornerShape(20.dp)).padding(horizontal = 10.dp, vertical = 4.dp)) {
+                            Icon(priorityIcon, contentDescription = null, tint = priorityColor, modifier = Modifier.size(12.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(priorityText, color = priorityColor, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines=1)
+                        }
                     }
                 }
-                
-                if (task.dueDate != null) {
+
+                if (isCancelled) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Info, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(12.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Motivo: ${task.cancellationReason ?: "Não especificado"}", color = Color.Gray, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                } else if (isBlocked) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(LumiereIcons.Lock, contentDescription = null, tint = Color(0xFFB8860B), modifier = Modifier.size(12.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Depende de: ${blockerName ?: "outra tarefa"}", color = Color(0xFFB8860B), fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                } else if (isCompleted) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.DateRange, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(12.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        val dateStr = task.completedAt?.let { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date(it)) } ?: "Concluída"
+                        Text("Concluída • $dateStr", color = Color.Gray, fontSize = 12.sp)
+                    }
+                } else if (task.dueDate != null) {
                      Spacer(modifier = Modifier.height(6.dp))
-                     val cal = java.util.Calendar.getInstance().apply { timeInMillis = task.dueDate }
-                     val todayCal = java.util.Calendar.getInstance()
-                     val isToday = cal.get(java.util.Calendar.YEAR) == todayCal.get(java.util.Calendar.YEAR) && cal.get(java.util.Calendar.DAY_OF_YEAR) == todayCal.get(java.util.Calendar.DAY_OF_YEAR)
-                     val dateStr = if (isToday) "Hoje • ${SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(task.dueDate))}" else SimpleDateFormat("dd/MM/yyyy • HH:mm", Locale.getDefault()).format(Date(task.dueDate))
-                     
+                     val dateStr = SimpleDateFormat("dd/MM • HH:mm", Locale.getDefault()).format(Date(task.dueDate))
                      Row(verticalAlignment = Alignment.CenterVertically) {
                           Icon(Icons.Default.DateRange, contentDescription = null, tint = if(isOverdue) Color.Red else Color.Gray, modifier = Modifier.size(12.dp))
                           Spacer(modifier = Modifier.width(4.dp))
@@ -923,20 +965,22 @@ fun TaskItem(task: Task, onToggleComplete: () -> Unit, onOpenDetails: () -> Unit
                      }
                 }
                 
-                if (task.estimatedDurationMinutes != null && task.estimatedDurationMinutes > 0) {
+                if (task.estimatedDurationMinutes != null && task.estimatedDurationMinutes > 0 && !isCompleted && !isCancelled) {
                     TimerBadge(task, priorityColor)
                 }
             }
 
             Spacer(modifier = Modifier.width(12.dp))
-            Box(modifier = Modifier.width(1.dp).height(48.dp).background(Color(0xFF444444)))
+            Box(modifier = Modifier.width(1.dp).height(50.dp).background(Color(0xFF333333)))
             Spacer(modifier = Modifier.width(12.dp))
             
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                IconButton(onClick = onTimerClick, modifier = Modifier.size(40.dp).border(1.dp, if (task.timerStartedAt != null) Color.Red else LumiereGold, CircleShape)) {
-                    Icon(imageVector = if (task.timerStartedAt != null) Icons.Default.Close else Icons.Default.PlayArrow, contentDescription = "Timer", tint = if (task.timerStartedAt != null) Color.Red else LumiereGold, modifier = Modifier.size(24.dp))
+                if (!isCompleted && !isCancelled && !isBlocked) {
+                    IconButton(onClick = onTimerClick, modifier = Modifier.size(42.dp).border(1.5.dp, if (isRunning) Color.Red else LumiereGold, CircleShape)) {
+                        Icon(imageVector = if (isRunning) Icons.Default.Close else Icons.Default.PlayArrow, contentDescription = "Timer", tint = if (isRunning) Color.Red else LumiereGold, modifier = Modifier.size(24.dp))
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
                 }
-                Spacer(modifier = Modifier.height(4.dp))
                 IconButton(onClick = onMenuClick, modifier = Modifier.size(24.dp)) { Icon(Icons.Default.MoreVert, contentDescription = "Menu", tint = Color.Gray) }
             }
         }
