@@ -13,6 +13,7 @@ class HabitRepository(
 
     suspend fun insertHabit(habit: Habit): Long = habitDao.insertHabit(habit)
     suspend fun updateHabit(habit: Habit) = habitDao.updateHabit(habit)
+    suspend fun deleteHabit(habit: Habit) = habitDao.deleteHabit(habit)
     suspend fun getHabitById(id: Long): Habit? = habitDao.getHabitById(id)
 
     fun getCheckIns(habitId: Long): Flow<List<HabitCheckIn>> = checkInDao.getCheckInsForHabit(habitId)

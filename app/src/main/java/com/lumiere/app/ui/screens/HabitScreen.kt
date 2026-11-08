@@ -2,6 +2,7 @@ package com.lumiere.app.ui.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -48,6 +49,7 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
     var newHabitFrequency by remember { mutableStateOf("DAILY") }
     var newHabitTarget by remember { mutableStateOf("") }
     var newHabitUnit by remember { mutableStateOf("") }
+    var selectedDays by remember { mutableStateOf(127) }
 
     Scaffold(
         topBar = {
@@ -209,11 +211,16 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                         isCompletedToday = isCompletedToday,
                         onCheckIn = {
                             viewModel.addCheckIn(com.lumiere.app.data.local.entity.HabitCheckIn(habitId = habit.id))
-                        }
+                        },
+                        onDelete = { viewModel.deleteHabit(habit) }
                     )
                 }
             }
             
+            // Passo 1: Calendário Semanal
+            Text("Calendário de Consistência", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(top = 16.dp))
+            HabitWeekStrip(checkIns = checkInsToday)
+
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
@@ -270,6 +277,21 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                     )
                 }
                 
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text("Dias da semana", color = Color.Gray, fontSize = 12.sp)
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    val days = listOf("S" to 1, "T" to 2, "Q" to 4, "Q" to 8, "S" to 16, "S" to 32, "D" to 64)
+                    days.forEach { (label, bit) ->
+                        val isSelected = (selectedDays and bit) != 0
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = { selectedDays = if (isSelected) selectedDays - bit else selectedDays + bit },
+                            label = { Text(label, fontSize = 10.sp) }
+                        )
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(24.dp))
                 
                 Button(
@@ -279,6 +301,7 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                                 name = newHabitName,
                                 category = newHabitCategory.ifBlank { null },
                                 frequencyType = newHabitFrequency,
+                                weeklyDays = selectedDays,
                                 targetValue = newHabitTarget.toIntOrNull(),
                                 unit = newHabitUnit.ifBlank { null }
                             ))
@@ -320,7 +343,7 @@ fun MetricTile(modifier: Modifier, value: String, label: String, color: Color) {
 }
 
 @Composable
-fun HabitItem(habit: Habit, isCompletedToday: Boolean = false, onCheckIn: () -> Unit) {
+fun HabitItem(habit: Habit, isCompletedToday: Boolean = false, onCheckIn: () -> Unit, onDelete: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         colors = CardDefaults.cardColors(containerColor = LumiereDarkGray),
@@ -335,7 +358,7 @@ fun HabitItem(habit: Habit, isCompletedToday: Boolean = false, onCheckIn: () -> 
                 modifier = Modifier.size(48.dp).background(Color(0xFF332A1D), RoundedCornerShape(12.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.Star, contentDescription = null, tint = LumiereGold)
+                Icon(getCategoryIcon(habit.category), contentDescription = null, tint = LumiereGold)
             }
             Spacer(modifier = Modifier.width(16.dp))
             
@@ -346,6 +369,20 @@ fun HabitItem(habit: Habit, isCompletedToday: Boolean = false, onCheckIn: () -> 
                 }
             }
             
+            // Menu de 3 pontinhos
+            var showMenu by remember { mutableStateOf(false) }
+            Box {
+                IconButton(onClick = { showMenu = true }) {
+                    Icon(Icons.Default.MoreVert, contentDescription = "Opções", tint = Color.Gray)
+                }
+                DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }, modifier = Modifier.background(LumiereDarkGray)) {
+                    DropdownMenuItem(
+                        text = { Text("Eliminar", color = Color.Red) },
+                        onClick = { onDelete(); showMenu = false }
+                    )
+                }
+            }
+
             // Botão de Check-in (Estado Dinâmico)
             if (isCompletedToday) {
                 Button(
@@ -366,6 +403,61 @@ fun HabitItem(habit: Habit, isCompletedToday: Boolean = false, onCheckIn: () -> 
                     Icon(Icons.Default.PlayArrow, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
                     Text("Registar", color = LumiereGold, fontSize = 12.sp)
+                }
+            }
+        }
+    }
+}
+
+fun getCategoryIcon(categoryName: String?): androidx.compose.ui.graphics.vector.ImageVector {
+    if (categoryName == null) return androidx.compose.material.icons.Icons.Default.Star
+    val name = categoryName.lowercase()
+    return when {
+        name.contains("saúd") || name.contains("saud") || name.contains("médic") || name.contains("agua") -> androidx.compose.material.icons.Icons.Default.Favorite
+        name.contains("exerc") || name.contains("ginás") || name.contains("ginas") || name.contains("corrid") -> com.lumiere.app.ui.theme.LumiereIcons.Fitness
+        name.contains("estud") || name.contains("curso") || name.contains("aula") -> com.lumiere.app.ui.theme.LumiereIcons.School
+        name.contains("trabalho") || name.contains("escrit") -> com.lumiere.app.ui.theme.LumiereIcons.Work
+        name.contains("leitur") || name.contains("livro") -> com.lumiere.app.ui.theme.LumiereIcons.Notes
+        else -> androidx.compose.material.icons.Icons.Default.Star
+    }
+}
+
+@Composable
+fun HabitWeekStrip(checkIns: List<HabitCheckIn>) {
+    val days = listOf("Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom")
+    val calendar = java.util.Calendar.getInstance()
+    val today = calendar.get(java.util.Calendar.DAY_OF_WEEK)
+    val todayIndex = if (today == 1) 6 else today - 2
+    
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        days.forEachIndexed { index, day ->
+            val isToday = index == todayIndex
+            val hasCheckIn = checkIns.any { 
+                val cal = java.util.Calendar.getInstance().apply { timeInMillis = it.timestamp }
+                val ciDay = if (cal.get(java.util.Calendar.DAY_OF_WEEK) == 1) 6 else cal.get(java.util.Calendar.DAY_OF_WEEK) - 2
+                ciDay == index 
+            }
+            
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(day, color = Color.Gray, fontSize = 11.sp)
+                Spacer(modifier = Modifier.height(4.dp))
+                Box(
+                    modifier = Modifier.size(36.dp)
+                        .background(
+                            if (hasCheckIn) Color(0xFF2E7D32) else if (isToday) LumiereGold.copy(alpha=0.2f) else LumiereDarkGray,
+                            CircleShape
+                        )
+                        .border(if (isToday) 1.dp else 0.dp, if (isToday) LumiereGold else Color.Transparent, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (hasCheckIn) {
+                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+                    } else {
+                        Text("${calendar.get(java.util.Calendar.DAY_OF_MONTH) - todayIndex + index}", color = Color.White, fontSize = 12.sp)
+                    }
                 }
             }
         }
