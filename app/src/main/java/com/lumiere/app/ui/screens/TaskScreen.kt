@@ -860,6 +860,57 @@ Text("Urgência: ${if(urgency==1) "Baixa" else if(urgency==2) "Média" else "Alt
     }
 }
 
+
+fun getCategoryIcon(categoryName: String?): androidx.compose.ui.graphics.vector.ImageVector {
+    if (categoryName == null) return LumiereIcons.Tag
+    val name = categoryName.lowercase()
+    return when {
+        name.contains("trabalho") || name.contains("escrit") || name.contains("reuni") -> LumiereIcons.Work
+        name.contains("estud") || name.contains("curso") || name.contains("aula") -> LumiereIcons.School
+        name.contains("saúd") || name.contains("saud") || name.contains("médic") || name.contains("medic") || name.contains("trein") -> LumiereIcons.Favorite
+        name.contains("financ") || name.contains("dinheir") || name.contains("salári") || name.contains("salari") -> LumiereIcons.Money
+        name.contains("casa") || name.contains("lar") -> LumiereIcons.Home
+        name.contains("pessoal") || name.contains("eu") -> LumiereIcons.Person
+        name.contains("compra") || name.contains("mercado") || name.contains("supermercado") -> LumiereIcons.ShoppingCart
+        name.contains("exerc") || name.contains("ginás") || name.contains("ginas") || name.contains("corrid") -> LumiereIcons.Fitness
+        name.contains("comid") || name.contains("restaur") || name.contains("almoç") -> LumiereIcons.Restaurant
+        name.contains("viag") || name.contains("avião") || name.contains("aviao") -> LumiereIcons.Flight
+        name.contains("program") || name.contains("códig") || name.contains("codig") -> LumiereIcons.Code
+        name.contains("músic") || name.contains("music") -> LumiereIcons.Music
+        name.contains("filme") || name.contains("séri") || name.contains("seri") -> LumiereIcons.Movie
+        else -> LumiereIcons.Tag
+    }
+}
+
+@Composable
+fun TimerBadge(task: Task, priorityColor: Color) {
+    // RECOMPOSE ISOLADO: Só este componente é redesenhado a cada segundo.
+    var currentTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(task.timerStartedAt) {
+        if (task.timerStartedAt != null) {
+            while (true) { currentTime = System.currentTimeMillis(); kotlinx.coroutines.delay(1000L) }
+        }
+    }
+
+    val elapsedSecs = if (task.timerStartedAt != null) ((currentTime - task.timerStartedAt) / 1000).coerceAtLeast(0) else 0
+    val totalActualMins = task.actualDurationMinutes + (elapsedSecs / 60).toInt()
+    val progress = if (task.estimatedDurationMinutes != null && task.estimatedDurationMinutes > 0) {
+        (totalActualMins.toFloat() / task.estimatedDurationMinutes.toFloat()).coerceIn(0f, 1f)
+    } else 0f
+    val remaining = (task.estimatedDurationMinutes ?: 0) - totalActualMins
+
+    Spacer(modifier = Modifier.height(10.dp))
+    Row(verticalAlignment = Alignment.CenterVertically) {
+         Icon(Icons.Default.Refresh, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(14.dp))
+         Spacer(modifier = Modifier.width(4.dp))
+         Text(if (remaining > 0) "Restam: ${remaining}m" else "Excedeu: ${-remaining}m", color = if (progress >= 1f) Color.Red else Color.Gray, fontSize = 11.sp)
+         Spacer(modifier = Modifier.width(8.dp))
+         LinearProgressIndicator(progress = progress, modifier = Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp)), color = LumiereGold, trackColor = Color.DarkGray)
+         Spacer(modifier = Modifier.width(8.dp))
+         Text("${(progress * 100).toInt()}%", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+    }
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TaskItem(task: Task, onToggleComplete: () -> Unit, onOpenDetails: () -> Unit, onMenuClick: () -> Unit, onTimerClick: () -> Unit) {
@@ -871,35 +922,11 @@ fun TaskItem(task: Task, onToggleComplete: () -> Unit, onOpenDetails: () -> Unit
         2 -> LumiereGold        // Dourado
         else -> Color(0xFF43A047) // Verde
     }
-    val priorityText = when(task.priority) {
-        3 -> "Alta"
-        2 -> "Média"
-        else -> "Baixa"
-    }
+    val priorityText = when(task.priority) { 3 -> "Alta"; 2 -> "Média"; else -> "Baixa" }
     val priorityIcon = if (task.priority == 3) Icons.Default.Warning else Icons.Default.Info
-
-    // Lógica do Cronómetro em Tempo Real
-    var currentTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
-    LaunchedEffect(task.timerStartedAt) {
-        if (task.timerStartedAt != null) {
-            while (true) {
-                currentTime = System.currentTimeMillis()
-                kotlinx.coroutines.delay(1000L)
-            }
-        }
-    }
-
-    // Cálculo do tempo decorrido e restante
-    val elapsedSecs = if (task.timerStartedAt != null) ((currentTime - task.timerStartedAt) / 1000).coerceAtLeast(0) else 0
-    val totalActualMins = task.actualDurationMinutes + (elapsedSecs / 60).toInt()
-    val progress = if (task.estimatedDurationMinutes != null && task.estimatedDurationMinutes > 0) {
-        (totalActualMins.toFloat() / task.estimatedDurationMinutes.toFloat()).coerceIn(0f, 1f)
-    } else 0f
-
-    val remainingText = if (task.estimatedDurationMinutes != null) {
-        val remaining = task.estimatedDurationMinutes - totalActualMins
-        if (remaining > 0) "Restam: ${remaining}m" else "Excedeu: ${-remaining}m"
-    } else null
+    
+    // A MÁGICA: O ícone agora depende da categoria!
+    val categoryIcon = getCategoryIcon(task.category)
 
     Card(
         modifier = Modifier
@@ -910,13 +937,13 @@ fun TaskItem(task: Task, onToggleComplete: () -> Unit, onOpenDetails: () -> Unit
         shape = RoundedCornerShape(16.dp)
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            // Ícone Principal (Prancheta)
+            // Ícone Inteligente da Categoria
             Box(
                 modifier = Modifier.size(52.dp).background(priorityColor.copy(alpha = 0.1f), RoundedCornerShape(14.dp)).border(1.dp, priorityColor.copy(alpha=0.3f), RoundedCornerShape(14.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = if (isCompleted) Icons.Default.CheckCircle else LumiereIcons.Tag,
+                    imageVector = if (isCompleted) Icons.Default.CheckCircle else categoryIcon,
                     contentDescription = null,
                     tint = priorityColor,
                     modifier = Modifier.size(28.dp)
@@ -924,7 +951,7 @@ fun TaskItem(task: Task, onToggleComplete: () -> Unit, onOpenDetails: () -> Unit
             }
             Spacer(modifier = Modifier.width(16.dp))
 
-            // Conteúdo Textual
+            // Conteúdo
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = task.title,
@@ -935,11 +962,10 @@ fun TaskItem(task: Task, onToggleComplete: () -> Unit, onOpenDetails: () -> Unit
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 
-                // Badges com Ícones
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (!task.category.isNullOrBlank()) {
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.background(Color(0xFF332A1D), RoundedCornerShape(12.dp)).padding(horizontal = 8.dp, vertical = 4.dp)) {
-                             Icon(LumiereIcons.Work, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(12.dp))
+                             Icon(categoryIcon, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(12.dp))
                              Spacer(modifier = Modifier.width(4.dp))
                              Text(task.category!!, color = LumiereGold, fontSize = 11.sp, maxLines=1)
                         }
@@ -951,10 +977,8 @@ fun TaskItem(task: Task, onToggleComplete: () -> Unit, onOpenDetails: () -> Unit
                     }
                 }
                 
-                Spacer(modifier = Modifier.height(6.dp))
-                
-                // Data
                 if (task.dueDate != null) {
+                     Spacer(modifier = Modifier.height(6.dp))
                      val cal = java.util.Calendar.getInstance().apply { timeInMillis = task.dueDate }
                      val todayCal = java.util.Calendar.getInstance()
                      val isToday = cal.get(java.util.Calendar.YEAR) == todayCal.get(java.util.Calendar.YEAR) && cal.get(java.util.Calendar.DAY_OF_YEAR) == todayCal.get(java.util.Calendar.DAY_OF_YEAR)
@@ -967,51 +991,21 @@ fun TaskItem(task: Task, onToggleComplete: () -> Unit, onOpenDetails: () -> Unit
                      }
                 }
                 
-                // Barra de Progresso e Tempo Restante
                 if (task.estimatedDurationMinutes != null && task.estimatedDurationMinutes > 0) {
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                         if (remainingText != null) {
-                             Icon(Icons.Default.Refresh, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(14.dp))
-                             Spacer(modifier = Modifier.width(4.dp))
-                             Text(remainingText, color = if (progress >= 1f) Color.Red else Color.Gray, fontSize = 11.sp)
-                             Spacer(modifier = Modifier.width(8.dp))
-                         }
-                         
-                         LinearProgressIndicator(
-                             progress = progress, 
-                             modifier = Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp)), 
-                             color = LumiereGold, 
-                             trackColor = Color.DarkGray
-                         )
-                         Spacer(modifier = Modifier.width(8.dp))
-                         Text("${(progress * 100).toInt()}%", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                    }
+                    TimerBadge(task, priorityColor)
                 }
             }
 
             Spacer(modifier = Modifier.width(12.dp))
-            
-            // Ações (Separadas por linha vertical)
             Box(modifier = Modifier.width(1.dp).height(48.dp).background(Color(0xFF444444)))
             Spacer(modifier = Modifier.width(12.dp))
             
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                IconButton(
-                    onClick = onTimerClick,
-                    modifier = Modifier.size(40.dp).border(1.dp, if (task.timerStartedAt != null) Color.Red else LumiereGold, CircleShape)
-                ) {
-                    Icon(
-                        imageVector = if (task.timerStartedAt != null) Icons.Default.Close else Icons.Default.PlayArrow,
-                        contentDescription = "Timer",
-                        tint = if (task.timerStartedAt != null) Color.Red else LumiereGold,
-                        modifier = Modifier.size(24.dp)
-                    )
+                IconButton(onClick = onTimerClick, modifier = Modifier.size(40.dp).border(1.dp, if (task.timerStartedAt != null) Color.Red else LumiereGold, CircleShape)) {
+                    Icon(imageVector = if (task.timerStartedAt != null) Icons.Default.Close else Icons.Default.PlayArrow, contentDescription = "Timer", tint = if (task.timerStartedAt != null) Color.Red else LumiereGold, modifier = Modifier.size(24.dp))
                 }
                 Spacer(modifier = Modifier.height(4.dp))
-                IconButton(onClick = onMenuClick, modifier = Modifier.size(24.dp)) {
-                     Icon(Icons.Default.MoreVert, contentDescription = "Menu", tint = Color.Gray)
-                }
+                IconButton(onClick = onMenuClick, modifier = Modifier.size(24.dp)) { Icon(Icons.Default.MoreVert, contentDescription = "Menu", tint = Color.Gray) }
             }
         }
     }
