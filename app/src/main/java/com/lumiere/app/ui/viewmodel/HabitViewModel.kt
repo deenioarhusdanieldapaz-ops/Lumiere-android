@@ -47,6 +47,45 @@ class HabitViewModel(private val repository: HabitRepository) : ViewModel() {
     }
 }
 
+
+    fun calculateStreak(habitId: Long): Int {
+        val checkIns = allCheckIns.value.filter { it.habitId == habitId }.sortedByDescending { it.timestamp }
+        if (checkIns.isEmpty()) return 0
+
+        val cal = Calendar.getInstance()
+        cal.set(Calendar.HOUR_OF_DAY, 0); cal.set(Calendar.MINUTE, 0); cal.set(Calendar.SECOND, 0); cal.set(Calendar.MILLISECOND, 0)
+        val todayStart = cal.timeInMillis
+
+        var foundToday = false
+        var foundYesterday = false
+
+        for (ci in checkIns) {
+            val ciCal = Calendar.getInstance().apply { timeInMillis = ci.timestamp }
+            ciCal.set(Calendar.HOUR_OF_DAY, 0); ciCal.set(Calendar.MINUTE, 0); ciCal.set(Calendar.SECOND, 0); ciCal.set(Calendar.MILLISECOND, 0)
+            
+            if (ciCal.timeInMillis == todayStart) foundToday = true
+            if (ciCal.timeInMillis == todayStart - 86400000L) foundYesterday = true
+            if (foundToday || foundYesterday) break
+        }
+
+        if (!foundToday && !foundYesterday) return 0
+
+        var streak = 0
+        var expectedTime = if (foundToday) todayStart else todayStart - 86400000L
+        for (ci in checkIns) {
+            val ciCal = Calendar.getInstance().apply { timeInMillis = ci.timestamp }
+            ciCal.set(Calendar.HOUR_OF_DAY, 0); ciCal.set(Calendar.MINUTE, 0); ciCal.set(Calendar.SECOND, 0); ciCal.set(Calendar.MILLISECOND, 0)
+            
+            if (ciCal.timeInMillis == expectedTime) {
+                streak++
+                expectedTime -= 86400000L
+            } else if (ciCal.timeInMillis < expectedTime) {
+                break
+            }
+        }
+        return streak
+    }
+
 class HabitViewModelFactory(private val repository: HabitRepository) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(HabitViewModel::class.java)) {

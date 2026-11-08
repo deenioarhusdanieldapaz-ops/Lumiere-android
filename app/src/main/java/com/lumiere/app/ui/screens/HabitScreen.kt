@@ -66,6 +66,15 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { showCreateSheet = true },
+                containerColor = LumiereGold,
+                contentColor = Color.Black
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Novo Hábito")
+            }
+        },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Column(
@@ -76,6 +85,9 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                 .verticalScroll(rememberScrollState()), // CORREÇÃO DO SCROLL
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Cálculo do Streak (Sequência)
+            val currentStreak = if (habits.isNotEmpty()) viewModel.calculateStreak(habits.first().id) else 0
+
             // HERO CARD
             Card(
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
@@ -108,7 +120,7 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                             Icon(Icons.Default.Star, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(8.dp))
                             Column {
-                                Text("0 dias", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                Text("$currentStreak dias", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                                 Text("Sequência atual", color = Color.Gray, fontSize = 11.sp)
                             }
                         }
@@ -116,7 +128,7 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                             Icon(Icons.Default.Star, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(8.dp))
                             Column {
-                                Text("0 dias", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                Text("$currentStreak dias", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                                 Text("Recorde pessoal", color = Color.Gray, fontSize = 11.sp)
                             }
                         }
