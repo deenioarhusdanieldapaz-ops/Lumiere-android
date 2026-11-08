@@ -9,6 +9,9 @@ interface HabitCheckInDao {
     @Query("SELECT * FROM habit_checkins WHERE habitId = :habitId ORDER BY timestamp DESC")
     fun getCheckInsForHabit(habitId: Long): Flow<List<HabitCheckIn>>
 
+    @Query("SELECT * FROM habit_checkins ORDER BY timestamp DESC")
+    fun getAllCheckIns(): Flow<List<HabitCheckIn>>
+
     @Query("SELECT * FROM habit_checkins WHERE habitId = :habitId AND timestamp BETWEEN :start AND :end ORDER BY timestamp DESC")
     suspend fun getCheckInsForPeriod(habitId: Long, start: Long, end: Long): List<HabitCheckIn>
 

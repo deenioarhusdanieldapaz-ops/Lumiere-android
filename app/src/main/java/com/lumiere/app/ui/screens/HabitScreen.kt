@@ -28,6 +28,18 @@ import com.lumiere.app.ui.viewmodel.HabitViewModel
 @Composable
 fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
     val habits by viewModel.habits.collectAsState()
+    val allCheckIns by viewModel.allCheckIns.collectAsState()
+
+    // Cálculo de métricas reais
+    val cal = java.util.Calendar.getInstance()
+    val startOfDay = cal.apply { set(java.util.Calendar.HOUR_OF_DAY, 0); set(java.util.Calendar.MINUTE, 0); set(java.util.Calendar.SECOND, 0); set(java.util.Calendar.MILLISECOND, 0) }.timeInMillis
+    val endOfDay = cal.apply { set(java.util.Calendar.HOUR_OF_DAY, 23); set(java.util.Calendar.MINUTE, 59); set(java.util.Calendar.SECOND, 59); set(java.util.Calendar.MILLISECOND, 999) }.timeInMillis
+    
+    val checkInsToday = allCheckIns.filter { it.timestamp in startOfDay..endOfDay }
+    val completedToday = checkInsToday.size
+    val totalHabits = habits.size
+    val pendingToday = (totalHabits - completedToday).coerceAtLeast(0)
+    val consistency = if (totalHabits > 0) (completedToday.toFloat() / totalHabits.toFloat()) * 100 else 0f
 
     // Dica #4: State Hoisting (Elevação de Estado)
     var showCreateSheet by remember { mutableStateOf(false) }
@@ -79,13 +91,13 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Box(contentAlignment = Alignment.Center, modifier = Modifier.size(80.dp)) {
                             CircularProgressIndicator(
-                                progress = 0.78f,
+                                progress = consistency / 100f,
                                 modifier = Modifier.size(80.dp),
                                 color = LumiereGold,
                                 trackColor = Color.DarkGray,
                                 strokeWidth = 8.dp
                             )
-                            Text("78%", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                            Text("${consistency.toInt()}%", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         Text("Consistência", color = Color.Gray, fontSize = 11.sp)
@@ -96,7 +108,7 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                             Icon(Icons.Default.Star, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(8.dp))
                             Column {
-                                Text("21 dias", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                Text("0 dias", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                                 Text("Sequência atual", color = Color.Gray, fontSize = 11.sp)
                             }
                         }
@@ -104,7 +116,7 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                             Icon(Icons.Default.Star, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(8.dp))
                             Column {
-                                Text("48 dias", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                Text("0 dias", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                                 Text("Recorde pessoal", color = Color.Gray, fontSize = 11.sp)
                             }
                         }
@@ -117,10 +129,10 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                MetricTile(Modifier.weight(1f), "0", "Concluídos", Color.Green)
-                MetricTile(Modifier.weight(1f), "0", "Pendentes", LumiereGold)
-                MetricTile(Modifier.weight(1f), "0%", "Média", Color(0xFF9C27B0))
-                MetricTile(Modifier.weight(1f), "0/0", "Metas", Color(0xFFFF9800))
+                MetricTile(Modifier.weight(1f), "$completedToday", "Concluídos", Color.Green)
+                MetricTile(Modifier.weight(1f), "$pendingToday", "Pendentes", LumiereGold)
+                MetricTile(Modifier.weight(1f), "${consistency.toInt()}%", "Média", Color(0xFF9C27B0))
+                MetricTile(Modifier.weight(1f), "$completedToday/$totalHabits", "Metas", Color(0xFFFF9800))
             }
 
             // TÍTULO "HÁBITOS DE HOJE"
