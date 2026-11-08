@@ -871,7 +871,7 @@ fun TaskItem(task: Task, onToggleComplete: () -> Unit, onOpenDetails: () -> Unit
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             // Ícone Inteligente da Categoria
             Box(
-                modifier = Modifier.size(52.dp).background(priorityColor.copy(alpha = 0.1f), RoundedCornerShape(14.dp)).border(1.dp, priorityColor.copy(alpha=0.3f), RoundedCornerShape(14.dp)),
+                modifier = Modifier.size(52.dp).background(priorityColor.copy(alpha = 0.1f), RoundedCornerShape(14.dp)).border(1.dp, priorityColor.copy(alpha=0.3f), RoundedCornerShape(14.dp)).clickable { onToggleComplete() },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
