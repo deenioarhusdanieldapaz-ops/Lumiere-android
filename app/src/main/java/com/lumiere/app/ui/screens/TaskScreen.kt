@@ -230,11 +230,27 @@ fun TaskScreen(viewModel: TaskViewModel) {
 
             if (tasks.isEmpty()) {
                 item {
-                    Card(modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp), colors = CardDefaults.cardColors(containerColor = LumiereDarkGray), shape = RoundedCornerShape(16.dp)) {
+                    Card(modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp), colors = CardDefaults.cardColors(containerColor = LumiereDarkGray), shape = RoundedCornerShape(24.dp)) {
                         Column(modifier = Modifier.padding(32.dp).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(Icons.Default.CheckCircle, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(64.dp))
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text("Ainda não tem tarefas", color = MaterialTheme.colorScheme.onBackground, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                            Box(modifier = Modifier.size(100.dp).background(LumiereGold.copy(alpha = 0.1f), CircleShape), contentAlignment = Alignment.Center) {
+                                Icon(Icons.Default.Event, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(50.dp))
+                            }
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Text("Ainda não tem tarefas", color = MaterialTheme.colorScheme.onBackground, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text("Comece por criar a sua primeira tarefa ou explore as recomendações.", color = Color.Gray, fontSize = 14.sp)
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Button(onClick = { showSheet = true }, colors = ButtonDefaults.buttonColors(containerColor = LumiereGold), modifier = Modifier.fillMaxWidth()) {
+                                Icon(Icons.Default.Add, contentDescription = null, tint = Color.Black)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Criar Tarefa", color = Color.Black, fontWeight = FontWeight.Bold)
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
+                            OutlinedButton(onClick = { }, modifier = Modifier.fillMaxWidth(), border = BorderStroke(1.dp, LumiereGold)) {
+                                Icon(Icons.Default.Star, contentDescription = null, tint = LumiereGold)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Ver Recomendações", color = LumiereGold)
+                            }
                         }
                     }
                 }
