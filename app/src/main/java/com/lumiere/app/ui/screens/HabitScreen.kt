@@ -7,6 +7,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
@@ -25,6 +28,12 @@ import com.lumiere.app.ui.viewmodel.HabitViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
+    // Dica #4: State Hoisting (Elevação de Estado)
+    var showCreateSheet by remember { mutableStateOf(false) }
+    var newHabitName by remember { mutableStateOf("") }
+    var newHabitCategory by remember { mutableStateOf("") }
+    var newHabitFrequency by remember { mutableStateOf("DAILY") }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -126,26 +135,82 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                 Text("Ver todos →", color = LumiereGold, fontSize = 12.sp)
             }
 
-            // 3. LISTA DE HÁBITOS (Estado Vazio por agora)
-            Card(
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                colors = CardDefaults.cardColors(containerColor = LumiereDarkGray),
-                shape = RoundedCornerShape(16.dp)
+            // 3. ESTADO VAZIO PREMIUM (Design do Eng. 11)
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Column(
-                    modifier = Modifier.padding(32.dp).fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                // Estrela Gigante
+                Box(
+                    modifier = Modifier.size(120.dp).background(LumiereGold.copy(alpha = 0.05f), CircleShape),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Star,
-                        contentDescription = null,
-                        tint = LumiereGold,
-                        modifier = Modifier.size(48.dp)
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text("Nenhum hábito para hoje", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Cria o teu primeiro hábito para começar a construir consistência.", color = Color.Gray, fontSize = 12.sp)
+                    Icon(Icons.Default.Star, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(80.dp))
+                }
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                Text("Bem-vindo ao Módulo", color = Color.White, fontSize = 24.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                Text("Hábitos!", color = LumiereGold, fontSize = 32.sp, fontWeight = FontWeight.Bold)
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Text(
+                    "Comece agora a criar os seus hábitos e construa uma vida mais equilibrada.",
+                    color = Color.Gray,
+                    fontSize = 14.sp,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 24.dp)
+                )
+                
+                Spacer(modifier = Modifier.height(32.dp))
+                
+                // Botão Principal
+                Button(
+                    onClick = { showCreateSheet = true }, // Usando o estado elevado (Tip #4)
+                    modifier = Modifier.fillMaxWidth(0.9f).height(56.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = LumiereGold),
+                    shape = RoundedCornerShape(28.dp)
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null, tint = Color.Black)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Criar Meu Primeiro Hábito", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                }
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                // Botão Secundário (Tutorial)
+                OutlinedButton(
+                    onClick = { /* Ação do tutorial */ },
+                    modifier = Modifier.fillMaxWidth(0.9f).height(56.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, LumiereGold),
+                    shape = RoundedCornerShape(28.dp)
+                ) {
+                    Icon(Icons.Default.PlayArrow, contentDescription = null, tint = LumiereGold)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Ver Tutorial", color = LumiereGold, fontSize = 16.sp)
+                }
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                // Dica da Lumière
+                Card(
+                    modifier = Modifier.fillMaxWidth(0.9f),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E)),
+                    shape = RoundedCornerShape(16.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF4A3F38))
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Info, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(24.dp))
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            Text("Dica da Lumière", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            Text("Pequenos hábitos, grandes mudanças!", color = Color.Gray, fontSize = 12.sp)
+                        }
+                    }
                 }
             }
             
