@@ -483,7 +483,7 @@ fun HabitItem(habit: Habit, isCompletedToday: Boolean = false, todayValue: Int =
             Spacer(modifier = Modifier.width(16.dp))
             
             Column(modifier = Modifier.weight(1f)) {
-                Text(habit.name, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = androidx.compose.foundation.clickable { onOpenDetails() })
+                Text(habit.name, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = Modifier.clickable { onOpenDetails() })
                 if (habit.targetValue != null && habit.unit != null) {
                     val progressText = if (isCompletedToday) "${habit.targetValue}/${habit.targetValue} ${habit.unit}" else "$todayValue/${habit.targetValue} ${habit.unit}"
                     Text(progressText, color = if (isCompletedToday) Color(0xFF2E7D32) else Color.Gray, fontSize = 12.sp)
