@@ -31,6 +31,30 @@ class HabitViewModel(private val repository: HabitRepository) : ViewModel() {
         viewModelScope.launch { repository.insertCheckIn(checkIn) }
     }
 
+
+    fun addCheckInValue(habitId: Long, currentValue: Int, targetValue: Int?) {
+        viewModelScope.launch {
+            val newValue = currentValue + 1
+            repository.insertCheckIn(
+                HabitCheckIn(
+                    habitId = habitId,
+                    value = if (targetValue != null) newValue else 1
+                )
+            )
+        }
+    }
+
+    fun getTodayValueForHabit(habitId: Long, allCheckIns: List<HabitCheckIn>): Int {
+        val cal = Calendar.getInstance()
+        cal.set(Calendar.HOUR_OF_DAY, 0); cal.set(Calendar.MINUTE, 0); cal.set(Calendar.SECOND, 0); cal.set(Calendar.MILLISECOND, 0)
+        val startOfDay = cal.timeInMillis
+        val endOfDay = startOfDay + 86400000L - 1
+
+        return allCheckIns
+            .filter { it.habitId == habitId && it.timestamp in startOfDay..endOfDay }
+            .sumOf { it.value ?: 1 }
+    }
+
     fun getCheckInsForHabit(habitId: Long): StateFlow<List<HabitCheckIn>> = repository.getCheckIns(habitId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 

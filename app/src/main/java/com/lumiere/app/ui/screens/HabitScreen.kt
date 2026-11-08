@@ -51,6 +51,7 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
     var newHabitTarget by remember { mutableStateOf("") }
     var newHabitUnit by remember { mutableStateOf("") }
     var selectedDays by remember { mutableStateOf(127) }
+    var habitDetails by remember { mutableStateOf<Habit?>(null) }
 
     Scaffold(
         topBar = {
@@ -211,9 +212,12 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                         habit = habit,
                         isCompletedToday = isCompletedToday,
                         onCheckIn = {
-                            viewModel.addCheckIn(com.lumiere.app.data.local.entity.HabitCheckIn(habitId = habit.id))
+                            val currentVal = viewModel.getTodayValueForHabit(habit.id, checkInsToday)
+                            viewModel.addCheckInValue(habit.id, currentVal, habit.targetValue)
                         },
-                        onDelete = { viewModel.deleteHabit(habit) }
+                        onDelete = { viewModel.deleteHabit(habit) },
+                        todayValue = viewModel.getTodayValueForHabit(habit.id, checkInsToday),
+                        onOpenDetails = { habitDetails = habit }
                     )
                 }
             }
@@ -226,7 +230,121 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
         }
     }
 
-    // MODAL: CRIAR HÁBITO    // MODAL: CRIAR HÁBITO
+
+    // MODAL: Detalhes do Hábito
+    if (habitDetails != null) {
+        val habit = habitDetails!!
+        val habitCheckIns by viewModel.getCheckInsForHabit(habit.id).collectAsState(initial = emptyList())
+        
+        ModalBottomSheet(onDismissRequest = { habitDetails = null }, containerColor = LumiereDarkGray) {
+            Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
+                Text(habit.name, color = LumiereGold, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                if (habit.category != null) {
+                    Text(habit.category!!, color = Color.Gray, fontSize = 14.sp)
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Text("Histórico de Check-ins", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                if (habitCheckIns.isEmpty()) {
+                    Text("Sem registos ainda.", color = Color.Gray, fontSize = 12.sp)
+                } else {
+                    habitCheckIns.take(10).forEach { ci ->
+                        val date = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.getDefault()).format(java.util.Date(ci.timestamp))
+                        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text(date, color = Color.Gray, fontSize = 12.sp)
+                            if (ci.value != null) {
+                                Text("${ci.value} ${habit.unit ?: ""}", color = Color.White, fontSize = 12.sp)
+                            } else {
+                                Text("✓", color = Color(0xFF2E7D32), fontSize = 12.sp)
+                            }
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                Button(
+                    onClick = {
+                        // Preencher o formulário com os dados existentes
+                        newHabitName = habit.name
+                        newHabitCategory = habit.category ?: ""
+                        newHabitFrequency = habit.frequencyType
+                        newHabitTarget = habit.targetValue?.toString() ?: ""
+                        newHabitUnit = habit.unit ?: ""
+                        selectedDays = habit.weeklyDays
+                        habitDetails = null
+                        showCreateSheet = true
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = LumiereGold)
+                ) {
+                    Text("Editar Hábito", color = Color.Black, fontWeight = FontWeight.Bold)
+                }
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+        }
+    }
+
+    // MODAL: CRIAR HÁBITO
+    // MODAL: Detalhes do Hábito
+    if (habitDetails != null) {
+        val habit = habitDetails!!
+        val habitCheckIns by viewModel.getCheckInsForHabit(habit.id).collectAsState(initial = emptyList())
+        
+        ModalBottomSheet(onDismissRequest = { habitDetails = null }, containerColor = LumiereDarkGray) {
+            Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
+                Text(habit.name, color = LumiereGold, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                if (habit.category != null) {
+                    Text(habit.category!!, color = Color.Gray, fontSize = 14.sp)
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Text("Histórico de Check-ins", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                if (habitCheckIns.isEmpty()) {
+                    Text("Sem registos ainda.", color = Color.Gray, fontSize = 12.sp)
+                } else {
+                    habitCheckIns.take(10).forEach { ci ->
+                        val date = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.getDefault()).format(java.util.Date(ci.timestamp))
+                        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text(date, color = Color.Gray, fontSize = 12.sp)
+                            if (ci.value != null) {
+                                Text("${ci.value} ${habit.unit ?: ""}", color = Color.White, fontSize = 12.sp)
+                            } else {
+                                Text("✓", color = Color(0xFF2E7D32), fontSize = 12.sp)
+                            }
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                Button(
+                    onClick = {
+                        // Preencher o formulário com os dados existentes
+                        newHabitName = habit.name
+                        newHabitCategory = habit.category ?: ""
+                        newHabitFrequency = habit.frequencyType
+                        newHabitTarget = habit.targetValue?.toString() ?: ""
+                        newHabitUnit = habit.unit ?: ""
+                        selectedDays = habit.weeklyDays
+                        habitDetails = null
+                        showCreateSheet = true
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = LumiereGold)
+                ) {
+                    Text("Editar Hábito", color = Color.Black, fontWeight = FontWeight.Bold)
+                }
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+        }
+    }
+
+    // MODAL: CRIAR HÁBITO
     if (showCreateSheet) {
         ModalBottomSheet(
             onDismissRequest = { showCreateSheet = false },
@@ -344,7 +462,7 @@ fun MetricTile(modifier: Modifier, value: String, label: String, color: Color) {
 }
 
 @Composable
-fun HabitItem(habit: Habit, isCompletedToday: Boolean = false, onCheckIn: () -> Unit, onDelete: () -> Unit) {
+fun HabitItem(habit: Habit, isCompletedToday: Boolean = false, todayValue: Int = 0, onCheckIn: () -> Unit, onDelete: () -> Unit, onOpenDetails: () -> Unit = {}) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         colors = CardDefaults.cardColors(containerColor = LumiereDarkGray),
@@ -364,9 +482,10 @@ fun HabitItem(habit: Habit, isCompletedToday: Boolean = false, onCheckIn: () -> 
             Spacer(modifier = Modifier.width(16.dp))
             
             Column(modifier = Modifier.weight(1f)) {
-                Text(habit.name, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text(habit.name, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = androidx.compose.foundation.clickable { onOpenDetails() })
                 if (habit.targetValue != null && habit.unit != null) {
-                    Text("Meta: ${habit.targetValue} ${habit.unit}", color = Color.Gray, fontSize = 12.sp)
+                    val progressText = if (isCompletedToday) "${habit.targetValue}/${habit.targetValue} ${habit.unit}" else "$todayValue/${habit.targetValue} ${habit.unit}"
+                    Text(progressText, color = if (isCompletedToday) Color(0xFF2E7D32) else Color.Gray, fontSize = 12.sp)
                 }
             }
             
@@ -403,7 +522,7 @@ fun HabitItem(habit: Habit, isCompletedToday: Boolean = false, onCheckIn: () -> 
                 ) {
                     Icon(Icons.Default.PlayArrow, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("Registar", color = LumiereGold, fontSize = 12.sp)
+                    Text(if (habit.targetValue != null) "+1" else "Registar", color = LumiereGold, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
