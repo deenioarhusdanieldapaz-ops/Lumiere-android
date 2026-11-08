@@ -703,6 +703,13 @@ fun TaskScreen(viewModel: TaskViewModel) {
                         OutlinedTextField(value = timeReserved, onValueChange = { timeReserved = it }, label = { Text("Reservado (min)") }, modifier = Modifier.weight(1f))
                     }
                     Spacer(modifier = Modifier.height(8.dp))
+                    Text("Urgência: ${if(urgency==1) "Baixa" else if(urgency==2) "Média" else "Alta"}", color = MaterialTheme.colorScheme.onSurface)
+                    Slider(value = urgency.toFloat(), onValueChange = { urgency = it.toInt() }, valueRange = 1f..3f, steps = 1)
+                    Text("Importância: ${if(importance==1) "Baixa" else if(importance==2) "Média" else "Alta"}", color = MaterialTheme.colorScheme.onSurface)
+                    Slider(value = importance.toFloat(), onValueChange = { importance = it.toInt() }, valueRange = 1f..3f, steps = 1)
+                    Text("Energia Necessária: ${if(energy==1) "Baixa" else if(energy==2) "Média" else "Alta"}", color = MaterialTheme.colorScheme.onSurface)
+                    Slider(value = energy.toFloat(), onValueChange = { energy = it.toInt() }, valueRange = 1f..3f, steps = 1)
+                    Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(value = instructions, onValueChange = { instructions = it }, label = { Text("Instruções / Notas") }, modifier = Modifier.fillMaxWidth(), minLines = 2)
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(value = links, onValueChange = { links = it }, label = { Text("Links") }, modifier = Modifier.fillMaxWidth())
@@ -779,6 +786,38 @@ fun TaskScreen(viewModel: TaskViewModel) {
                 containerColor = LumiereDarkGray
             )
         }
+
+
+    // DIALOG: Motivo de Cancelamento
+    if (taskToCancel != null) {
+        AlertDialog(
+            onDismissRequest = { taskToCancel = null; cancelReason = "" },
+            title = { Text("Cancelar Tarefa", color = Color.Red) },
+            text = {
+                Column {
+                    Text("Porque estás a cancelar '${taskToCancel?.title}'?", color = MaterialTheme.colorScheme.onBackground)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = cancelReason,
+                        onValueChange = { cancelReason = it },
+                        label = { Text("Motivo (ex: Falta de tempo)") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (cancelReason.isNotBlank()) {
+                        viewModel.cancelTask(taskToCancel!!, cancelReason)
+                        taskToCancel = null
+                        cancelReason = ""
+                    }
+                }) { Text("Confirmar", color = Color.Red) }
+            },
+            dismissButton = { TextButton(onClick = { taskToCancel = null; cancelReason = "" }) { Text("Voltar", color = LumiereGold) } },
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    }
 
     // DIALOG: Confirmar Eliminação
     if (taskToDelete != null) {
@@ -899,7 +938,7 @@ fun TaskItem(task: Task, blockerName: String?, onToggleComplete: () -> Unit, onO
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(
-                modifier = Modifier.size(52.dp).background(mainIconTint.copy(alpha = 0.1f), RoundedCornerShape(14.dp)).border(1.dp, mainIconTint.copy(alpha=0.3f), RoundedCornerShape(14.dp)),
+                modifier = Modifier.size(52.dp).background(mainIconTint.copy(alpha = 0.1f), RoundedCornerShape(14.dp)).border(1.dp, mainIconTint.copy(alpha=0.3f), RoundedCornerShape(14.dp)).clickable { onToggleComplete() },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(imageVector = mainIcon, contentDescription = null, tint = mainIconTint, modifier = Modifier.size(28.dp))
