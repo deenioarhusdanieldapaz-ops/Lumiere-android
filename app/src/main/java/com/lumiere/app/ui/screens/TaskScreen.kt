@@ -736,6 +736,49 @@ fun TaskScreen(viewModel: TaskViewModel) {
 
     }
 
+        // DIALOG: DatePicker
+        if (showDatePicker) {
+            val datePickerState = rememberDatePickerState(initialSelectedDateMillis = taskDueDate ?: System.currentTimeMillis())
+            DatePickerDialog(
+                onDismissRequest = { showDatePicker = false },
+                confirmButton = {
+                    TextButton(onClick = {
+                        val currentCalendar = Calendar.getInstance()
+                        if (taskDueDate != null) currentCalendar.timeInMillis = taskDueDate!!
+                        val newCalendar = Calendar.getInstance()
+                        newCalendar.timeInMillis = datePickerState.selectedDateMillis ?: System.currentTimeMillis()
+                        newCalendar.set(Calendar.HOUR_OF_DAY, currentCalendar.get(Calendar.HOUR_OF_DAY))
+                        newCalendar.set(Calendar.MINUTE, currentCalendar.get(Calendar.MINUTE))
+                        taskDueDate = newCalendar.timeInMillis
+                        showDatePicker = false
+                    }) { Text("OK", color = LumiereGold) }
+                },
+                dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") } }
+            ) { DatePicker(state = datePickerState) }
+        }
+
+        // DIALOG: TimePicker
+        if (showTimePicker) {
+            val timePickerState = rememberTimePickerState()
+            AlertDialog(
+                onDismissRequest = { showTimePicker = false },
+                title = { Text("Escolher Hora", color = LumiereGold) },
+                text = { TimePicker(state = timePickerState) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        val cal = Calendar.getInstance()
+                        if (taskDueDate != null) cal.timeInMillis = taskDueDate!!
+                        cal.set(Calendar.HOUR_OF_DAY, timePickerState.hour)
+                        cal.set(Calendar.MINUTE, timePickerState.minute)
+                        taskDueDate = cal.timeInMillis
+                        showTimePicker = false
+                    }) { Text("OK", color = LumiereGold) }
+                },
+                dismissButton = { TextButton(onClick = { showTimePicker = false }) { Text("Cancelar") } },
+                colors = AlertDialogDefaults.colors(containerColor = LumiereDarkGray)
+            )
+        }
+
     // DIALOG: Confirmar Eliminação
     if (taskToDelete != null) {
         AlertDialog(
