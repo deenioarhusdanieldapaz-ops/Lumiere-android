@@ -55,6 +55,40 @@ class HabitViewModel(private val repository: HabitRepository) : ViewModel() {
             .sumOf { it.value ?: 1 }
     }
 
+
+    fun updateHabit(habit: Habit) {
+        viewModelScope.launch { repository.updateHabit(habit) }
+    }
+
+    fun pauseHabit(habit: Habit) {
+        viewModelScope.launch {
+            repository.updateHabit(habit.copy(status = 1))
+            repository.insertException(
+                HabitException(
+                    habitId = habit.id,
+                    startDate = System.currentTimeMillis(),
+                    endDate = Long.MAX_VALUE,
+                    type = "PAUSE",
+                    reason = "Pausa manual"
+                )
+            )
+        }
+    }
+
+    fun resumeHabit(habit: Habit) {
+        viewModelScope.launch {
+            repository.updateHabit(habit.copy(status = 0))
+        }
+    }
+
+    fun addFailureCheckIn(habitId: Long) {
+        viewModelScope.launch {
+            repository.insertCheckIn(
+                HabitCheckIn(habitId = habitId, value = 0, type = "FAIL")
+            )
+        }
+    }
+
     fun getCheckInsForHabit(habitId: Long): StateFlow<List<HabitCheckIn>> = repository.getCheckIns(habitId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 

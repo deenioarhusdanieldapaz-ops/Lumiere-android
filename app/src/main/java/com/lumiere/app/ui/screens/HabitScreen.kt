@@ -53,6 +53,8 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
     var newHabitTarget by remember { mutableStateOf("") }
     var newHabitUnit by remember { mutableStateOf("") }
     var selectedDays by remember { mutableStateOf(127) }
+    var habitToEdit by remember { mutableStateOf<Habit?>(null) }
+    var preferredTime by remember { mutableStateOf<Pair<Int, Int>?>(null) }
     var habitDetails by remember { mutableStateOf<Habit?>(null) }
 
     Scaffold(
@@ -74,7 +76,16 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { showCreateSheet = true },
+                onClick = { 
+                    habitToEdit = null
+                    newHabitName = ""
+                    newHabitCategory = ""
+                    newHabitTarget = ""
+                    newHabitUnit = ""
+                    selectedDays = 127
+                    preferredTime = null
+                    showCreateSheet = true 
+                },
                 containerColor = LumiereGold,
                 contentColor = Color.Black
             ) {
@@ -195,7 +206,16 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                     Spacer(modifier = Modifier.height(32.dp))
                     
                     Button(
-                        onClick = { showCreateSheet = true },
+                        onClick = { 
+                    habitToEdit = null
+                    newHabitName = ""
+                    newHabitCategory = ""
+                    newHabitTarget = ""
+                    newHabitUnit = ""
+                    selectedDays = 127
+                    preferredTime = null
+                    showCreateSheet = true 
+                },
                         modifier = Modifier.fillMaxWidth(0.9f).height(56.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = LumiereGold),
                         shape = RoundedCornerShape(28.dp)
@@ -218,6 +238,8 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                             viewModel.addCheckInValue(habit.id, currentVal, habit.targetValue)
                         },
                         onDelete = { viewModel.deleteHabit(habit) },
+                        onPause = { viewModel.pauseHabit(habit) },
+                        onResume = { viewModel.resumeHabit(habit) },
                         todayValue = viewModel.getTodayValueForHabit(habit.id, checkInsToday),
                         onOpenDetails = { habitDetails = habit }
                     )
@@ -267,6 +289,17 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                 
                 Spacer(modifier = Modifier.height(24.dp))
                 
+                Button(
+                    onClick = {
+                        viewModel.addFailureCheckIn(habit.id)
+                        habitDetails = null
+                    },
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                ) {
+                    Text("Registar Falha Hoje", color = Color.White)
+                }
+
                 Button(
                     onClick = {
                         // Preencher o formulário com os dados existentes
@@ -324,6 +357,17 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                 
                 Spacer(modifier = Modifier.height(24.dp))
                 
+                Button(
+                    onClick = {
+                        viewModel.addFailureCheckIn(habit.id)
+                        habitDetails = null
+                    },
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                ) {
+                    Text("Registar Falha Hoje", color = Color.White)
+                }
+
                 Button(
                     onClick = {
                         // Preencher o formulário com os dados existentes
@@ -389,19 +433,41 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                     }
                 }
 
+                Spacer(modifier = Modifier.height(8.dp))
+                LumiereTimePicker(
+                    selectedTime = preferredTime,
+                    onTimeSelected = { preferredTime = it },
+                    label = "Horário preferencial (opcional)"
+                )
+
                 Spacer(modifier = Modifier.height(24.dp))
                 
                 Button(
                     onClick = {
                         if (newHabitName.isNotBlank()) {
-                            viewModel.addHabit(Habit(
-                                name = newHabitName,
-                                category = newHabitCategory.ifBlank { null },
-                                frequencyType = newHabitFrequency,
-                                weeklyDays = selectedDays,
-                                targetValue = newHabitTarget.toIntOrNull(),
-                                unit = newHabitUnit.ifBlank { null }
-                            ))
+                            val timeStr = preferredTime?.let { String.format("%02d:%02d", it.first, it.second) }
+                            if (habitToEdit != null) {
+                                viewModel.updateHabit(habitToEdit!!.copy(
+                                    name = newHabitName,
+                                    category = newHabitCategory.ifBlank { null },
+                                    frequencyType = newHabitFrequency,
+                                    weeklyDays = selectedDays,
+                                    targetValue = newHabitTarget.toIntOrNull(),
+                                    unit = newHabitUnit.ifBlank { null },
+                                    preferredTime = timeStr
+                                ))
+                            } else {
+                                viewModel.addHabit(Habit(
+                                    name = newHabitName,
+                                    category = newHabitCategory.ifBlank { null },
+                                    frequencyType = newHabitFrequency,
+                                    weeklyDays = selectedDays,
+                                    targetValue = newHabitTarget.toIntOrNull(),
+                                    unit = newHabitUnit.ifBlank { null },
+                                    preferredTime = timeStr
+                                ))
+                            }
+                            habitToEdit = null
                             // Limpar os campos (State Hoisting)
                             newHabitName = ""
                             newHabitCategory = ""
@@ -440,7 +506,7 @@ fun MetricTile(modifier: Modifier, value: String, label: String, color: Color) {
 }
 
 @Composable
-fun HabitItem(habit: Habit, isCompletedToday: Boolean = false, todayValue: Int = 0, onCheckIn: () -> Unit, onDelete: () -> Unit, onOpenDetails: () -> Unit = {}) {
+fun HabitItem(habit: Habit, isCompletedToday: Boolean = false, todayValue: Int = 0, onCheckIn: () -> Unit, onDelete: () -> Unit, onPause: () -> Unit, onResume: () -> Unit, onOpenDetails: () -> Unit = {}) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         colors = CardDefaults.cardColors(containerColor = LumiereDarkGray),
@@ -474,6 +540,17 @@ fun HabitItem(habit: Habit, isCompletedToday: Boolean = false, todayValue: Int =
                     Icon(Icons.Default.MoreVert, contentDescription = "Opções", tint = Color.Gray)
                 }
                 DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }, modifier = Modifier.background(LumiereDarkGray)) {
+                    if (habit.status == 0) {
+                        DropdownMenuItem(
+                            text = { Text("Pausar", color = LumiereGold) },
+                            onClick = { onPause(); showMenu = false }
+                        )
+                    } else {
+                        DropdownMenuItem(
+                            text = { Text("Retomar", color = Color.Green) },
+                            onClick = { onResume(); showMenu = false }
+                        )
+                    }
                     DropdownMenuItem(
                         text = { Text("Eliminar", color = Color.Red) },
                         onClick = { onDelete(); showMenu = false }
