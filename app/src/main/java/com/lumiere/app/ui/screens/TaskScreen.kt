@@ -102,6 +102,7 @@ fun TaskScreen(viewModel: TaskViewModel) {
     var showProjectsSheet by remember { mutableStateOf(false) }
     var showSearchBar by remember { mutableStateOf(false) }
     var showFilterMenu by remember { mutableStateOf(false) }
+    var showFilterSheet by remember { mutableStateOf(false) }
     var showStatsSheet by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     var instructions by remember { mutableStateOf("") }
@@ -120,18 +121,8 @@ fun TaskScreen(viewModel: TaskViewModel) {
                     IconButton(onClick = { showSearchBar = !showSearchBar }) {
                         Icon(LumiereIcons.Search, contentDescription = "Pesquisar", tint = LumiereGold)
                     }
-                    Box {
-                        IconButton(onClick = { showFilterMenu = true }) {
-                            Icon(LumiereIcons.Filter, contentDescription = "Filtros", tint = LumiereGold)
-                        }
-                        DropdownMenu(expanded = showFilterMenu, onDismissRequest = { showFilterMenu = false }, modifier = Modifier.background(LumiereDarkGray)) {
-                            listOf("ALL" to "Todas", "TODAY" to "Hoje", "OVERDUE" to "Atrasadas", "COMPLETED" to "Concluídas").forEach { (filter, label) ->
-                                DropdownMenuItem(
-                                    text = { Text(label, color = if (activeFilter == filter) LumiereGold else MaterialTheme.colorScheme.onBackground) },
-                                    onClick = { activeFilter = filter; showFilterMenu = false }
-                                )
-                            }
-                        }
+                    IconButton(onClick = { showFilterSheet = true }) {
+                        Icon(LumiereIcons.Filter, contentDescription = "Filtros", tint = LumiereGold)
                     }
                     IconButton(onClick = { showProjectsSheet = true }) {
                         Icon(LumiereIcons.Folder, contentDescription = "Projetos", tint = LumiereGold)
@@ -233,7 +224,7 @@ fun TaskScreen(viewModel: TaskViewModel) {
                     Card(modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp), colors = CardDefaults.cardColors(containerColor = LumiereDarkGray), shape = RoundedCornerShape(24.dp)) {
                         Column(modifier = Modifier.padding(32.dp).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                             Box(modifier = Modifier.size(100.dp).background(LumiereGold.copy(alpha = 0.1f), CircleShape), contentAlignment = Alignment.Center) {
-                                Icon(Icons.Default.Event, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(50.dp))
+                                Icon(LumiereIcons.Event, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(50.dp))
                             }
                             Spacer(modifier = Modifier.height(24.dp))
                             Text("Ainda não tem tarefas", color = MaterialTheme.colorScheme.onBackground, fontSize = 22.sp, fontWeight = FontWeight.Bold)
@@ -296,6 +287,38 @@ fun TaskScreen(viewModel: TaskViewModel) {
             }
 
             item { Spacer(modifier = Modifier.height(80.dp)) }
+        }
+    }
+
+
+    // MODAL: Filtros (Bottom Sheet)
+    if (showFilterSheet) {
+        ModalBottomSheet(onDismissRequest = { showFilterSheet = false }, containerColor = LumiereDarkGray) {
+            Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
+                Text("Filtrar Tarefas", color = LumiereGold, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                listOf(
+                    "ALL" to "Todas as Tarefas",
+                    "TODAY" to "Apenas Hoje",
+                    "OVERDUE" to "Atrasadas",
+                    "COMPLETED" to "Concluídas"
+                ).forEach { (filter, label) ->
+                    ListItem(
+                        headlineContent = { Text(label, color = if (activeFilter == filter) LumiereGold else MaterialTheme.colorScheme.onBackground) },
+                        leadingContent = { 
+                            Icon(
+                                imageVector = if (activeFilter == filter) Icons.Default.CheckCircle else LumiereIcons.RadioButtonUnchecked,
+                                contentDescription = null, 
+                                tint = if (activeFilter == filter) LumiereGold else Color.Gray
+                            ) 
+                        },
+                        modifier = Modifier.clickable { activeFilter = filter; showFilterSheet = false },
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                    )
+                }
+                Spacer(modifier = Modifier.height(24.dp))
+            }
         }
     }
 
@@ -610,257 +633,107 @@ fun TaskScreen(viewModel: TaskViewModel) {
                 Text(if (taskToEdit == null) "Nova Tarefa" else "Editar Tarefa", color = LumiereGold, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(16.dp))
 
-                OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Título") }, modifier = Modifier.fillMaxWidth())
-                Spacer(modifier = Modifier.height(8.dp))
-                var expandedBlocker by remember { mutableStateOf(false) }
-                val availableBlockers = tasks.filter { it.id != taskToEdit?.id && !it.isCompleted }
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    OutlinedButton(onClick = { expandedBlocker = true }, modifier = Modifier.fillMaxWidth()) {
-                        Icon(Icons.Default.Lock, contentDescription = null, tint = if(blockedByTaskId != null) Color.Red else LumiereGold, modifier = Modifier.size(16.dp))
+                var isPlanOpen by remember { mutableStateOf(true) }
+                AccordionSection("01 - Planeamento", isPlanOpen, { isPlanOpen = !isPlanOpen }) {
+                    OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Título da Tarefa") }, modifier = Modifier.fillMaxWidth(), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = LumiereGold))
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                        OutlinedButton(onClick = { showDatePicker = true }, modifier = Modifier.weight(1f)) {
+                            Icon(Icons.Default.DateRange, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(taskDueDate?.let { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date(it)) } ?: "Sem Data", color = LumiereGold, fontSize = 12.sp)
+                        }
+                        OutlinedButton(onClick = { showTimePicker = true }, modifier = Modifier.weight(1f), enabled = taskDueDate != null) {
+                            Icon(Icons.Default.Refresh, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(taskDueDate?.let { SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(it)) } ?: "Hora", color = if (taskDueDate != null) LumiereGold else Color.Gray, fontSize = 12.sp)
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Prioridade:", color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp)
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                        FilterChip(selected = taskPriority == 1, onClick = { taskPriority = 1 }, label = { Text("Baixa") })
+                        FilterChip(selected = taskPriority == 2, onClick = { taskPriority = 2 }, label = { Text("Média") })
+                        FilterChip(selected = taskPriority == 3, onClick = { taskPriority = 3 }, label = { Text("Alta") })
+                    }
+                }
+
+                var isOrgOpen by remember { mutableStateOf(false) }
+                AccordionSection("02 - Organização", isOrgOpen, { isOrgOpen = !isOrgOpen }) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(value = category, onValueChange = { category = it }, label = { Text("Categoria") }, modifier = Modifier.weight(1f), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = LumiereGold))
+                        OutlinedTextField(value = context, onValueChange = { context = it }, label = { Text("Contexto") }, modifier = Modifier.weight(1f), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = LumiereGold))
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    var expandedBlocker by remember { mutableStateOf(false) }
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedButton(onClick = { expandedBlocker = true }, modifier = Modifier.fillMaxWidth()) {
+                            Icon(Icons.Default.Lock, contentDescription = null, tint = if(blockedByTaskId != null) Color.Red else LumiereGold, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(tasks.find { it.id == blockedByTaskId }?.title ?: "Sem bloqueio", color = if(blockedByTaskId != null) Color.Red else LumiereGold)
+                        }
+                        DropdownMenu(expanded = expandedBlocker, onDismissRequest = { expandedBlocker = false }, modifier = Modifier.background(LumiereDarkGray)) {
+                            DropdownMenuItem(text = { Text("Sem bloqueio", color = MaterialTheme.colorScheme.onBackground) }, onClick = { blockedByTaskId = null; expandedBlocker = false })
+                            tasks.filter { it.id != taskToEdit?.id && !it.isCompleted }.forEach { t ->
+                                DropdownMenuItem(text = { Text(t.title, color = MaterialTheme.colorScheme.onBackground) }, onClick = { blockedByTaskId = t.id; expandedBlocker = false })
+                            }
+                        }
+                    }
+                }
+
+                var isAdvOpen by remember { mutableStateOf(false) }
+                AccordionSection("03 - Avançado & Anexos", isAdvOpen, { isAdvOpen = !isAdvOpen }) {
+                    var expandedRecurrence by remember { mutableStateOf(false) }
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedButton(onClick = { expandedRecurrence = true }, modifier = Modifier.fillMaxWidth()) {
+                            Icon(Icons.Default.Refresh, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(when(taskRecurrence) { "DAILY" -> "Repetir: Diariamente"; "WEEKLY" -> "Semanalmente"; "MONTHLY" -> "Mensalmente"; "YEARLY" -> "Anualmente"; else -> "Repetir: Nunca" }, color = LumiereGold)
+                        }
+                        DropdownMenu(expanded = expandedRecurrence, onDismissRequest = { expandedRecurrence = false }, modifier = Modifier.background(LumiereDarkGray)) {
+                            listOf("NONE" to "Nunca", "DAILY" to "Diariamente", "WEEKLY" to "Semanalmente", "MONTHLY" to "Mensalmente", "YEARLY" to "Anualmente").forEach { (rule, label) ->
+                                DropdownMenuItem(text = { Text(label, color = MaterialTheme.colorScheme.onBackground) }, onClick = { taskRecurrence = rule; expandedRecurrence = false })
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(value = estimatedDuration, onValueChange = { estimatedDuration = it }, label = { Text("Estimativa (min)") }, modifier = Modifier.weight(1f))
+                        OutlinedTextField(value = timeReserved, onValueChange = { timeReserved = it }, label = { Text("Reservado (min)") }, modifier = Modifier.weight(1f))
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(value = instructions, onValueChange = { instructions = it }, label = { Text("Instruções / Notas") }, modifier = Modifier.fillMaxWidth(), minLines = 2)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(value = links, onValueChange = { links = it }, label = { Text("Links") }, modifier = Modifier.fillMaxWidth())
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedButton(onClick = { filePickerLauncher.launch("*/*") }, modifier = Modifier.fillMaxWidth()) {
+                        Icon(Icons.Default.Add, contentDescription = null, tint = LumiereGold)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = tasks.find { it.id == blockedByTaskId }?.title ?: "Sem bloqueio",
-                            color = if(blockedByTaskId != null) Color.Red else LumiereGold
-                        )
-                    }
-                    DropdownMenu(expanded = expandedBlocker, onDismissRequest = { expandedBlocker = false }, modifier = Modifier.background(LumiereDarkGray)) {
-                        DropdownMenuItem(text = { Text("Sem bloqueio", color = MaterialTheme.colorScheme.onBackground) }, onClick = { blockedByTaskId = null; expandedBlocker = false })
-                        availableBlockers.forEach { t ->
-                            DropdownMenuItem(text = { Text(t.title, color = MaterialTheme.colorScheme.onBackground) }, onClick = { blockedByTaskId = t.id; expandedBlocker = false })
-                        }
+                        Text(if (taskAttachmentUris.isEmpty()) "Anexar Ficheiros" else "${taskAttachmentUris.size} Anexos", color = LumiereGold)
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(value = category, onValueChange = { category = it }, label = { Text("Categoria") }, modifier = Modifier.weight(1f))
-                    OutlinedTextField(value = context, onValueChange = { context = it }, label = { Text("Contexto (ex: Casa)") }, modifier = Modifier.weight(1f))
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Seletor de Projetos
-                var expandedProject by remember { mutableStateOf(false) }
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    OutlinedButton(onClick = { expandedProject = true }, modifier = Modifier.fillMaxWidth()) {
-                        Icon(LumiereIcons.Folder, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = projects.find { it.id == selectedProjectId }?.name ?: "Sem Projeto",
-                            color = LumiereGold
-                        )
-                    }
-                    DropdownMenu(expanded = expandedProject, onDismissRequest = { expandedProject = false }, modifier = Modifier.background(LumiereDarkGray)) {
-                        DropdownMenuItem(text = { Text("Sem Projeto", color = MaterialTheme.colorScheme.onBackground) }, onClick = { selectedProjectId = null; expandedProject = false })
-                        projects.forEach { proj ->
-                            DropdownMenuItem(text = { Text(proj.name, color = MaterialTheme.colorScheme.onBackground) }, onClick = { selectedProjectId = proj.id; expandedProject = false })
-                        }
-                    }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(value = estimatedDuration, onValueChange = { estimatedDuration = it }, label = { Text("Estimativa (min)") }, modifier = Modifier.weight(1f))
-                    OutlinedTextField(value = timeReserved, onValueChange = { timeReserved = it }, label = { Text("Reservado (min)") }, modifier = Modifier.weight(1f))
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-
-                                // DATA E HORA
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                    OutlinedButton(onClick = { showDatePicker = true }, modifier = Modifier.weight(1f)) {
-                        Icon(Icons.Default.DateRange, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(taskDueDate?.let { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date(it)) } ?: "Sem Data", color = LumiereGold, fontSize = 12.sp)
-                    }
-                    OutlinedButton(onClick = { showTimePicker = true }, modifier = Modifier.weight(1f), enabled = taskDueDate != null) {
-                        Icon(Icons.Default.Refresh, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(taskDueDate?.let { SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(it)) } ?: "Hora", color = if (taskDueDate != null) LumiereGold else Color.Gray, fontSize = 12.sp)
-                    }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // RECORRÊNCIA
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    OutlinedButton(onClick = { expandedRecurrence = true }, modifier = Modifier.fillMaxWidth()) {
-                        Icon(Icons.Default.Refresh, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = when(taskRecurrence) {
-                                "DAILY" -> "Repetir: Diariamente"
-                                "WEEKLY" -> "Repetir: Semanalmente"
-                                "MONTHLY" -> "Repetir: Mensalmente"
-                                "YEARLY" -> "Repetir: Anualmente"
-                                else -> "Repetir: Nunca"
-                            },
-                            color = LumiereGold
-                        )
-                    }
-                    DropdownMenu(expanded = expandedRecurrence, onDismissRequest = { expandedRecurrence = false }, modifier = Modifier.background(LumiereDarkGray)) {
-                        listOf("NONE" to "Nunca", "DAILY" to "Diariamente", "WEEKLY" to "Semanalmente", "MONTHLY" to "Mensalmente", "YEARLY" to "Anualmente").forEach { (rule, label) ->
-                            DropdownMenuItem(text = { Text(label, color = MaterialTheme.colorScheme.onBackground) }, onClick = { taskRecurrence = rule; expandedRecurrence = false })
-                        }
-                    }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // PRIORIDADE
-                Text("Prioridade:", color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp)
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    FilterChip(selected = taskPriority == 1, onClick = { taskPriority = 1 }, label = { Text("Baixa") })
-                    FilterChip(selected = taskPriority == 2, onClick = { taskPriority = 2 }, label = { Text("Média") })
-                    FilterChip(selected = taskPriority == 3, onClick = { taskPriority = 3 }, label = { Text("Alta") })
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-
-Text("Urgência: ${if(urgency==1) "Baixa" else if(urgency==2) "Média" else "Alta"}", color = MaterialTheme.colorScheme.onSurface)
-                Slider(value = urgency.toFloat(), onValueChange = { urgency = it.toInt() }, valueRange = 1f..3f, steps = 1)
-                
-                Text("Importância: ${if(importance==1) "Baixa" else if(importance==2) "Média" else "Alta"}", color = MaterialTheme.colorScheme.onSurface)
-                Slider(value = importance.toFloat(), onValueChange = { importance = it.toInt() }, valueRange = 1f..3f, steps = 1)
-
-                Text("Energia Necessária: ${if(energy==1) "Baixa" else if(energy==2) "Média" else "Alta"}", color = MaterialTheme.colorScheme.onSurface)
-                Slider(value = energy.toFloat(), onValueChange = { energy = it.toInt() }, valueRange = 1f..3f, steps = 1)
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("Anexos e Contexto", color = LumiereGold, fontWeight = FontWeight.Bold)
-                OutlinedTextField(value = instructions, onValueChange = { instructions = it }, label = { Text("Instruções / Notas") }, modifier = Modifier.fillMaxWidth(), minLines = 2)
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(value = links, onValueChange = { links = it }, label = { Text("Links (ex: https://...)") }, modifier = Modifier.fillMaxWidth())
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                OutlinedButton(
-                    onClick = { 
-                        if (taskAttachmentUris.size < 10) {
-                            filePickerLauncher.launch("*/*") 
-                        }
-                    }, 
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = taskAttachmentUris.size < 10
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = null, tint = if (taskAttachmentUris.size < 10) LumiereGold else Color.Gray)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = if (taskAttachmentUris.isEmpty()) "Anexar Ficheiros (Máx 10)" else "${taskAttachmentUris.size} Ficheiros Anexados",
-                        color = if (taskAttachmentUris.size < 10) LumiereGold else Color.Gray
-                    )
-                }
-                if (taskAttachmentUris.isNotEmpty()) {
-                    Text("Ficheiros selecionados:", color = Color.Gray, fontSize = 10.sp, modifier = Modifier.padding(top = 4.dp))
-                    taskAttachmentUris.forEachIndexed { index, uri ->
-                        Text("${index + 1}. $uri", color = Color.Gray, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(value = completionCriteria, onValueChange = { completionCriteria = it }, label = { Text("Critério de Conclusão") }, modifier = Modifier.fillMaxWidth())
-                
                 Spacer(modifier = Modifier.height(24.dp))
-                
                 Button(
                     onClick = {
                         val task = (taskToEdit ?: Task(title = "")).copy(
-                            title = title,
-                            category = category.ifBlank { null },
-                            urgency = urgency,
-                            importance = importance,
-                            energy = energy,
-                            context = context.ifBlank { null },
-                            dueDate = taskDueDate,
-                            projectId = selectedProjectId,
-                            blockedByTaskId = blockedByTaskId,
-                            priority = taskPriority,
-                            recurrenceRule = taskRecurrence,
-                            estimatedDurationMinutes = estimatedDuration.toIntOrNull(),
-                            timeReservedMinutes = timeReserved.toIntOrNull(),
-                            instructions = instructions.ifBlank { null },
-                            links = links.ifBlank { null },
-                            completionCriteria = completionCriteria.ifBlank { null },
-                            attachmentUris = if (taskAttachmentUris.isEmpty()) null else taskAttachmentUris.joinToString(","),
+                            title = title, category = category.ifBlank { null }, context = context.ifBlank { null },
+                            dueDate = taskDueDate, projectId = selectedProjectId, blockedByTaskId = blockedByTaskId,
+                            priority = taskPriority, recurrenceRule = taskRecurrence, urgency = urgency, importance = importance, energy = energy,
+                            estimatedDurationMinutes = estimatedDuration.toIntOrNull(), timeReservedMinutes = timeReserved.toIntOrNull(),
+                            instructions = instructions.ifBlank { null }, links = links.ifBlank { null }, completionCriteria = completionCriteria.ifBlank { null },
+                            attachmentUris = if (taskAttachmentUris.isEmpty()) null else taskAttachmentUris.joinToString(",")
                         )
                         if (taskToEdit == null) viewModel.addTask(task) else viewModel.updateTask(task)
                         showSheet = false
                     },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = LumiereGold)
-                ) { Text("Guardar", color = Color.Black) }
+                ) { Text("Guardar Tarefa", color = Color.Black, fontWeight = FontWeight.Bold) }
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
 
-        // DIALOG: DatePicker
-        if (showDatePicker) {
-            val datePickerState = rememberDatePickerState(initialSelectedDateMillis = taskDueDate ?: System.currentTimeMillis())
-            DatePickerDialog(
-                onDismissRequest = { showDatePicker = false },
-                confirmButton = {
-                    TextButton(onClick = {
-                        val currentCalendar = Calendar.getInstance()
-                        if (taskDueDate != null) currentCalendar.timeInMillis = taskDueDate!!
-                        val newCalendar = Calendar.getInstance()
-                        newCalendar.timeInMillis = datePickerState.selectedDateMillis ?: System.currentTimeMillis()
-                        newCalendar.set(Calendar.HOUR_OF_DAY, currentCalendar.get(Calendar.HOUR_OF_DAY))
-                        newCalendar.set(Calendar.MINUTE, currentCalendar.get(Calendar.MINUTE))
-                        taskDueDate = newCalendar.timeInMillis
-                        showDatePicker = false
-                    }) { Text("OK", color = LumiereGold) }
-                },
-                dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") } }
-            ) { DatePicker(state = datePickerState) }
-        }
-
-        // DIALOG: TimePicker
-        if (showTimePicker) {
-            val timePickerState = rememberTimePickerState()
-            AlertDialog(
-                onDismissRequest = { showTimePicker = false },
-                title = { Text("Escolher Hora", color = LumiereGold) },
-                text = { TimePicker(state = timePickerState) },
-                confirmButton = {
-                    TextButton(onClick = {
-                        val cal = Calendar.getInstance()
-                        if (taskDueDate != null) cal.timeInMillis = taskDueDate!!
-                        cal.set(Calendar.HOUR_OF_DAY, timePickerState.hour)
-                        cal.set(Calendar.MINUTE, timePickerState.minute)
-                        taskDueDate = cal.timeInMillis
-                        showTimePicker = false
-                    }) { Text("OK", color = LumiereGold) }
-                },
-                dismissButton = { TextButton(onClick = { showTimePicker = false }) { Text("Cancelar") } },
-                containerColor = LumiereDarkGray
-            )
-        }
-    }
-
-
-    // DIALOG: Motivo de Cancelamento
-    if (taskToCancel != null) {
-        AlertDialog(
-            onDismissRequest = { taskToCancel = null; cancelReason = "" },
-            title = { Text("Cancelar Tarefa", color = Color.Red) },
-            text = {
-                Column {
-                    Text("Porque estás a cancelar '${taskToCancel?.title}'?", color = MaterialTheme.colorScheme.onBackground)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = cancelReason,
-                        onValueChange = { cancelReason = it },
-                        label = { Text("Motivo (ex: Falta de tempo)") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    if (cancelReason.isNotBlank()) {
-                        viewModel.cancelTask(taskToCancel!!, cancelReason)
-                        taskToCancel = null
-                        cancelReason = ""
-                    }
-                }) { Text("Confirmar", color = Color.Red) }
-            },
-            dismissButton = { TextButton(onClick = { taskToCancel = null; cancelReason = "" }) { Text("Voltar", color = LumiereGold) } },
-            containerColor = MaterialTheme.colorScheme.surface
-        )
     }
 
     // DIALOG: Confirmar Eliminação
@@ -1050,4 +923,29 @@ fun getEndOfDay(timestamp: Long): Long {
     calendar.set(Calendar.SECOND, 59)
     calendar.set(Calendar.MILLISECOND, 999)
     return calendar.timeInMillis
+}
+
+@Composable
+fun AccordionSection(title: String, isExpanded: Boolean, onToggle: () -> Unit, content: @Composable () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E)),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column {
+            Row(
+                modifier = Modifier.fillMaxWidth().clickable { onToggle() }.padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(title, color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                Icon(if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown, contentDescription = null, tint = LumiereGold)
+            }
+            if (isExpanded) {
+                Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
+                    content()
+                }
+            }
+        }
+    }
 }
