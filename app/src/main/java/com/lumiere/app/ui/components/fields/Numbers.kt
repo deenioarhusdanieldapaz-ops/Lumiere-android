@@ -3,13 +3,12 @@ package com.lumiere.app.ui.components.fields
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.lumiere.app.ui.theme.LumiereGold
@@ -60,11 +59,11 @@ fun LumiereStepper(
     Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text(label, modifier = Modifier.weight(1f))
         IconButton(onClick = { if (value > 0) onValueChange(value - 1) }) {
-            Icon(Icons.Default.Remove, contentDescription = "Menos", tint = LumiereGold)
+            Text("−", color = LumiereGold, fontSize = 24.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
         }
         Text(value.toString(), color = LumiereGold)
         IconButton(onClick = { onValueChange(value + 1) }) {
-            Icon(Icons.Default.Add, contentDescription = "Mais", tint = LumiereGold)
+            Text("+", color = LumiereGold, fontSize = 24.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
         }
     }
 }
