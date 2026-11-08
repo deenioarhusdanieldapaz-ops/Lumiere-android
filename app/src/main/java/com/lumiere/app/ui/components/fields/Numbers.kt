@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.lumiere.app.ui.theme.LumiereGold
 
 @Composable
@@ -59,11 +60,11 @@ fun LumiereStepper(
     Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text(label, modifier = Modifier.weight(1f))
         IconButton(onClick = { if (value > 0) onValueChange(value - 1) }) {
-            Text("−", color = LumiereGold, fontSize = 24.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+            Text("−", color = LumiereGold, fontSize = 24.sp, fontWeight = FontWeight.Bold)
         }
         Text(value.toString(), color = LumiereGold)
         IconButton(onClick = { onValueChange(value + 1) }) {
-            Text("+", color = LumiereGold, fontSize = 24.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+            Text("+", color = LumiereGold, fontSize = 24.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
