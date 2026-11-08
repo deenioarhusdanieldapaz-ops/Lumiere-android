@@ -1,30 +1,24 @@
 package com.lumiere.app.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lumiere.app.data.local.entity.Habit
 import com.lumiere.app.ui.theme.LumiereDarkGray
 import com.lumiere.app.ui.theme.LumiereGold
 import com.lumiere.app.ui.viewmodel.HabitViewModel
@@ -37,6 +31,8 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
     var newHabitName by remember { mutableStateOf("") }
     var newHabitCategory by remember { mutableStateOf("") }
     var newHabitFrequency by remember { mutableStateOf("DAILY") }
+    var newHabitTarget by remember { mutableStateOf("") }
+    var newHabitUnit by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
@@ -61,22 +57,22 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 16.dp)
+                .verticalScroll(rememberScrollState()), // CORREÇÃO DO SCROLL
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // HERO CARD (O anel de 78%, sequência e recorde)
+            // HERO CARD
             Card(
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                 colors = CardDefaults.cardColors(containerColor = LumiereDarkGray),
                 shape = RoundedCornerShape(24.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF4A3F38))
+                border = BorderStroke(1.dp, Color(0xFF4A3F38))
             ) {
                 Row(
                     modifier = Modifier.padding(20.dp).fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Anel de Consistência (Simulado por agora)
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Box(contentAlignment = Alignment.Center, modifier = Modifier.size(80.dp)) {
                             CircularProgressIndicator(
@@ -92,7 +88,6 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                         Text("Consistência", color = Color.Gray, fontSize = 11.sp)
                     }
 
-                    // Streak (Sequência e Recorde)
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.Star, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(20.dp))
@@ -113,23 +108,19 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                     }
                 }
             }
-            
-            // 1. INDICADORES COMPACTOS (4 cartões)
+
+            // INDICADORES COMPACTOS
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Concluídos
                 MetricTile(Modifier.weight(1f), "0", "Concluídos", Color.Green)
-                // Pendentes
                 MetricTile(Modifier.weight(1f), "0", "Pendentes", LumiereGold)
-                // Média
                 MetricTile(Modifier.weight(1f), "0%", "Média", Color(0xFF9C27B0))
-                // Metas
                 MetricTile(Modifier.weight(1f), "0/0", "Metas", Color(0xFFFF9800))
             }
 
-            // 2. TÍTULO "HÁBITOS DE HOJE"
+            // TÍTULO "HÁBITOS DE HOJE"
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -139,12 +130,11 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                 Text("Ver todos →", color = LumiereGold, fontSize = 12.sp)
             }
 
-            // 3. ESTADO VAZIO PREMIUM (Design do Eng. 11)
+            // ESTADO VAZIO PREMIUM
             Column(
                 modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Estrela Gigante
                 Box(
                     modifier = Modifier.size(120.dp).background(LumiereGold.copy(alpha = 0.05f), CircleShape),
                     contentAlignment = Alignment.Center
@@ -154,7 +144,7 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                 
                 Spacer(modifier = Modifier.height(24.dp))
                 
-                Text("Bem-vindo ao Módulo", color = Color.White, fontSize = 24.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                Text("Bem-vindo ao Módulo", color = Color.White, fontSize = 24.sp, textAlign = TextAlign.Center)
                 Text("Hábitos!", color = LumiereGold, fontSize = 32.sp, fontWeight = FontWeight.Bold)
                 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -163,15 +153,15 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                     "Comece agora a criar os seus hábitos e construa uma vida mais equilibrada.",
                     color = Color.Gray,
                     fontSize = 14.sp,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    textAlign = TextAlign.Center,
                     modifier = Modifier.padding(horizontal = 24.dp)
                 )
                 
                 Spacer(modifier = Modifier.height(32.dp))
                 
-                // Botão Principal
+                // ABRE O FORMULÁRIO DE CRIAÇÃO
                 Button(
-                    onClick = { showCreateSheet = true }, // Usando o estado elevado (Tip #4)
+                    onClick = { showCreateSheet = true },
                     modifier = Modifier.fillMaxWidth(0.9f).height(56.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = LumiereGold),
                     shape = RoundedCornerShape(28.dp)
@@ -183,11 +173,10 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                 
                 Spacer(modifier = Modifier.height(12.dp))
                 
-                // Botão Secundário (Tutorial)
                 OutlinedButton(
                     onClick = { /* Ação do tutorial */ },
                     modifier = Modifier.fillMaxWidth(0.9f).height(56.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, LumiereGold),
+                    border = BorderStroke(1.dp, LumiereGold),
                     shape = RoundedCornerShape(28.dp)
                 ) {
                     Icon(Icons.Default.PlayArrow, contentDescription = null, tint = LumiereGold)
@@ -197,17 +186,13 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                 
                 Spacer(modifier = Modifier.height(24.dp))
                 
-                // Dica da Lumière
                 Card(
                     modifier = Modifier.fillMaxWidth(0.9f),
                     colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E)),
                     shape = RoundedCornerShape(16.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF4A3F38))
+                    border = BorderStroke(1.dp, Color(0xFF4A3F38))
                 ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Info, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(24.dp))
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
@@ -218,7 +203,89 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                 }
             }
             
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+
+    // MODAL: CRIAR HÁBITO
+    if (showCreateSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showCreateSheet = false },
+            containerColor = LumiereDarkGray
+        ) {
+            Column(modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState()).fillMaxWidth()) {
+                Text("Novo Hábito", color = LumiereGold, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = newHabitName,
+                    onValueChange = { newHabitName = it },
+                    label = { Text("Nome do Hábito") },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = LumiereGold)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = newHabitCategory,
+                    onValueChange = { newHabitCategory = it },
+                    label = { Text("Categoria (ex: Saúde)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = LumiereGold)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text("Frequência", color = Color.Gray, fontSize = 12.sp)
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    FilterChip(selected = newHabitFrequency == "DAILY", onClick = { newHabitFrequency = "DAILY" }, label = { Text("Diário") })
+                    FilterChip(selected = newHabitFrequency == "WEEKLY", onClick = { newHabitFrequency = "WEEKLY" }, label = { Text("Semanal") })
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = newHabitTarget,
+                        onValueChange = { newHabitTarget = it },
+                        label = { Text("Meta (ex: 8)") },
+                        modifier = Modifier.weight(1f),
+                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = LumiereGold)
+                    )
+                    OutlinedTextField(
+                        value = newHabitUnit,
+                        onValueChange = { newHabitUnit = it },
+                        label = { Text("Unidade (ex: copos)") },
+                        modifier = Modifier.weight(1f),
+                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = LumiereGold)
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                Button(
+                    onClick = {
+                        if (newHabitName.isNotBlank()) {
+                            viewModel.addHabit(Habit(
+                                name = newHabitName,
+                                category = newHabitCategory.ifBlank { null },
+                                frequencyType = newHabitFrequency,
+                                targetValue = newHabitTarget.toIntOrNull(),
+                                unit = newHabitUnit.ifBlank { null }
+                            ))
+                            // Limpar os campos (State Hoisting)
+                            newHabitName = ""
+                            newHabitCategory = ""
+                            newHabitTarget = ""
+                            newHabitUnit = ""
+                            showCreateSheet = false
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = LumiereGold)
+                ) {
+                    Text("Guardar Hábito", color = Color.Black, fontWeight = FontWeight.Bold)
+                }
+                Spacer(modifier = Modifier.height(24.dp))
+            }
         }
     }
 }
