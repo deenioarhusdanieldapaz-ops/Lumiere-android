@@ -11,8 +11,8 @@ import java.util.Calendar
 
 class HabitViewModel(private val repository: HabitRepository) : ViewModel() {
     val habits: StateFlow<List<Habit>> = repository.allHabits
-    val allCheckIns: StateFlow<List<HabitCheckIn>> = repository.allCheckIns
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    val allCheckIns: StateFlow<List<HabitCheckIn>> = repository.allCheckIns
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun addHabit(habit: Habit) {

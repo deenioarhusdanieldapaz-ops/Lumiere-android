@@ -190,17 +190,12 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
             } else {
                 // LISTA REAL DE HÁBITOS
                 habits.forEach { habit ->
-                    val todayCheckIns by viewModel.getCheckInsForHabit(habit.id).collectAsState(initial = emptyList())
-                    val isCompletedToday = todayCheckIns.any { 
-                        val cal = java.util.Calendar.getInstance().apply { timeInMillis = it.timestamp }
-                        val today = java.util.Calendar.getInstance()
-                        cal.get(java.util.Calendar.YEAR) == today.get(java.util.Calendar.YEAR) &&
-                        cal.get(java.util.Calendar.DAY_OF_YEAR) == today.get(java.util.Calendar.DAY_OF_YEAR)
-                    }
+                    // Dica #8: Usa a lista global checkInsToday (evita flickering)
+                    val isCompletedToday = checkInsToday.any { it.habitId == habit.id }
                     HabitItem(
-                        habit = habit, 
+                        habit = habit,
                         isCompletedToday = isCompletedToday,
-                        onCheckIn = { 
+                        onCheckIn = {
                             viewModel.addCheckIn(com.lumiere.app.data.local.entity.HabitCheckIn(habitId = habit.id))
                         }
                     )
