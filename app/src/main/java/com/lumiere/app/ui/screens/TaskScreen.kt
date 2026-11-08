@@ -775,7 +775,7 @@ fun TaskScreen(viewModel: TaskViewModel) {
                     }) { Text("OK", color = LumiereGold) }
                 },
                 dismissButton = { TextButton(onClick = { showTimePicker = false }) { Text("Cancelar") } },
-                colors = AlertDialogDefaults.colors(containerColor = LumiereDarkGray)
+                containerColor = LumiereDarkGray
             )
         }
 
