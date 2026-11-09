@@ -1,7 +1,17 @@
 #!/bin/bash
 
+echo "🛡️ 0. A verificar se há segredos no código (Segurança Eng.9)..."
+# Se encontrar os padrões, cancela o commit.
+if git diff --cached --name-only | grep -qE '\.(jks|keystore|properties|zip)$|base64'; then
+    echo "❌ BLOQUEADO: Detetado ficheiro sensível no staging. Faça 'git reset' e remova-o."
+    exit 1
+fi
+
 echo "🚀 1. A enviar código para o GitHub..."
-git add .
+# git add -u atualiza ficheiros já rastreados, mas não adiciona novos por engano
+git add -u
+# Se houver ficheiros novos de código que quer adicionar, adicione-os explicitamente abaixo (ex: git add app/src/...)
+
 git commit -m "Auto-update: Nova versão da app"
 git push origin main
 
@@ -16,11 +26,10 @@ if [ "$CONCLUSION" != "success" ]; then
     echo "=========================================="
     echo "❌ COMPILAÇÃO FALHOU — LOG DE ERRO:"
     echo "=========================================="
-    # Extrai as linhas exatas do compilador Kotlin (ficheiro, linha e motivo)
     gh run view $RUN_ID --log-failed 2>/dev/null | grep -E "e: file:///|Caused by|FAILURE: Build failed" | sed 's/^[0-9T:.-]*Z //'
     echo ""
     echo "=========================================="
-    echo "Ver log completo em: https://github.com/deenioarhusdanieldapaz-ops/Lumiere-android/actions/runs/$RUN_ID"
+    echo "Ver log completo em: https://github.com/deenioarhusdaneldapaz-ops/Lumiere-android/actions/runs/$RUN_ID"
     exit 1
 fi
 

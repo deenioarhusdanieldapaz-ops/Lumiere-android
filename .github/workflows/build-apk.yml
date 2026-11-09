@@ -24,6 +24,13 @@ jobs:
       with:
         gradle-version: 8.4
 
+    - name: Decode Keystore
+      env:
+        LUMIERE_KEYSTORE_BASE64: ${{ secrets.LUMIERE_KEYSTORE_BASE64 }}
+      run: |
+        echo "::add-mask::$LUMIERE_KEYSTORE_BASE64"
+        echo "$LUMIERE_KEYSTORE_BASE64" | base64 --decode > signing.keystore
+
     - name: Run Unit Tests
       env:
         LUMIERE_STORE_PASSWORD: ${{ secrets.LUMIERE_STORE_PASSWORD }}
@@ -41,3 +48,7 @@ jobs:
       with:
         name: debug-apk
         path: app/build/outputs/apk/debug/app-debug.apk
+
+    - name: Cleanup Keystore
+      if: always()
+      run: rm -f signing.keystore

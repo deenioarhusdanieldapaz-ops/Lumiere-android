@@ -35,16 +35,16 @@ jobs:
 
       - name: Decode Keystore
         run: |
-          echo "::add-mask::${{ secrets.KEYSTORE_BASE64 }}"
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > release.jks
+          echo "::add-mask::${{ secrets.LUMIERE_KEYSTORE_BASE64 }}"
+          echo "${{ secrets.LUMIERE_KEYSTORE_BASE64 }}" | base64 --decode > release.jks
 
       - name: Build Release APK
         run: |
           ./gradlew assembleRelease \
             -Pandroid.injected.signing.store.file=$(pwd)/release.jks \
-            -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
-            -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
-            -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
+            -Pandroid.injected.signing.store.password=${{ secrets.LUMIERE_STORE_PASSWORD }} \
+            -Pandroid.injected.signing.key.alias=${{ secrets.LUMIERE_KEY_ALIAS }} \
+            -Pandroid.injected.signing.key.password=${{ secrets.LUMIERE_KEY_PASSWORD }}
 
       - name: Cleanup Keystore
         if: always()
