@@ -22,3 +22,10 @@ assetlinks.json
 local.properties
 *.bak-*
 *.bak_*
+
+# Segredos e ficheiros sensiveis (adicionado Eng.9)
+keystore_base64.txt
+release-keystore-jks.zip
+*.zip
+.github/workflows/generate-keystore.yml
+*.bak-pre-secrets
