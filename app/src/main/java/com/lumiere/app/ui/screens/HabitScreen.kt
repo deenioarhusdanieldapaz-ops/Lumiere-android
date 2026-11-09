@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -51,6 +52,8 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
     var showCreateSheet by remember { mutableStateOf(false) }
     var newHabitName by remember { mutableStateOf("") }
     var newHabitCategory by remember { mutableStateOf("") }
+    var newHabitDescription by remember { mutableStateOf("") }
+    var newHabitNotes by remember { mutableStateOf("") }
     var newHabitFrequency by remember { mutableStateOf("DAILY") }
     var newHabitTarget by remember { mutableStateOf("") }
     var newHabitUnit by remember { mutableStateOf("") }
@@ -250,14 +253,25 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                         onDelete = { viewModel.deleteHabit(habit) },
                         onPause = { viewModel.pauseHabit(habit) },
                         onResume = { viewModel.resumeHabit(habit) },
-                        onEdit = { 
+                        onEdit = {
                             habitToEdit = habit
                             newHabitName = habit.name
                             newHabitCategory = habit.category ?: ""
+                            newHabitDescription = habit.description ?: ""
+                            newHabitNotes = habit.notes ?: ""
                             newHabitFrequency = habit.frequencyType
                             newHabitTarget = habit.targetValue?.toString() ?: ""
                             newHabitUnit = habit.unit ?: ""
                             selectedDays = habit.weeklyDays
+                            newHabitInterval = habit.intervalDays.toString()
+                            restDaysState = habit.restDays
+                            preferredTime = habit.preferredTime?.let {
+                                val parts = it.split(":")
+                                if (parts.size == 2) Pair(parts[0].toIntOrNull() ?: 0, parts[1].toIntOrNull() ?: 0) else null
+                            }
+                            durationMinutes = habit.durationMinutes?.toString() ?: ""
+                            completionCriteria = habit.completionCriteria ?: ""
+                            isAdaptationPeriod = habit.isAdaptationPeriod
                             showCreateSheet = true
                         },
                         onFail = { viewModel.addFailureCheckIn(habit.id) },
@@ -388,6 +402,10 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                         selected = newHabitCategory.ifBlank { null },
                         onSelect = { newHabitCategory = it }
                     )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    LumiereTextArea(value = newHabitDescription, onValueChange = { newHabitDescription = it }, label = "Detalhes (Descrição)")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    LumiereTextArea(value = newHabitNotes, onValueChange = { newHabitNotes = it }, label = "Notas Pessoais")
                 }
 
                 // GAVETA 2: FREQUÊNCIA
@@ -488,6 +506,8 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                             val habit = Habit(
                                 name = newHabitName,
                                 category = newHabitCategory.ifBlank { null },
+                                description = newHabitDescription.ifBlank { null },
+                                notes = newHabitNotes.ifBlank { null },
                                 frequencyType = newHabitFrequency,
                                 weeklyDays = selectedDays,
                                 intervalDays = newHabitInterval.toIntOrNull() ?: 1,
@@ -501,7 +521,7 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                             )
                             if (habitToEdit != null) {
                                 viewModel.updateHabit(habitToEdit!!.copy(
-                                    name = habit.name, category = habit.category, frequencyType = habit.frequencyType,
+                                    name = habit.name, category = habit.category, description = habit.description, notes = habit.notes, frequencyType = habit.frequencyType,
                                     weeklyDays = habit.weeklyDays, intervalDays = habit.intervalDays,
                                     targetValue = habit.targetValue, unit = habit.unit, preferredTime = habit.preferredTime
                                 ))
@@ -543,100 +563,105 @@ fun MetricTile(modifier: Modifier, value: String, label: String, color: Color) {
 
 @Composable
 fun HabitItem(habit: Habit, isCompletedToday: Boolean = false, failureToday: Boolean = false, todayValue: Int = 0, onCheckIn: () -> Unit, onDelete: () -> Unit, onPause: () -> Unit, onResume: () -> Unit, onEdit: () -> Unit, onFail: () -> Unit, onOpenDetails: () -> Unit = {}) {
+    val isPaused = habit.status == 1
+    val isCompleted = isCompletedToday
+    val hasFailed = failureToday
+    
+    val (iconColor, bgColor) = getCategoryColor(habit.category)
+
     Card(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         colors = CardDefaults.cardColors(containerColor = LumiereDarkGray),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, Color(0xFF333333))
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Ícone (simplificado por agora)
+        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            // Ícone Colorido
             Box(
-                modifier = Modifier.size(48.dp).background(Color(0xFF332A1D), RoundedCornerShape(12.dp)),
+                modifier = Modifier.size(52.dp).background(bgColor, RoundedCornerShape(14.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(getCategoryIcon(habit.category), contentDescription = null, tint = LumiereGold)
+                Icon(getCategoryIcon(habit.category), contentDescription = null, tint = iconColor, modifier = Modifier.size(28.dp))
             }
             Spacer(modifier = Modifier.width(16.dp))
-            
+
+            // Textos
             Column(modifier = Modifier.weight(1f)) {
-                Text(habit.name, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = Modifier.clickable { onOpenDetails() })
+                Text(
+                    text = habit.name,
+                    color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp,
+                    maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    modifier = Modifier.clickable { onOpenDetails() }
+                )
                 if (habit.targetValue != null && habit.unit != null) {
-                    val progressText = if (isCompletedToday) "${habit.targetValue}/${habit.targetValue} ${habit.unit}" else "$todayValue/${habit.targetValue} ${habit.unit}"
-                    Text(progressText, color = if (isCompletedToday) Color(0xFF2E7D32) else Color.Gray, fontSize = 12.sp)
-                }
-            }
-            
-            // Menu de 3 pontinhos
-            var showMenu by remember { mutableStateOf(false) }
-            Box {
-                IconButton(onClick = { showMenu = true }) {
-                    Icon(Icons.Default.MoreVert, contentDescription = "Opções", tint = Color.Gray)
-                }
-                DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }, modifier = Modifier.background(LumiereDarkGray)) {
-                    DropdownMenuItem(
-                        text = { Text("Editar Hábito", color = LumiereGold) },
-                        onClick = { onEdit(); showMenu = false }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Registar Falha", color = Color(0xFFFF9800)) },
-                        onClick = { onFail(); showMenu = false }
-                    )
-                    if (habit.status == 0) {
-                        DropdownMenuItem(
-                            text = { Text("Pausar", color = LumiereGold) },
-                            onClick = { onPause(); showMenu = false }
-                        )
-                    } else {
-                        DropdownMenuItem(
-                            text = { Text("Retomar", color = Color.Green) },
-                            onClick = { onResume(); showMenu = false }
-                        )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.DateRange, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(12.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        val progressText = if (isCompletedToday) "${habit.targetValue}/${habit.targetValue} ${habit.unit}" else "$todayValue/${habit.targetValue} ${habit.unit}"
+                        Text(progressText, color = if (isCompletedToday) Color(0xFF4CAF50) else Color.Gray, fontSize = 12.sp)
                     }
-                    DropdownMenuItem(
-                        text = { Text("Eliminar", color = Color.Red) },
-                        onClick = { onDelete(); showMenu = false }
-                    )
                 }
             }
 
-            // Botão de Check-in (Estado Dinâmico)
-            if (habit.status == 1) {
-                // Estado Pausado
-                Surface(color = Color.Gray.copy(alpha = 0.2f), shape = RoundedCornerShape(20.dp)) {
-                    Text("Pausado", color = Color.Gray, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+            Spacer(modifier = Modifier.width(8.dp))
+            Box(modifier = Modifier.width(1.dp).height(40.dp).background(Color(0xFF444444)))
+            Spacer(modifier = Modifier.width(8.dp))
+
+            // Ações
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                if (isPaused) {
+                    OutlinedButton(onClick = onResume, border = BorderStroke(1.dp, Color.Gray), shape = RoundedCornerShape(20.dp), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)) {
+                        Text("Retomar", color = Color.Gray, fontSize = 11.sp)
+                    }
+                } else if (hasFailed) {
+                    OutlinedButton(onClick = { }, border = BorderStroke(1.dp, Color.Red), shape = RoundedCornerShape(20.dp), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)) {
+                        Text("Falhou", color = Color.Red, fontSize = 11.sp)
+                    }
+                } else if (isCompleted) {
+                    Button(onClick = { }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1B5E20)), shape = RoundedCornerShape(20.dp), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)) {
+                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Cumprido", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
+                } else {
+                    OutlinedButton(onClick = onCheckIn, border = BorderStroke(1.dp, LumiereGold), shape = RoundedCornerShape(20.dp), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)) {
+                        Icon(Icons.Default.PlayArrow, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(if (habit.targetValue != null) "+1" else "Registar", color = LumiereGold, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
                 }
-            } else if (failureToday) {
-                // Estado Falha
-                Surface(color = Color.Red.copy(alpha = 0.2f), shape = RoundedCornerShape(20.dp)) {
-                    Text("Falhou", color = Color.Red, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
-                }
-            } else if (isCompletedToday) {
-                // Estado Cumprido
-                Button(
-                    onClick = { },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32)),
-                    shape = RoundedCornerShape(20.dp)
-                ) {
-                    Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Cumprido", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                }
-            } else {
-                // Estado Pendente
-                OutlinedButton(
-                    onClick = onCheckIn,
-                    border = BorderStroke(1.dp, LumiereGold),
-                    shape = RoundedCornerShape(20.dp)
-                ) {
-                    Icon(Icons.Default.PlayArrow, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(if (habit.targetValue != null) "+1" else "Registar", color = LumiereGold, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                
+                var showMenu by remember { mutableStateOf(false) }
+                Box {
+                    IconButton(onClick = { showMenu = true }, modifier = Modifier.size(32.dp)) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "Opções", tint = Color.Gray)
+                    }
+                    DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }, modifier = Modifier.background(LumiereDarkGray)) {
+                        DropdownMenuItem(text = { Text("Editar Hábito", color = LumiereGold) }, onClick = { onEdit(); showMenu = false })
+                        DropdownMenuItem(text = { Text("Registar Falha", color = Color(0xFFFF9800)) }, onClick = { onFail(); showMenu = false })
+                        if (habit.status == 0) {
+                            DropdownMenuItem(text = { Text("Pausar", color = LumiereGold) }, onClick = { onPause(); showMenu = false })
+                        } else {
+                            DropdownMenuItem(text = { Text("Retomar", color = Color.Green) }, onClick = { onResume(); showMenu = false })
+                        }
+                        DropdownMenuItem(text = { Text("Eliminar", color = Color.Red) }, onClick = { onDelete(); showMenu = false })
+                    }
                 }
             }
         }
+    }
+}
+
+fun getCategoryColor(category: String?): Pair<Color, Color> {
+    val name = category?.lowercase() ?: ""
+    return when {
+        name.contains("saúd") || name.contains("água") || name.contains("agua") -> Pair(Color(0xFF1976D2), Color(0xFFE3F2FD))
+        name.contains("exerc") || name.contains("desport") -> Pair(Color(0xFFF57C00), Color(0xFFFFF3E0))
+        name.contains("estud") || name.contains("leit") || name.contains("livro") -> Pair(Color(0xFF7B1FA2), Color(0xFFF3E5F5))
+        name.contains("medit") || name.contains("bem-estar") -> Pair(Color(0xFF388E3C), Color(0xFFE8F5E9))
+        name.contains("financ") || name.contains("dinheir") -> Pair(Color(0xFF00796B), Color(0xFFE0F2F1))
+        else -> Pair(LumiereGold, Color(0xFF332A1D))
     }
 }
 
