@@ -35,12 +35,14 @@ jobs:
       env:
         LUMIERE_STORE_PASSWORD: ${{ secrets.LUMIERE_STORE_PASSWORD }}
         LUMIERE_KEY_PASSWORD: ${{ secrets.LUMIERE_KEY_PASSWORD }}
+        LUMIERE_KEY_ALIAS: ${{ secrets.LUMIERE_KEY_ALIAS }}
       run: gradle testDebugUnitTest
 
     - name: Build with Gradle
       env:
         LUMIERE_STORE_PASSWORD: ${{ secrets.LUMIERE_STORE_PASSWORD }}
         LUMIERE_KEY_PASSWORD: ${{ secrets.LUMIERE_KEY_PASSWORD }}
+        LUMIERE_KEY_ALIAS: ${{ secrets.LUMIERE_KEY_ALIAS }}
       run: gradle assembleDebug
 
     - name: Upload APK
