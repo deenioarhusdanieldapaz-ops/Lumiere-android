@@ -610,6 +610,16 @@ fun HabitItem(
 
     val isDone = hasFailedOrCompleted(failureToday, isCompletedToday, kind, habit, totalSec)
 
+    // Auto-concluir na base de dados quando o timer atinge o alvo
+    androidx.compose.runtime.LaunchedEffect(totalSec, habit.timerStartedAt) {
+        if (kind == HabitKind.DURATION && habit.timerStartedAt != null) {
+            val target = (habit.durationMinutes ?: 0) * 60
+            if (target > 0 && totalSec >= target && !isCompletedToday) {
+                onCompleteTimer()
+            }
+        }
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         colors = CardDefaults.cardColors(containerColor = LumiereDarkGray),

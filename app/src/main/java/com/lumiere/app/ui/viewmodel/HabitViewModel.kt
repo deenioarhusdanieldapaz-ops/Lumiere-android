@@ -108,9 +108,9 @@ class HabitViewModel(private val repository: HabitRepository) : ViewModel() {
 
             val hasCheckInOnThisDay = checkIns.any {
                 val ciCal = Calendar.getInstance().apply { timeInMillis = it.timestamp }
-                ciCal.set(Calendar.HOUR_OF_DAY, 0); ciCal.set(Calendar.MINUTE, 0)
-                ciCal.set(Calendar.SECOND, 0); ciCal.set(Calendar.MILLISECOND, 0)
-                ciCal.timeInMillis == currentDay
+                val checkCal = Calendar.getInstance().apply { timeInMillis = currentDay }
+                ciCal.get(Calendar.YEAR) == checkCal.get(Calendar.YEAR) &&
+                ciCal.get(Calendar.DAY_OF_YEAR) == checkCal.get(Calendar.DAY_OF_YEAR)
             }
 
             if (isExpectedDay && !isRestDay) {
