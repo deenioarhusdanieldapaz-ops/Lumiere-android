@@ -47,6 +47,7 @@ import com.lumiere.app.ui.utils.getCategoryIcon
 import com.lumiere.app.data.local.entity.Task
 import com.lumiere.app.ui.theme.LumiereDarkGray
 import com.lumiere.app.ui.theme.LumiereGold
+import com.lumiere.app.ui.components.SummaryCard
 import com.lumiere.app.ui.theme.LumiereIcons
 import com.lumiere.app.ui.viewmodel.TaskViewModel
 import java.util.Calendar
@@ -1007,21 +1008,6 @@ fun TaskItem(task: Task, blockerName: String?, onToggleComplete: () -> Unit, onO
                 }
                 IconButton(onClick = onMenuClick, modifier = Modifier.size(24.dp)) { Icon(Icons.Default.MoreVert, contentDescription = "Menu", tint = Color.Gray) }
             }
-        }
-    }
-}
-
-@Composable
-fun SummaryCard(modifier: Modifier = Modifier, title: String, count: String, color: Color) {
-    Card(modifier = modifier, colors = CardDefaults.cardColors(containerColor = LumiereDarkGray), shape = RoundedCornerShape(16.dp)) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.DateRange, contentDescription = null, tint = color)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(title, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(count, color = MaterialTheme.colorScheme.onBackground, fontSize = 28.sp, fontWeight = FontWeight.Bold)
         }
     }
 }

@@ -35,3 +35,19 @@ fun MetricTile(modifier: Modifier = Modifier, value: String, label: String, colo
         }
     }
 }
+
+
+@Composable
+fun SummaryCard(modifier: Modifier = Modifier, title: String, count: String, color: Color) {
+    Card(modifier = modifier, colors = CardDefaults.cardColors(containerColor = LumiereDarkGray), shape = RoundedCornerShape(16.dp)) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.DateRange, contentDescription = null, tint = color)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(title, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(count, color = MaterialTheme.colorScheme.onBackground, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+        }
+    }
+}
