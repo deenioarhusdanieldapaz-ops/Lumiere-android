@@ -21,22 +21,16 @@ class HabitViewModel(private val repository: HabitRepository) : ViewModel() {
     private val addFailureCheckInUC = AddFailureCheckInUseCase(repository)
     private val getTodayValueUC = GetTodayValueForHabitUseCase()
     private val deleteHabitUC = DeleteHabitUseCase(repository)
+    private val startTimerUC = StartHabitTimerUseCase(repository)
+    private val pauseTimerUC = PauseHabitTimerUseCase(repository)
+    private val completeTimerUC = CompleteHabitTimerUseCase(repository)
+    private val getWeeklyProgressUC = GetWeeklyProgressUseCase()
+    private val getIntervalStatusUC = GetIntervalStatusUseCase()
 
-    fun addHabit(habit: Habit) {
-        viewModelScope.launch { repository.insertHabit(habit) }
-    }
-
-    fun deleteHabit(habit: Habit) {
-        viewModelScope.launch { deleteHabitUC(habit) }
-    }
-
-    fun updateHabit(habit: Habit) {
-        viewModelScope.launch { repository.updateHabit(habit) }
-    }
-
-    fun addCheckIn(checkIn: HabitCheckIn) {
-        viewModelScope.launch { repository.insertCheckIn(checkIn) }
-    }
+    fun addHabit(habit: Habit) { viewModelScope.launch { repository.insertHabit(habit) } }
+    fun deleteHabit(habit: Habit) { viewModelScope.launch { deleteHabitUC(habit) } }
+    fun updateHabit(habit: Habit) { viewModelScope.launch { repository.updateHabit(habit) } }
+    fun addCheckIn(checkIn: HabitCheckIn) { viewModelScope.launch { repository.insertCheckIn(checkIn) } }
 
     fun addCheckInValue(habitId: Long, currentValue: Int, targetValue: Int?) {
         viewModelScope.launch { addCheckInValueUC(habitId, currentValue, targetValue) }
@@ -49,6 +43,16 @@ class HabitViewModel(private val repository: HabitRepository) : ViewModel() {
     fun getTodayValueForHabit(habitId: Long, allCheckIns: List<HabitCheckIn>): Int {
         return getTodayValueUC(habitId, allCheckIns)
     }
+
+    fun startTimer(habit: Habit) { viewModelScope.launch { startTimerUC(habit) } }
+    fun pauseTimer(habit: Habit) { viewModelScope.launch { pauseTimerUC(habit) } }
+    fun completeTimer(habit: Habit) { viewModelScope.launch { completeTimerUC(habit) } }
+
+    fun getWeeklyProgress(habit: Habit, allCheckIns: List<HabitCheckIn>): Pair<Int, Int> =
+        getWeeklyProgressUC(habit, allCheckIns)
+
+    fun getIntervalStatus(habit: Habit, allCheckIns: List<HabitCheckIn>): Pair<Int, Int> =
+        getIntervalStatusUC(habit, allCheckIns)
 
     fun pauseHabit(habit: Habit) {
         viewModelScope.launch {
@@ -110,13 +114,9 @@ class HabitViewModel(private val repository: HabitRepository) : ViewModel() {
             }
 
             if (isExpectedDay && !isRestDay) {
-                if (hasCheckInOnThisDay) {
-                    streak++; foundAny = true
-                } else if (i == 0) {
-                    // Hoje ainda pode ser feito
-                } else {
-                    break
-                }
+                if (hasCheckInOnThisDay) { streak++; foundAny = true }
+                else if (i == 0) { /* hoje ainda pode ser feito */ }
+                else break
             }
             cal.add(Calendar.DAY_OF_YEAR, -1)
             currentDay = cal.timeInMillis
