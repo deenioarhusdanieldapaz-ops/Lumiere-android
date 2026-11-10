@@ -21,7 +21,7 @@ class UpdateTaskUseCase(private val repository: TaskRepository) {
 }
 
 class CreateNextRecurringTaskUseCase(private val repository: TaskRepository) {
-    suspend fun invoke(task: Task) {
+    suspend operator fun invoke(task: Task) {
         val baseDate = task.dueDate ?: System.currentTimeMillis()
         val nextDate = when (task.recurrenceRule) {
             "DAILY" -> addDays(baseDate, 1)
