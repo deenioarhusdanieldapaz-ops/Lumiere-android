@@ -242,7 +242,7 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                 // LISTA REAL DE HÁBITOS
                 habits.forEach { habit ->
                     // Dica #8: Usa a lista global checkInsToday (evita flickering)
-                    val isCompletedToday = checkInsToday.any { it.habitId == habit.id }
+                    val isCompletedToday = checkInsToday.any { it.habitId == habit.id && it.type == "SUCCESS" }
                     val failureToday = checkInsToday.any { it.habitId == habit.id && it.type == "FAIL" }
                     HabitItem(
                         habit = habit,
@@ -603,11 +603,12 @@ fun HabitItem(
         }
     }
     val elapsedSec = if (habit.timerStartedAt != null) ((nowMs - habit.timerStartedAt) / 1000L).toInt() else 0
-    val totalMin = habit.timerAccumulatedMinutes + elapsedSec / 60
-    val displaySec = if (habit.timerStartedAt != null) elapsedSec % 60 else 0
+    val totalSec = habit.timerAccumulatedSeconds + elapsedSec
+    val totalMin = totalSec / 60
+    val displaySec = totalSec % 60
     val timerText = String.format("%02d:%02d", totalMin, displaySec)
 
-    val isDone = hasFailedOrCompleted(failureToday, isCompletedToday, kind, habit, totalMin)
+    val isDone = hasFailedOrCompleted(failureToday, isCompletedToday, kind, habit, totalSec)
 
     Card(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
@@ -640,8 +641,8 @@ fun HabitItem(
                     }
                     HabitKind.DURATION -> {
                         val target = habit.durationMinutes ?: 0
-                        val showText = if (habit.timerStartedAt != null) "$timerText / $target min" else "$totalMin / $target min"
-                        Text(showText, color = if (totalMin >= target && target > 0) Color(0xFF4CAF50) else Color.Gray, fontSize = 12.sp)
+                        val showText = "$timerText / $target min"
+                        Text(showText, color = if (totalSec >= target * 60 && target > 0) Color(0xFF4CAF50) else Color.Gray, fontSize = 12.sp)
                     }
                     HabitKind.WEEKLY_FREQUENCY -> {
                         val pair = weeklyProgress ?: (0 to habit.weeklyDays.countOneBits())
@@ -668,7 +669,7 @@ fun HabitItem(
                     OutlinedButton(onClick = onResume, border = BorderStroke(1.dp, Color.Gray), shape = RoundedCornerShape(20.dp), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)) {
                         Text("Retomar", color = Color.Gray, fontSize = 11.sp)
                     }
-                } else if (failureToday) {
+                } else if (failureToday && kind == HabitKind.BOOLEAN) {
                     OutlinedButton(onClick = { }, border = BorderStroke(1.dp, Color.Red), shape = RoundedCornerShape(20.dp), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)) {
                         Text("Falhou", color = Color.Red, fontSize = 11.sp)
                     }
@@ -732,13 +733,13 @@ fun HabitItem(
 
 private fun hasFailedOrCompleted(
     failureToday: Boolean, isCompletedToday: Boolean,
-    kind: HabitKind, habit: Habit, totalMin: Int
+    kind: HabitKind, habit: Habit, totalSec: Int
 ): Boolean {
-    if (failureToday) return true
+    if (failureToday && kind == HabitKind.BOOLEAN) return true
     return when (kind) {
         HabitKind.DURATION -> {
             val target = habit.durationMinutes ?: 0
-            target > 0 && totalMin >= target
+            target > 0 && totalSec >= target * 60
         }
         else -> isCompletedToday
     }

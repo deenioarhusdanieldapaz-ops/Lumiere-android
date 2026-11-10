@@ -25,5 +25,6 @@ data class Habit(
     val createdAt: Long = System.currentTimeMillis(),
     // Cronómetro persistido (migration 14->15)
     val timerStartedAt: Long? = null,
-    val timerAccumulatedMinutes: Int = 0
+    val timerAccumulatedMinutes: Int = 0, // legacy, migration 15->16
+    val timerAccumulatedSeconds: Int = 0
 )

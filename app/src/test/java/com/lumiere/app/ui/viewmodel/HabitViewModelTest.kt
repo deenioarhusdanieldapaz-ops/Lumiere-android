@@ -99,7 +99,7 @@ class HabitViewModelTest {
 
         coVerify(exactly = 1) {
             repository.updateHabit(match {
-                it.timerStartedAt == null && it.timerAccumulatedMinutes >= 4
+                it.timerStartedAt == null && it.timerAccumulatedSeconds >= 240
             })
         }
     }
@@ -122,7 +122,7 @@ class HabitViewModelTest {
                 it.durationMinutes != null && it.durationMinutes!! >= 29 && it.type == "SUCCESS"
             })
             repository.updateHabit(match {
-                it.timerStartedAt == null && it.timerAccumulatedMinutes == 0
+                it.timerStartedAt == null && it.timerAccumulatedSeconds == 0
             })
         }
     }

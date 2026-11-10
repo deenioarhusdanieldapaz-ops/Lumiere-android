@@ -90,10 +90,10 @@ class StartHabitTimerUseCase(private val repository: HabitRepository) {
 class PauseHabitTimerUseCase(private val repository: HabitRepository) {
     suspend operator fun invoke(habit: Habit) {
         val started = habit.timerStartedAt ?: return
-        val elapsedMin = ((System.currentTimeMillis() - started) / 60_000).toInt().coerceAtLeast(0)
+        val elapsedSec = ((System.currentTimeMillis() - started) / 1000L).toInt().coerceAtLeast(0)
         repository.updateHabit(habit.copy(
             timerStartedAt = null,
-            timerAccumulatedMinutes = habit.timerAccumulatedMinutes + elapsedMin
+            timerAccumulatedSeconds = habit.timerAccumulatedSeconds + elapsedSec
         ))
     }
 }
@@ -101,10 +101,17 @@ class PauseHabitTimerUseCase(private val repository: HabitRepository) {
 class CompleteHabitTimerUseCase(private val repository: HabitRepository) {
     suspend operator fun invoke(habit: Habit) {
         val started = habit.timerStartedAt
-        val elapsedMin = if (started != null) {
-            ((System.currentTimeMillis() - started) / 60_000).toInt().coerceAtLeast(0)
+        val elapsedSec = if (started != null) {
+            ((System.currentTimeMillis() - started) / 1000L).toInt().coerceAtLeast(0)
         } else 0
-        val total = habit.timerAccumulatedMinutes + elapsedMin
+        val totalSec = habit.timerAccumulatedSeconds + elapsedSec
+        val totalMin = totalSec / 60
+
+        // Se não correu tempo suficiente, só reseta (não cria FAIL)
+        if (totalSec == 0) {
+            repository.updateHabit(habit.copy(timerStartedAt = null, timerAccumulatedSeconds = 0))
+            return
+        }
 
         val (startOfDay, endOfDay) = todayBounds()
         val existing = repository.getCheckInForDay(habit.id, startOfDay, endOfDay)
@@ -112,26 +119,25 @@ class CompleteHabitTimerUseCase(private val repository: HabitRepository) {
         val target = habit.durationMinutes ?: 0
         val type = when {
             target == 0 -> "SUCCESS"
-            total >= target -> "SUCCESS"
-            total > 0 -> "PARTIAL"
-            else -> "FAIL"
+            totalSec >= target * 60 -> "SUCCESS"
+            else -> "PARTIAL"
         }
 
         if (existing != null) {
             repository.updateCheckIn(existing.copy(
-                durationMinutes = total,
+                durationMinutes = totalMin,
                 type = type,
                 timestamp = System.currentTimeMillis()
             ))
         } else {
             repository.insertCheckIn(HabitCheckIn(
                 habitId = habit.id,
-                durationMinutes = total,
+                durationMinutes = totalMin,
                 type = type
             ))
         }
 
-        repository.updateHabit(habit.copy(timerStartedAt = null, timerAccumulatedMinutes = 0))
+        repository.updateHabit(habit.copy(timerStartedAt = null, timerAccumulatedSeconds = 0))
     }
 }
 
