@@ -128,6 +128,44 @@ class HabitViewModel(private val repository: HabitRepository) : ViewModel() {
     fun calculateGlobalStreak(): Int {
         return habits.value.maxOfOrNull { habit -> calculateStreak(habit.id) } ?: 0
     }
+
+    // Novo cálculo de consistência (Aceita progresso parcial)
+    fun calculateConsistency(): Int {
+        if (habits.value.isEmpty()) return 0
+        var totalProgress = 0.0
+        val todayCheckIns = allCheckIns.value
+
+        habits.value.forEach { habit ->
+            val kind = habit.kind()
+            val habitCheckInsToday = todayCheckIns.filter { 
+                it.habitId == habit.id && isSameDay(it.timestamp, System.currentTimeMillis()) 
+            }
+            
+            val progress = when (kind) {
+                HabitKind.BOOLEAN -> if (habitCheckInsToday.any { it.type == "SUCCESS" }) 1.0 else 0.0
+                HabitKind.QUANTITATIVE -> {
+                    val current = habitCheckInsToday.maxByOrNull { it.timestamp }?.value ?: 0
+                    val target = habit.targetValue ?: 1
+                    (current.toDouble() / target).coerceAtMost(1.0)
+                }
+                HabitKind.DURATION -> {
+                    val currentMin = habitCheckInsToday.maxByOrNull { it.timestamp }?.durationMinutes ?: 0
+                    val target = habit.durationMinutes ?: 1
+                    (currentMin.toDouble() / target).coerceAtMost(1.0)
+                }
+                else -> if (habitCheckInsToday.any { it.type == "SUCCESS" }) 1.0 else 0.0
+            }
+            totalProgress += progress
+        }
+        return ((totalProgress / habits.value.size) * 100).toInt()
+    }
+
+    private fun isSameDay(ts1: Long, ts2: Long): Boolean {
+        val cal1 = Calendar.getInstance().apply { timeInMillis = ts1 }
+        val cal2 = Calendar.getInstance().apply { timeInMillis = ts2 }
+        return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
+               cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR)
+    }
 }
 
 class HabitViewModelFactory(private val repository: HabitRepository) : ViewModelProvider.Factory {

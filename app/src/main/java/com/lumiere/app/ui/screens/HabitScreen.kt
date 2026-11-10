@@ -48,7 +48,7 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
     val completedToday = checkInsToday.map { it.habitId }.distinct().size
     val totalHabits = habits.size
     val pendingToday = (totalHabits - completedToday).coerceAtLeast(0)
-    val consistency = if (totalHabits > 0) (completedToday.toFloat() / totalHabits.toFloat()) * 100 else 0f
+    val consistency = viewModel.calculateConsistency().toFloat()
 
     // Dica #4: State Hoisting (Elevação de Estado)
     var showCreateSheet by remember { mutableStateOf(false) }
@@ -603,7 +603,10 @@ fun HabitItem(
         }
     }
     val elapsedSec = if (habit.timerStartedAt != null) ((nowMs - habit.timerStartedAt) / 1000L).toInt() else 0
-    val totalSec = habit.timerAccumulatedSeconds + elapsedSec
+    val realTotalSec = habit.timerAccumulatedSeconds + elapsedSec
+    val targetSec = (habit.durationMinutes ?: 0) * 60
+    // Congela o display se o alvo for atingido
+    val totalSec = if (targetSec > 0 && realTotalSec > targetSec) targetSec else realTotalSec
     val totalMin = totalSec / 60
     val displaySec = totalSec % 60
     val timerText = String.format("%02d:%02d", totalMin, displaySec)
