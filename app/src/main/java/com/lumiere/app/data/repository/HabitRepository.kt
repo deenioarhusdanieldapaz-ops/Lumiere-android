@@ -19,8 +19,12 @@ class HabitRepository(
     fun getCheckIns(habitId: Long): Flow<List<HabitCheckIn>> = checkInDao.getCheckInsForHabit(habitId)
     val allCheckIns: Flow<List<HabitCheckIn>> = checkInDao.getAllCheckIns()
     suspend fun insertCheckIn(checkIn: HabitCheckIn): Long = checkInDao.insertCheckIn(checkIn)
+    suspend fun updateCheckIn(checkIn: HabitCheckIn) = checkInDao.updateCheckIn(checkIn)
     suspend fun deleteCheckIn(checkIn: HabitCheckIn) = checkInDao.deleteCheckIn(checkIn)
     suspend fun getCheckInsForPeriod(habitId: Long, start: Long, end: Long): List<HabitCheckIn> = checkInDao.getCheckInsForPeriod(habitId, start, end)
+    suspend fun getCheckInForDay(habitId: Long, start: Long, end: Long): HabitCheckIn? = checkInDao.getCheckInForDay(habitId, start, end)
+    suspend fun countCheckIns(habitId: Long): Int = checkInDao.countForHabit(habitId)
+    suspend fun deleteCheckInsForHabit(habitId: Long) = checkInDao.deleteForHabit(habitId)
 
     fun getExceptions(habitId: Long): Flow<List<HabitException>> = exceptionDao.getExceptionsForHabit(habitId)
     suspend fun insertException(exception: HabitException): Long = exceptionDao.insertException(exception)
