@@ -569,7 +569,6 @@ fun MetricTile(modifier: Modifier, value: String, label: String, color: Color) {
 }
 
 @Composable
-@Composable
 fun HabitItem(
     habit: Habit,
     isCompletedToday: Boolean = false,
