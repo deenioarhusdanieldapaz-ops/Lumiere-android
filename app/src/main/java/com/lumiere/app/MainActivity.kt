@@ -15,27 +15,30 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import com.lumiere.app.data.local.database.AppDatabase
 import com.lumiere.app.data.repository.HabitRepository
 import com.lumiere.app.data.repository.TaskRepository
+import com.lumiere.app.ui.screens.ComponentGalleryScreen
 import com.lumiere.app.ui.screens.HabitScreen
 import com.lumiere.app.ui.screens.TaskScreen
 import com.lumiere.app.ui.theme.LumiereDarkGray
@@ -47,25 +50,33 @@ import com.lumiere.app.ui.viewmodel.TaskViewModel
 import com.lumiere.app.ui.viewmodel.TaskViewModelFactory
 import kotlinx.coroutines.launch
 
+sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
+    object Tasks : Screen("tasks", "M01 — Tarefas", Icons.Default.CheckCircle)
+    object Habits : Screen("habits", "M02 — Hábitos", Icons.Default.Star)
+    object Gallery : Screen("gallery", "🧪 Galeria (Dev)", Icons.Default.Info)
+}
+
 class MainActivity : ComponentActivity() {
 
     private val database by lazy { AppDatabase.getDatabase(this) }
     private val habitRepository by lazy { HabitRepository(database.habitDao(), database.habitCheckInDao(), database.habitExceptionDao()) }
     private val repository by lazy { TaskRepository(database.taskDao(), database.subtaskDao(), database.projectDao(), database.taskHistoryDao()) }
+    
     private val habitViewModel: HabitViewModel by viewModels { HabitViewModelFactory(habitRepository) }
-    private val viewModel: TaskViewModel by viewModels {
-        TaskViewModelFactory(repository)
-    }
+    private val taskViewModel: TaskViewModel by viewModels { TaskViewModelFactory(repository) }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             LumiereTheme {
-                var showHabits by remember { mutableStateOf(false) }
-                var showGallery by remember { mutableStateOf(false) }
+                val navController = rememberNavController()
                 val drawerState = rememberDrawerState(DrawerValue.Closed)
                 val scope = rememberCoroutineScope()
+                
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentRoute = navBackStackEntry?.destination?.route
 
                 ModalNavigationDrawer(
                     drawerState = drawerState,
@@ -82,46 +93,46 @@ class MainActivity : ComponentActivity() {
                             Divider(color = Color.DarkGray)
                             Spacer(modifier = Modifier.height(16.dp))
 
-                            NavigationDrawerItem(
-                                label = { Text("M01 — Tarefas", color = if (!showHabits) LumiereGold else Color.White) },
-                                selected = !showHabits,
-                                onClick = { showHabits = false; scope.launch { drawerState.close() } },
-                                icon = { Icon(Icons.Default.CheckCircle, contentDescription = null, tint = LumiereGold) }
-                            )
-                            NavigationDrawerItem(
-                                label = { Text("M02 — Hábitos", color = if (showHabits) LumiereGold else Color.White) },
-                                selected = showHabits,
-                                onClick = { showHabits = true; showGallery = false; scope.launch { drawerState.close() } },
-                                icon = { Icon(Icons.Default.Star, contentDescription = null, tint = LumiereGold) }
-                            )
-                            Divider(color = Color.DarkGray, modifier = Modifier.padding(vertical = 8.dp))
-                            NavigationDrawerItem(
-                                label = { Text("🧪 Galeria (Dev)", color = if (showGallery) LumiereGold else Color.Gray) },
-                                selected = showGallery,
-                                onClick = { showGallery = true; showHabits = false; scope.launch { drawerState.close() } },
-                                icon = { Icon(Icons.Default.Info, contentDescription = null, tint = if (showGallery) LumiereGold else Color.Gray) }
-                            )
+                            val items = listOf(Screen.Tasks, Screen.Habits, Screen.Gallery)
+                            items.forEach { screen ->
+                                NavigationDrawerItem(
+                                    label = { Text(screen.label, color = if (currentRoute == screen.route) LumiereGold else Color.White) },
+                                    selected = currentRoute == screen.route,
+                                    onClick = {
+                                        navController.navigate(screen.route) {
+                                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                            launchSingleTop = true
+                                            restoreState = true
+                                        }
+                                        scope.launch { drawerState.close() }
+                                    },
+                                    icon = { Icon(screen.icon, contentDescription = null, tint = if (currentRoute == screen.route) LumiereGold else Color.Gray) }
+                                )
+                            }
                         }
                     },
                     gesturesEnabled = true
                 ) {
-                    Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        color = MaterialTheme.colorScheme.background
+                    NavHost(
+                        navController = navController,
+                        startDestination = Screen.Tasks.route,
+                        modifier = Modifier.fillMaxSize()
                     ) {
-                        if (showGallery) {
-                            com.lumiere.app.ui.screens.ComponentGalleryScreen(
-                                onBack = { showGallery = false }
+                        composable(Screen.Tasks.route) {
+                            TaskScreen(
+                                viewModel = taskViewModel,
+                                onOpenDrawer = { scope.launch { drawerState.open() } }
                             )
-                        } else if (showHabits) {
+                        }
+                        composable(Screen.Habits.route) {
                             HabitScreen(
                                 viewModel = habitViewModel,
                                 onOpenDrawer = { scope.launch { drawerState.open() } }
                             )
-                        } else {
-                            TaskScreen(
-                                viewModel = viewModel,
-                                onOpenDrawer = { scope.launch { drawerState.open() } }
+                        }
+                        composable(Screen.Gallery.route) {
+                            ComponentGalleryScreen(
+                                onBack = { navController.popBackStack() }
                             )
                         }
                     }
