@@ -41,7 +41,7 @@ class CreateNextRecurringTaskUseCase(private val repository: TaskRepository) {
         val newId = repository.insertTask(newTask)
         repository.insertHistory(TaskHistory(taskId = newId, action = "Gerada por Recorrência"))
         // D-26 fix: copiar subtarefas
-        val subtasks = repository.getSubtasks(task.id).first()
+        val subtasks = runCatching { repository.getSubtasks(task.id).first() }.getOrDefault(emptyList())
         subtasks.forEach { st ->
             repository.insertSubtask(st.copy(id = 0, taskId = newId, isCompleted = false))
         }
