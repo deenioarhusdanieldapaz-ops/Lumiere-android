@@ -47,6 +47,7 @@ import com.lumiere.app.ui.utils.getCategoryIcon
 import com.lumiere.app.data.local.entity.Task
 import com.lumiere.app.ui.theme.LumiereDarkGray
 import com.lumiere.app.ui.theme.LumiereGold
+import com.lumiere.app.ui.utils.CategoryEngine
 import com.lumiere.app.ui.components.SummaryCard
 import com.lumiere.app.ui.theme.LumiereIcons
 import com.lumiere.app.ui.viewmodel.TaskViewModel
@@ -881,7 +882,7 @@ fun TaskItem(task: Task, blockerName: String?, onToggleComplete: () -> Unit, onO
     val priorityColor = when(task.priority) { 3 -> Color(0xFFE53935); 2 -> LumiereGold; else -> Color(0xFF43A047) }
     val priorityText = when(task.priority) { 3 -> "Alta"; 2 -> "Média"; else -> "Baixa" }
     val priorityIcon = if (task.priority == 3) Icons.Default.Warning else Icons.Default.Info
-    val categoryIcon = getCategoryIcon(task.category)
+    val categoryIcon = CategoryEngine.getTheme(task.category).icon
 
     val cardColor = when {
         isCancelled -> Color(0xFF1E1E1E).copy(alpha = 0.5f)
@@ -943,10 +944,11 @@ fun TaskItem(task: Task, blockerName: String?, onToggleComplete: () -> Unit, onO
                 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (!task.category.isNullOrBlank() && !isCancelled) {
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.background(Color(0xFF332A1D), RoundedCornerShape(20.dp)).padding(horizontal = 10.dp, vertical = 4.dp)) {
-                             Icon(categoryIcon, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(12.dp))
+                        val catTheme = CategoryEngine.getTheme(task.category!!)
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.background(catTheme.backgroundColor.copy(alpha = 0.3f), RoundedCornerShape(20.dp)).padding(horizontal = 10.dp, vertical = 4.dp)) {
+                             Icon(catTheme.icon, contentDescription = null, tint = catTheme.iconColor, modifier = Modifier.size(12.dp))
                              Spacer(modifier = Modifier.width(4.dp))
-                             Text(task.category!!, color = LumiereGold, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines=1)
+                             Text(task.category!!, color = catTheme.iconColor, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines=1)
                         }
                     }
                     if (!isCancelled) {

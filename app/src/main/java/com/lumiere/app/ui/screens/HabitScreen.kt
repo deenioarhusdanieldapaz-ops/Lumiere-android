@@ -32,6 +32,7 @@ import com.lumiere.app.data.local.entity.HabitCheckIn
 import com.lumiere.app.ui.theme.LumiereDarkGray
 import com.lumiere.app.ui.components.MetricTile
 import com.lumiere.app.ui.theme.LumiereGold
+import com.lumiere.app.ui.utils.CategoryEngine
 import com.lumiere.app.ui.viewmodel.HabitViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -307,7 +308,7 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
             Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
                 Text(habit.name, color = LumiereGold, fontSize = 22.sp, fontWeight = FontWeight.Bold)
                 if (habit.category != null) {
-                    Text(habit.category!!, color = Color.Gray, fontSize = 14.sp)
+                    Text(habit.category!!, color = CategoryEngine.getTheme(habit.category).iconColor, fontSize = 14.sp)
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 
@@ -353,7 +354,7 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
             Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
                 Text(habit.name, color = LumiereGold, fontSize = 22.sp, fontWeight = FontWeight.Bold)
                 if (habit.category != null) {
-                    Text(habit.category!!, color = Color.Gray, fontSize = 14.sp)
+                    Text(habit.category!!, color = CategoryEngine.getTheme(habit.category).iconColor, fontSize = 14.sp)
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 
@@ -572,7 +573,7 @@ fun HabitItem(
 ) {
     val isPaused = habit.status == 1
     val kind = habit.kind()
-    val (iconColor, bgColor) = getCategoryColor(habit.category)
+    val (iconColor, bgColor) = Pair(CategoryEngine.getTheme(habit.category).iconColor, CategoryEngine.getTheme(habit.category).backgroundColor)
 
     val nowMs by androidx.compose.runtime.produceState(
         initialValue = System.currentTimeMillis(),
@@ -615,7 +616,7 @@ fun HabitItem(
                 modifier = Modifier.size(52.dp).background(bgColor, RoundedCornerShape(14.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(getCategoryIcon(habit.category), contentDescription = null, tint = iconColor, modifier = Modifier.size(28.dp))
+                Icon(CategoryEngine.getTheme(habit.category).icon, contentDescription = null, tint = iconColor, modifier = Modifier.size(28.dp))
             }
             Spacer(modifier = Modifier.width(16.dp))
 
@@ -739,17 +740,7 @@ private fun hasFailedOrCompleted(
     }
 }
 
-fun getCategoryColor(category: String?): Pair<Color, Color> {
-    val name = category?.lowercase() ?: ""
-    return when {
-        name.contains("saúd") || name.contains("água") || name.contains("agua") -> Pair(Color(0xFF1976D2), Color(0xFFE3F2FD))
-        name.contains("exerc") || name.contains("desport") -> Pair(Color(0xFFF57C00), Color(0xFFFFF3E0))
-        name.contains("estud") || name.contains("leit") || name.contains("livro") -> Pair(Color(0xFF7B1FA2), Color(0xFFF3E5F5))
-        name.contains("medit") || name.contains("bem-estar") -> Pair(Color(0xFF388E3C), Color(0xFFE8F5E9))
-        name.contains("financ") || name.contains("dinheir") -> Pair(Color(0xFF00796B), Color(0xFFE0F2F1))
-        else -> Pair(LumiereGold, Color(0xFF332A1D))
-    }
-}
+
 
 @Composable
 fun HabitWeekStrip(checkIns: List<HabitCheckIn>) {
