@@ -26,6 +26,8 @@ import com.lumiere.app.ui.components.fields.*
 import com.lumiere.app.ui.utils.LumiereCategories
 import com.lumiere.app.ui.utils.getCategoryIcon
 import com.lumiere.app.data.local.entity.Habit
+import com.lumiere.app.domain.usecase.HabitKind
+import com.lumiere.app.domain.usecase.kind
 import com.lumiere.app.data.local.entity.HabitCheckIn
 import com.lumiere.app.ui.theme.LumiereDarkGray
 import com.lumiere.app.ui.theme.LumiereGold
@@ -246,6 +248,11 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                         habit = habit,
                         isCompletedToday = isCompletedToday,
                         failureToday = failureToday,
+                        weeklyProgress = if (habit.kind() == HabitKind.WEEKLY_FREQUENCY) viewModel.getWeeklyProgress(habit, checkInsToday) else null,
+                        intervalStatus = if (habit.kind() == HabitKind.INTERVAL) viewModel.getIntervalStatus(habit, checkInsToday) else null,
+                        onStartTimer = { viewModel.startTimer(habit) },
+                        onPauseTimer = { viewModel.pauseTimer(habit) },
+                        onCompleteTimer = { viewModel.completeTimer(habit) },
                         onCheckIn = {
                             val currentVal = viewModel.getTodayValueForHabit(habit.id, checkInsToday)
                             viewModel.addCheckInValue(habit.id, currentVal, habit.targetValue)
@@ -562,12 +569,46 @@ fun MetricTile(modifier: Modifier, value: String, label: String, color: Color) {
 }
 
 @Composable
-fun HabitItem(habit: Habit, isCompletedToday: Boolean = false, failureToday: Boolean = false, todayValue: Int = 0, onCheckIn: () -> Unit, onDelete: () -> Unit, onPause: () -> Unit, onResume: () -> Unit, onEdit: () -> Unit, onFail: () -> Unit, onOpenDetails: () -> Unit = {}) {
+@Composable
+fun HabitItem(
+    habit: Habit,
+    isCompletedToday: Boolean = false,
+    failureToday: Boolean = false,
+    todayValue: Int = 0,
+    weeklyProgress: Pair<Int, Int>? = null,
+    intervalStatus: Pair<Int, Int>? = null,
+    onCheckIn: () -> Unit,
+    onDelete: () -> Unit,
+    onPause: () -> Unit,
+    onResume: () -> Unit,
+    onEdit: () -> Unit,
+    onFail: () -> Unit,
+    onOpenDetails: () -> Unit = {},
+    onStartTimer: () -> Unit = {},
+    onPauseTimer: () -> Unit = {},
+    onCompleteTimer: () -> Unit = {}
+) {
     val isPaused = habit.status == 1
-    val isCompleted = isCompletedToday
-    val hasFailed = failureToday
-    
+    val kind = habit.kind()
     val (iconColor, bgColor) = getCategoryColor(habit.category)
+
+    val nowMs by androidx.compose.runtime.produceState(
+        initialValue = System.currentTimeMillis(),
+        key1 = habit.timerStartedAt
+    ) {
+        if (habit.timerStartedAt != null) {
+            while (true) {
+                value = System.currentTimeMillis()
+                kotlinx.coroutines.delay(1000L)
+            }
+        }
+    }
+    val elapsedSec = if (habit.timerStartedAt != null) ((nowMs - habit.timerStartedAt) / 1000L).toInt() else 0
+    val totalMin = habit.timerAccumulatedMinutes + elapsedSec / 60
+    val displaySec = if (habit.timerStartedAt != null) elapsedSec % 60 else 0
+    val timerText = String.format("%02d:%02d", totalMin, displaySec)
+
+    val isDone = hasFailedOrCompleted(failureToday, isCompletedToday, kind, habit, totalMin)
 
     Card(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
@@ -576,7 +617,6 @@ fun HabitItem(habit: Habit, isCompletedToday: Boolean = false, failureToday: Boo
         border = BorderStroke(1.dp, Color(0xFF333333))
     ) {
         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            // Ícone Colorido
             Box(
                 modifier = Modifier.size(52.dp).background(bgColor, RoundedCornerShape(14.dp)),
                 contentAlignment = Alignment.Center
@@ -585,7 +625,6 @@ fun HabitItem(habit: Habit, isCompletedToday: Boolean = false, failureToday: Boo
             }
             Spacer(modifier = Modifier.width(16.dp))
 
-            // Textos
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = habit.name,
@@ -593,13 +632,30 @@ fun HabitItem(habit: Habit, isCompletedToday: Boolean = false, failureToday: Boo
                     maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                     modifier = Modifier.clickable { onOpenDetails() }
                 )
-                if (habit.targetValue != null && habit.unit != null) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.DateRange, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(12.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        val progressText = if (isCompletedToday) "${habit.targetValue}/${habit.targetValue} ${habit.unit}" else "$todayValue/${habit.targetValue} ${habit.unit}"
+                Spacer(modifier = Modifier.height(4.dp))
+                when (kind) {
+                    HabitKind.QUANTITATIVE -> {
+                        val target = habit.targetValue ?: 0
+                        val progressText = if (isCompletedToday) "$target/$target ${habit.unit ?: ""}" else "$todayValue/$target ${habit.unit ?: ""}"
                         Text(progressText, color = if (isCompletedToday) Color(0xFF4CAF50) else Color.Gray, fontSize = 12.sp)
+                    }
+                    HabitKind.DURATION -> {
+                        val target = habit.durationMinutes ?: 0
+                        val showText = if (habit.timerStartedAt != null) "$timerText / $target min" else "$totalMin / $target min"
+                        Text(showText, color = if (totalMin >= target && target > 0) Color(0xFF4CAF50) else Color.Gray, fontSize = 12.sp)
+                    }
+                    HabitKind.WEEKLY_FREQUENCY -> {
+                        val pair = weeklyProgress ?: (0 to habit.weeklyDays.countOneBits())
+                        Text("${pair.first}/${pair.second} esta semana", color = Color.Gray, fontSize = 12.sp)
+                    }
+                    HabitKind.INTERVAL -> {
+                        val pair = intervalStatus ?: (0 to habit.intervalDays)
+                        val available = pair.first >= pair.second
+                        Text(if (available) "Disponivel hoje" else "Proximo em ${pair.second - pair.first} dia(s)",
+                            color = if (available) Color(0xFF4CAF50) else Color.Gray, fontSize = 12.sp)
+                    }
+                    HabitKind.BOOLEAN -> {
+                        if (isCompletedToday) Text("Concluido hoje", color = Color(0xFF4CAF50), fontSize = 12.sp)
                     }
                 }
             }
@@ -608,37 +664,59 @@ fun HabitItem(habit: Habit, isCompletedToday: Boolean = false, failureToday: Boo
             Box(modifier = Modifier.width(1.dp).height(40.dp).background(Color(0xFF444444)))
             Spacer(modifier = Modifier.width(8.dp))
 
-            // Ações
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 if (isPaused) {
                     OutlinedButton(onClick = onResume, border = BorderStroke(1.dp, Color.Gray), shape = RoundedCornerShape(20.dp), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)) {
                         Text("Retomar", color = Color.Gray, fontSize = 11.sp)
                     }
-                } else if (hasFailed) {
+                } else if (failureToday) {
                     OutlinedButton(onClick = { }, border = BorderStroke(1.dp, Color.Red), shape = RoundedCornerShape(20.dp), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)) {
                         Text("Falhou", color = Color.Red, fontSize = 11.sp)
                     }
-                } else if (isCompleted) {
+                } else if (isDone) {
                     Button(onClick = { }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1B5E20)), shape = RoundedCornerShape(20.dp), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)) {
                         Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("Cumprido", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
                 } else {
-                    OutlinedButton(onClick = onCheckIn, border = BorderStroke(1.dp, LumiereGold), shape = RoundedCornerShape(20.dp), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)) {
-                        Icon(Icons.Default.PlayArrow, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(14.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(if (habit.targetValue != null) "+1" else "Registar", color = LumiereGold, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    if (kind == HabitKind.DURATION) {
+                        if (habit.timerStartedAt != null) {
+                            OutlinedButton(onClick = onPauseTimer, border = BorderStroke(1.dp, LumiereGold), shape = RoundedCornerShape(20.dp), contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)) {
+                                Text("Pausar", color = LumiereGold, fontSize = 11.sp)
+                            }
+                            Spacer(modifier = Modifier.height(2.dp))
+                            OutlinedButton(onClick = onCompleteTimer, border = BorderStroke(1.dp, Color(0xFF4CAF50)), shape = RoundedCornerShape(20.dp), contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)) {
+                                Text("Concluir", color = Color(0xFF4CAF50), fontSize = 11.sp)
+                            }
+                        } else {
+                            OutlinedButton(onClick = onStartTimer, border = BorderStroke(1.dp, LumiereGold), shape = RoundedCornerShape(20.dp), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)) {
+                                Icon(Icons.Default.PlayArrow, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(14.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Iniciar", color = LumiereGold, fontSize = 11.sp)
+                            }
+                        }
+                    } else {
+                        val label = when (kind) {
+                            HabitKind.QUANTITATIVE -> "+1"
+                            HabitKind.WEEKLY_FREQUENCY -> "Hoje"
+                            else -> "Registar"
+                        }
+                        OutlinedButton(onClick = onCheckIn, border = BorderStroke(1.dp, LumiereGold), shape = RoundedCornerShape(20.dp), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)) {
+                            Icon(Icons.Default.PlayArrow, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(label, color = LumiereGold, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
-                
+
                 var showMenu by remember { mutableStateOf(false) }
                 Box {
                     IconButton(onClick = { showMenu = true }, modifier = Modifier.size(32.dp)) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "Opções", tint = Color.Gray)
+                        Icon(Icons.Default.MoreVert, contentDescription = "Opcoes", tint = Color.Gray)
                     }
                     DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }, modifier = Modifier.background(LumiereDarkGray)) {
-                        DropdownMenuItem(text = { Text("Editar Hábito", color = LumiereGold) }, onClick = { onEdit(); showMenu = false })
+                        DropdownMenuItem(text = { Text("Editar Habito", color = LumiereGold) }, onClick = { onEdit(); showMenu = false })
                         DropdownMenuItem(text = { Text("Registar Falha", color = Color(0xFFFF9800)) }, onClick = { onFail(); showMenu = false })
                         if (habit.status == 0) {
                             DropdownMenuItem(text = { Text("Pausar", color = LumiereGold) }, onClick = { onPause(); showMenu = false })
@@ -652,6 +730,21 @@ fun HabitItem(habit: Habit, isCompletedToday: Boolean = false, failureToday: Boo
         }
     }
 }
+
+private fun hasFailedOrCompleted(
+    failureToday: Boolean, isCompletedToday: Boolean,
+    kind: HabitKind, habit: Habit, totalMin: Int
+): Boolean {
+    if (failureToday) return true
+    return when (kind) {
+        HabitKind.DURATION -> {
+            val target = habit.durationMinutes ?: 0
+            target > 0 && totalMin >= target
+        }
+        else -> isCompletedToday
+    }
+}
+
 
 fun getCategoryColor(category: String?): Pair<Color, Color> {
     val name = category?.lowercase() ?: ""
