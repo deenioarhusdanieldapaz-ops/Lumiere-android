@@ -123,6 +123,11 @@ class HabitViewModel(private val repository: HabitRepository) : ViewModel() {
         }
         return if (foundAny) streak else 0
     }
+
+    // Streak global: maior streak entre todos os hábitos ativos
+    fun calculateGlobalStreak(): Int {
+        return habits.value.maxOfOrNull { habit -> calculateStreak(habit.id) } ?: 0
+    }
 }
 
 class HabitViewModelFactory(private val repository: HabitRepository) : ViewModelProvider.Factory {

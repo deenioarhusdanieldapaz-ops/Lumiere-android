@@ -116,7 +116,7 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Cálculo do Streak (Sequência)
-            val currentStreak = if (habits.isNotEmpty()) viewModel.calculateStreak(habits.first().id) else 0
+            val currentStreak = viewModel.calculateGlobalStreak()
 
             // HERO CARD
             Card(
