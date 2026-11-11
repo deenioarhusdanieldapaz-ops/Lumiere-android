@@ -882,7 +882,8 @@ fun TaskItem(task: Task, blockerName: String?, onToggleComplete: () -> Unit, onO
     val priorityColor = when(task.priority) { 3 -> Color(0xFFE53935); 2 -> LumiereGold; else -> Color(0xFF43A047) }
     val priorityText = when(task.priority) { 3 -> "Alta"; 2 -> "Média"; else -> "Baixa" }
     val priorityIcon = if (task.priority == 3) Icons.Default.Warning else Icons.Default.Info
-    val categoryIcon = CategoryEngine.getTheme(task.category).icon
+    val categoryTheme = CategoryEngine.getTheme(task.category)
+    val categoryIcon = categoryTheme.icon
 
     val cardColor = when {
         isCancelled -> Color(0xFF1E1E1E).copy(alpha = 0.5f)
@@ -903,7 +904,7 @@ fun TaskItem(task: Task, blockerName: String?, onToggleComplete: () -> Unit, onO
         isCancelled -> Color.Gray
         isBlocked -> Color(0xFFB8860B)
         isOverdue -> Color.Red
-        else -> priorityColor
+        else -> categoryTheme.iconColor
     }
 
     val mainIcon = when {
