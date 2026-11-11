@@ -22,7 +22,7 @@ class CategoryEngineTest {
     @DisplayName("Categoria 'Cripto' deve devolver o icone de carteira (financas)")
     fun `category Cripto returns Finance icon`() {
         val theme = CategoryEngine.getTheme("Criptomoedas")
-        assertEquals(Icons.Default.AccountBalanceWallet, theme.icon)
+        assertEquals(Icons.Default.CurrencyBitcoin, theme.icon)
     }
 
     @Test
