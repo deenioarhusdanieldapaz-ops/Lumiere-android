@@ -24,7 +24,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lumiere.app.ui.components.fields.*
 import com.lumiere.app.ui.utils.LumiereCategories
-import com.lumiere.app.ui.utils.getCategoryIcon
 import com.lumiere.app.data.local.entity.Habit
 import com.lumiere.app.domain.usecase.HabitKind
 import com.lumiere.app.domain.usecase.kind

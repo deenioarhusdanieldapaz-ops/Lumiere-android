@@ -43,7 +43,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.lumiere.app.ui.utils.getCategoryIcon
 import com.lumiere.app.data.local.entity.Task
 import com.lumiere.app.ui.theme.LumiereDarkGray
 import com.lumiere.app.ui.theme.LumiereGold
