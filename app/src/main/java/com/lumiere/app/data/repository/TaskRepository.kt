@@ -3,6 +3,7 @@ package com.lumiere.app.data.repository
 import com.lumiere.app.data.local.dao.*
 import com.lumiere.app.data.local.entity.*
 import kotlinx.coroutines.flow.Flow
+import com.lumiere.app.utils.LumiereLogger
 
 class TaskRepository(
     private val taskDao: TaskDao,
@@ -13,9 +14,9 @@ class TaskRepository(
     val allTasks: Flow<List<Task>> = taskDao.getAllActiveTasks()
     val allProjects: Flow<List<Project>> = projectDao.getAllProjects()
 
-    suspend fun insertTask(task: Task): Long = taskDao.insertTask(task)
-    suspend fun updateTask(task: Task) = taskDao.updateTask(task)
-    suspend fun deleteTask(task: Task) = taskDao.deleteTask(task)
+    suspend fun insertTask(task: Task): Long = try { taskDao.insertTask(task) } catch (e: Exception) { LumiereLogger.e("TaskRepo", "Falha ao inserir tarefa", e); -1L }
+    suspend fun updateTask(task: Task) = try { taskDao.updateTask(task) } catch (e: Exception) { LumiereLogger.e("TaskRepo", "Falha ao atualizar tarefa", e) }
+    suspend fun deleteTask(task: Task) = try { taskDao.deleteTask(task) } catch (e: Exception) { LumiereLogger.e("TaskRepo", "Falha ao apagar tarefa", e) }
 
     fun getSubtasks(taskId: Long) = subtaskDao.getSubtasksForTask(taskId)
     suspend fun insertSubtask(subtask: Subtask) = subtaskDao.insertSubtask(subtask)
