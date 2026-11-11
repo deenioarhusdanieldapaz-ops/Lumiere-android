@@ -9,12 +9,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.lumiere.app.ui.components.fields.*
-import com.lumiere.app.ui.theme.LumiereGold
 import com.lumiere.app.ui.utils.LumiereCategories
 import com.lumiere.app.ui.theme.LumiereIcons
 
@@ -43,10 +40,10 @@ fun ComponentGalleryScreen(onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Galeria de Componentes", color = LumiereGold, fontWeight = FontWeight.Bold) },
+                title = { Text("Galeria de Componentes", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = LumiereGold)
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = MaterialTheme.colorScheme.primary)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
@@ -78,19 +75,20 @@ fun ComponentGalleryScreen(onBack: () -> Unit) {
             LumiereDropdown(label = "Selecionar Categoria", options = LumiereCategories.names, selected = drop, onSelect = { drop = it })
             LumiereSegmentedControl(options = listOf("Opção 1", "Opção 2", "Opção 3"), selected = seg, onSelect = { seg = it })
             LumiereRadioGroup(options = listOf("Receita", "Despesa"), selected = radio, onSelect = { radio = it })
-            LumiereCheckboxGroup(options = listOf("Seg", "Ter", "Qua", "Qui", "Sex"), selectedOptions = checks, onToggle = { 
-                checks = if (checks.contains(it)) checks - it else checks + it 
+            LumiereCheckboxGroup(options = listOf("Seg", "Ter", "Qua", "Qui", "Sex"), selectedOptions = checks, onToggle = {
+                checks = if (checks.contains(it)) checks - it else checks + it
             })
+
             // 4. SECÇÃO DATAS
             SectionHeader("4. Datas e Tempo")
             LumiereDatePicker(selectedDate = date, onDateSelected = { date = it }, label = "LumiereDatePicker")
             LumiereTimePicker(selectedTime = time, onTimeSelected = { time = it })
-            
+
             // 5. SECÇÃO ESTRUTURAS
             SectionHeader("5. Estruturas")
             var isExpanded by remember { mutableStateOf(true) }
             LumiereAccordion(title = "Secção Expansível", isExpanded = isExpanded, onToggle = { isExpanded = !isExpanded }) {
-                Text("Conteúdo da gaveta expansível.", color = Color.Gray)
+                Text("Conteúdo da gaveta expansível.", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             LumiereSearchBar(query = search, onQueryChange = { search = it }, placeholder = "Pesquisar...")
             LumiereFilterChips(options = listOf("Todas", "Hoje", "Atrasadas"), selected = filter, onSelect = { filter = it })
@@ -102,6 +100,11 @@ fun ComponentGalleryScreen(onBack: () -> Unit) {
 @Composable
 fun SectionHeader(title: String) {
     Spacer(modifier = Modifier.height(16.dp))
-    Text(title, color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(bottom = 8.dp))
-    Divider(color = Color.DarkGray, modifier = Modifier.padding(bottom = 8.dp))
+    Text(
+        text = title,
+        color = MaterialTheme.colorScheme.primary,
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier.padding(bottom = 8.dp)
+    )
+    Divider(color = MaterialTheme.colorScheme.outline, modifier = Modifier.padding(bottom = 8.dp))
 }
