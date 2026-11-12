@@ -668,13 +668,13 @@ fun HabitItem(
                 } else if (isDone) {
                     Button(
                         onClick = { },
-                        colors = ButtonDefaults.buttonColors(containerColor = Lumiere.colors.successContainer),
+                        colors = ButtonDefaults.buttonColors(containerColor = Lumiere.colors.success),
                         shape = RoundedCornerShape(20.dp),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
                     ) {
-                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(14.dp))
+                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Lumiere.colors.onSuccess, modifier = Modifier.size(14.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Cumprido", color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.labelSmall)
+                        Text("Cumprido", color = Lumiere.colors.onSuccess, style = MaterialTheme.typography.labelSmall)
                     }
                 } else {
                     if (kind == HabitKind.DURATION) {

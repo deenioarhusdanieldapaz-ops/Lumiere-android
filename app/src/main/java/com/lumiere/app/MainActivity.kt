@@ -17,8 +17,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,7 +40,7 @@ import com.lumiere.app.ui.viewmodel.TaskViewModel
 import com.lumiere.app.ui.viewmodel.TaskViewModelFactory
 import kotlinx.coroutines.launch
 
-sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
+sealed class Screen(val route: String, val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
     object Tasks : Screen("tasks", "M01 — Tarefas", Icons.Default.CheckCircle)
     object Habits : Screen("habits", "M02 — Hábitos", Icons.Default.Star)
     object Gallery : Screen("gallery", " 🧪 Galeria (Dev)", Icons.Default.Info)
@@ -61,7 +60,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            // --- PREFERÊNCIAS DE TEMA ---
             val prefs = getSharedPreferences("lumiere_prefs", Context.MODE_PRIVATE)
             var isDark by remember { mutableStateOf(prefs.getBoolean("is_dark_theme", true)) }
             val themeMode = if (isDark) LumiereThemeMode.Dark else LumiereThemeMode.Light
@@ -121,7 +119,6 @@ class MainActivity : ComponentActivity() {
                             Spacer(modifier = Modifier.weight(1f))
                             Divider(color = MaterialTheme.colorScheme.outline)
                             
-                            // SWITCH DE TEMA
                             Row(
                                 modifier = Modifier.fillMaxWidth().padding(16.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -157,27 +154,29 @@ class MainActivity : ComponentActivity() {
                     },
                     gesturesEnabled = true
                 ) {
-                    NavHost(
-                        navController = navController,
-                        startDestination = Screen.Tasks.route,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        composable(Screen.Tasks.route) {
-                            TaskScreen(
-                                viewModel = taskViewModel,
-                                onOpenDrawer = { scope.launch { drawerState.open() } }
-                            )
-                        }
-                        composable(Screen.Habits.route) {
-                            HabitScreen(
-                                viewModel = habitViewModel,
-                                onOpenDrawer = { scope.launch { drawerState.open() } }
-                            )
-                        }
-                        composable(Screen.Gallery.route) {
-                            ComponentGalleryScreen(
-                                onBack = { navController.popBackStack() }
-                            )
+                    Box(modifier = Modifier.fillMaxSize().alpha(if (drawerState.isOpen) 0f else 1f)) {
+                        NavHost(
+                            navController = navController,
+                            startDestination = Screen.Tasks.route,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            composable(Screen.Tasks.route) {
+                                TaskScreen(
+                                    viewModel = taskViewModel,
+                                    onOpenDrawer = { scope.launch { drawerState.open() } }
+                                )
+                            }
+                            composable(Screen.Habits.route) {
+                                HabitScreen(
+                                    viewModel = habitViewModel,
+                                    onOpenDrawer = { scope.launch { drawerState.open() } }
+                                )
+                            }
+                            composable(Screen.Gallery.route) {
+                                ComponentGalleryScreen(
+                                    onBack = { navController.popBackStack() }
+                                )
+                            }
                         }
                     }
                 }
