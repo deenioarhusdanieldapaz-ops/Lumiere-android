@@ -814,17 +814,17 @@ fun TaskItem(task: Task, blockerName: String?, onToggleComplete: () -> Unit, onO
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (!task.category.isNullOrBlank() && !isCancelled) {
                         val catTheme = CategoryEngine.getTheme(task.category!!)
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.background(catTheme.backgroundColor.copy(alpha = 0.3f), RoundedCornerShape(20.dp)).padding(horizontal = 10.dp, vertical = 4.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.background(catTheme.backgroundColor.copy(alpha = 0.2f), RoundedCornerShape(20.dp)).padding(horizontal = 10.dp, vertical = 4.dp)) {
                              Icon(catTheme.icon, contentDescription = null, tint = catTheme.iconColor, modifier = Modifier.size(12.dp))
                              Spacer(modifier = Modifier.width(4.dp))
-                             Text(task.category!!, color = catTheme.iconColor, style = MaterialTheme.typography.labelSmall, maxLines=1)
+                             Text(task.category!!, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.labelSmall, maxLines=1)
                         }
                     }
                     if (!isCancelled) {
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.background(priorityColor.copy(alpha=0.15f), RoundedCornerShape(20.dp)).padding(horizontal = 10.dp, vertical = 4.dp)) {
                             Icon(priorityIcon, contentDescription = null, tint = priorityColor, modifier = Modifier.size(12.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(priorityText, color = priorityColor, style = MaterialTheme.typography.labelSmall, maxLines=1)
+                            Text(priorityText, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.labelSmall, maxLines=1)
                         }
                     }
                 }
