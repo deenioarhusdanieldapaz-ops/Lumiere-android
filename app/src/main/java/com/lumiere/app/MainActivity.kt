@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Star
@@ -30,6 +31,7 @@ import com.lumiere.app.data.local.database.AppDatabase
 import com.lumiere.app.data.repository.HabitRepository
 import com.lumiere.app.data.repository.TaskRepository
 import com.lumiere.app.ui.screens.ComponentGalleryScreen
+import com.lumiere.app.ui.screens.DashboardScreen
 import com.lumiere.app.ui.screens.HabitScreen
 import com.lumiere.app.ui.screens.TaskScreen
 import com.lumiere.app.ui.theme.LumiereTheme
@@ -41,6 +43,7 @@ import com.lumiere.app.ui.viewmodel.TaskViewModelFactory
 import kotlinx.coroutines.launch
 
 sealed class Screen(val route: String, val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
+    object Dashboard : Screen("dashboard", "Início", Icons.Default.Home)
     object Tasks : Screen("tasks", "M01 — Tarefas", Icons.Default.CheckCircle)
     object Habits : Screen("habits", "M02 — Hábitos", Icons.Default.Star)
     object Gallery : Screen("gallery", " 🧪 Galeria (Dev)", Icons.Default.Info)
@@ -87,7 +90,7 @@ class MainActivity : ComponentActivity() {
                             Divider(color = MaterialTheme.colorScheme.outline)
                             Spacer(modifier = Modifier.height(16.dp))
 
-                            val items = listOf(Screen.Tasks, Screen.Habits, Screen.Gallery)
+                            val items = listOf(Screen.Dashboard, Screen.Tasks, Screen.Habits, Screen.Gallery)
                             items.forEach { screen ->
                                 NavigationDrawerItem(
                                     label = {
@@ -157,9 +160,16 @@ class MainActivity : ComponentActivity() {
                     Box(modifier = Modifier.fillMaxSize().alpha(if (drawerState.isOpen) 0f else 1f)) {
                         NavHost(
                             navController = navController,
-                            startDestination = Screen.Tasks.route,
+                            startDestination = Screen.Dashboard.route,
                             modifier = Modifier.fillMaxSize()
                         ) {
+                            composable(Screen.Dashboard.route) {
+                                DashboardScreen(
+                                    taskViewModel = taskViewModel,
+                                    habitViewModel = habitViewModel,
+                                    onOpenDrawer = { scope.launch { drawerState.open() } }
+                                )
+                            }
                             composable(Screen.Tasks.route) {
                                 TaskScreen(
                                     viewModel = taskViewModel,
