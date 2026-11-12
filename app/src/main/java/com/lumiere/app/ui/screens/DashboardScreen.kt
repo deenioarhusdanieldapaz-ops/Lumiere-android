@@ -1,130 +1,202 @@
 package com.lumiere.app.ui.screens
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lumiere.app.ui.components.LumiereEmptyState
-import com.lumiere.app.ui.components.MetricTile
 import com.lumiere.app.ui.theme.LumiereSpacing
 import com.lumiere.app.ui.viewmodel.HabitViewModel
 import com.lumiere.app.ui.viewmodel.TaskViewModel
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+
+data class AreaItem(val icon: ImageVector, val title: String, val subtitle: String)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     taskViewModel: TaskViewModel,
     habitViewModel: HabitViewModel,
-    onOpenDrawer: () -> Unit
+    isDark: Boolean,
+    onThemeToggle: () -> Unit
 ) {
     val tasks by taskViewModel.tasks.collectAsStateWithLifecycle()
     val habits by habitViewModel.habits.collectAsStateWithLifecycle()
 
-    // Lógica simples (Mock) até o Core (Eng. 7) estar pronto
-    val overdueTasks = tasks.filter { !it.isCompleted && it.dueDate != null && it.dueDate < System.currentTimeMillis() }
     val todayTasks = tasks.filter { !it.isCompleted && it.dueDate != null && it.dueDate >= System.currentTimeMillis() }
-    val totalHabits = habits.size
+    val overdueTasks = tasks.filter { !it.isCompleted && it.dueDate != null && it.dueDate < System.currentTimeMillis() }
+
+    val areas = listOf(
+        AreaItem(Icons.Outlined.CheckCircle, "Tarefas", "${todayTasks.size} ativos"),
+        AreaItem(Icons.Outlined.Star, "Hábitos", "${habits.size} em progresso"),
+        AreaItem(Icons.Outlined.DateRange, "Calendário", "Sem eventos"),
+        AreaItem(Icons.Outlined.Favorite, "Saúde", "Registo diário"),
+        AreaItem(Icons.Outlined.PlayArrow, "Finanças", "Consultar"),
+        AreaItem(Icons.Outlined.Info, "Ver Tudo", "Explorar módulos")
+    )
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Início", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleLarge) },
-                navigationIcon = {
-                    IconButton(onClick = onOpenDrawer) {
-                        Icon(Icons.Default.Menu, contentDescription = "Menu", tint = MaterialTheme.colorScheme.primary)
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Outlined.Star, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.width(LumiereSpacing.S))
+                        Text("LUMIÈRE", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.headlineMedium)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+                actions = {
+                    IconButton(onClick = onThemeToggle) {
+                        Icon(if (isDark) Icons.Filled.DarkMode else Icons.Filled.LightMode, contentDescription = "Tema", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    IconButton(onClick = { }) {
+                        Icon(Icons.Outlined.Notifications, contentDescription = "Notificações", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        Column(
-            modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(horizontal = LumiereSpacing.M),
-            verticalArrangement = Arrangement.spacedBy(LumiereSpacing.M)
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = LumiereSpacing.M),
+            verticalArrangement = Arrangement.spacedBy(LumiereSpacing.L)
         ) {
-            // 1. Saudação
-            val dateStr = SimpleDateFormat("EEEE, d 'de' MMMM", Locale("pt", "PT")).format(Date())
-            Column(modifier = Modifier.padding(top = LumiereSpacing.M)) {
-                Text("Olá, Proprietário", color = MaterialTheme.colorScheme.onBackground, style = MaterialTheme.typography.headlineMedium)
-                Text(dateStr.replaceFirstChar { it.uppercase() }, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyLarge)
-            }
-
-            // 2. AttentionCard (Avisos)
-            if (overdueTasks.isNotEmpty()) {
+            // Hero Card (Índice de Evolução)
+            item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
-                    shape = MaterialTheme.shapes.medium
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    shape = RoundedCornerShape(24.dp),
+                    border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
-                    Row(modifier = Modifier.padding(LumiereSpacing.M), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error)
-                        Spacer(modifier = Modifier.width(LumiereSpacing.S))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Atenção Necessária", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleSmall)
-                            Text("Tens ${overdueTasks.size} tarefa(s) atrasada(s).", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
+                    Row(modifier = Modifier.padding(LumiereSpacing.L), verticalAlignment = Alignment.CenterVertically) {
+                        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(80.dp)) {
+                            CircularProgressIndicator(
+                                progress = 0.2f,
+                                modifier = Modifier.size(80.dp),
+                                color = MaterialTheme.colorScheme.primary,
+                                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                                strokeWidth = 4.dp,
+                                strokeCap = StrokeCap.Round
+                            )
+                            Text("20%", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodyLarge)
+                        }
+                        Spacer(modifier = Modifier.width(LumiereSpacing.L))
+                        Column {
+                            Text("ÍNDICE DE EVOLUÇÃO", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelMedium)
+                            Spacer(modifier = Modifier.height(LumiereSpacing.S))
+                            Text("Continue a construir o seu império.", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleLarge)
                         }
                     }
                 }
             }
 
-            // 3. FocusToday (Métricas)
-            Text("Foco de Hoje", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = LumiereSpacing.S))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(LumiereSpacing.S)) {
-                MetricTile(Modifier.weight(1f), "${todayTasks.size}", "Tarefas Hoje", MaterialTheme.colorScheme.primary)
-                MetricTile(Modifier.weight(1f), "$totalHabits", "Hábitos Ativos", MaterialTheme.colorScheme.secondary)
+            // Grelha de Áreas
+            item {
+                Text("Áreas", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.height(LumiereSpacing.M))
             }
-
-            // 4. InsightCard (Core Mock)
-            Card(
-                modifier = Modifier.fillMaxWidth().padding(top = LumiereSpacing.S),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                shape = MaterialTheme.shapes.medium,
-                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-            ) {
-                Row(modifier = Modifier.padding(LumiereSpacing.M), verticalAlignment = Alignment.Top) {
-                    Icon(Icons.Default.Star, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                    Spacer(modifier = Modifier.width(LumiereSpacing.M))
-                    Column {
-                        Text("Insight Lumière", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleSmall)
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = if (overdueTasks.isNotEmpty()) "Sugiro focares-te primeiro nas tarefas atrasadas para limpar o teu quadro mental."
-                                   else "Tudo em ordem! Aproveita para adiantar algum hábito ou planear a semana.",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
+            item {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    horizontalArrangement = Arrangement.spacedBy(LumiereSpacing.M),
+                    verticalArrangement = Arrangement.spacedBy(LumiereSpacing.M),
+                    modifier = Modifier.heightIn(max = 600.dp)
+                ) {
+                    items(areas) { area ->
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                            shape = RoundedCornerShape(16.dp),
+                            border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(LumiereSpacing.M)) {
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Icon(area.icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                    Icon(Icons.Outlined.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                Spacer(modifier = Modifier.height(LumiereSpacing.M))
+                                Text(area.title, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
+                                Text(area.subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
                     }
                 }
             }
 
-            // 5. Empty State Global (se não houver nada)
-            if (tasks.isEmpty() && habits.isEmpty()) {
+            // Lista de Foco (Tarefas e Hábitos)
+            item {
+                Text("Foco de Hoje", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.height(LumiereSpacing.M))
+                
+                if (todayTasks.isEmpty() && habits.isEmpty()) {
+                    LumiereEmptyState(
+                        icon = Icons.Outlined.CheckCircle,
+                        title = "Tudo Limpo",
+                        description = "Não tens tarefas nem hábitos pendentes para hoje."
+                    )
+                } else {
+                    if (todayTasks.isNotEmpty()) {
+                        Text("Tarefas", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
+                        todayTasks.take(3).forEach { task ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = LumiereSpacing.S),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                shape = RoundedCornerShape(12.dp),
+                                border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant)
+                            ) {
+                                Row(modifier = Modifier.padding(LumiereSpacing.M), verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Outlined.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                    Spacer(modifier = Modifier.width(LumiereSpacing.S))
+                                    Text(task.title, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (habits.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(LumiereSpacing.M))
+                        Text("Hábitos", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
+                        habits.take(3).forEach { habit ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = LumiereSpacing.S),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                shape = RoundedCornerShape(12.dp),
+                                border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant)
+                            ) {
+                                Row(modifier = Modifier.padding(LumiereSpacing.M), verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Outlined.Star, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                    Spacer(modifier = Modifier.width(LumiereSpacing.S))
+                                    Text(habit.name, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                }
+                            }
+                        }
+                    }
+                }
                 Spacer(modifier = Modifier.height(LumiereSpacing.L))
-                LumiereEmptyState(
-                    icon = Icons.Default.Star,
-                    title = "Dia Limpo",
-                    description = "Não tens tarefas nem hábitos. Aproveita para descansar ou criar um novo objetivo.",
-                    actionLabel = "Criar Tarefa",
-                    onActionClick = { /* Futuro: Navegar para Tarefas */ }
-                )
             }
-            
-            Spacer(modifier = Modifier.height(LumiereSpacing.L))
         }
     }
 }

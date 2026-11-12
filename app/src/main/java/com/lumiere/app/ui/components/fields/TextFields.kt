@@ -3,15 +3,14 @@ package com.lumiere.app.ui.components.fields
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.unit.sp
-import com.lumiere.app.ui.theme.LumiereGold
+import com.lumiere.app.ui.theme.LumiereSpacing
 
 @Composable
 fun LumiereTextField(
@@ -29,14 +28,24 @@ fun LumiereTextField(
             label = { Text(label) },
             modifier = Modifier.fillMaxWidth(),
             isError = isError,
+            textStyle = MaterialTheme.typography.bodyLarge,
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = LumiereGold,
-                focusedLabelColor = LumiereGold,
-                cursorColor = LumiereGold
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                focusedLabelColor = MaterialTheme.colorScheme.primary,
+                cursorColor = MaterialTheme.colorScheme.primary,
+                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent
             )
         )
         if (isError && errorMessage != null) {
-            Text(errorMessage, color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
+            Text(
+                text = errorMessage,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = LumiereSpacing.S)
+            )
         }
     }
 }
@@ -55,10 +64,15 @@ fun LumiereTextArea(
         label = { Text(label) },
         modifier = modifier.fillMaxWidth(),
         minLines = minLines,
+        textStyle = MaterialTheme.typography.bodyLarge,
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = LumiereGold,
-            focusedLabelColor = LumiereGold,
-            cursorColor = LumiereGold
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            focusedLabelColor = MaterialTheme.colorScheme.primary,
+            cursorColor = MaterialTheme.colorScheme.primary,
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+            focusedContainerColor = Color.Transparent,
+            unfocusedContainerColor = Color.Transparent
         )
     )
 }
@@ -81,12 +95,18 @@ fun LumierePasswordField(
             IconButton(onClick = { visible = !visible }) {
                 Text(
                     text = if (visible) "ESCONDER" else "VER",
-                    color = LumiereGold,
-                    fontSize = 12.sp
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.labelMedium
                 )
             }
         },
-        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = LumiereGold)
+        textStyle = MaterialTheme.typography.bodyLarge,
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            cursorColor = MaterialTheme.colorScheme.primary,
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+        )
     )
 }
 
@@ -104,6 +124,12 @@ fun LumiereMaskedField(
         label = { Text("$label ($mask)") },
         modifier = modifier.fillMaxWidth(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = LumiereGold)
+        textStyle = MaterialTheme.typography.bodyLarge,
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            cursorColor = MaterialTheme.colorScheme.primary,
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+        )
     )
 }
