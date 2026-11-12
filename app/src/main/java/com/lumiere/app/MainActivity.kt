@@ -6,15 +6,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -36,11 +35,11 @@ import com.lumiere.app.ui.viewmodel.HabitViewModelFactory
 import com.lumiere.app.ui.viewmodel.TaskViewModel
 import com.lumiere.app.ui.viewmodel.TaskViewModelFactory
 
-sealed class Screen(val route: String) {
-    object Dashboard : Screen("dashboard")
-    object Tasks : Screen("tasks")
-    object Habits : Screen("habits")
-    object Gallery : Screen("gallery")
+sealed class Screen(val route: String, val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
+    object Dashboard : Screen("dashboard", "Início", Icons.Filled.Home)
+    object Tasks : Screen("tasks", "Tarefas", Icons.Filled.CheckCircle)
+    object Habits : Screen("habits", "Hábitos", Icons.Filled.Star)
+    object Gallery : Screen("gallery", "Dev", Icons.Filled.Info)
 }
 
 class MainActivity : ComponentActivity() {
@@ -63,41 +62,35 @@ class MainActivity : ComponentActivity() {
 
             LumiereTheme(mode = themeMode) {
                 val navController = rememberNavController()
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentRoute = navBackStackEntry?.destination?.route
+                
+                val items = listOf(Screen.Dashboard, Screen.Tasks, Screen.Habits, Screen.Gallery)
 
                 Scaffold(
                     containerColor = MaterialTheme.colorScheme.background,
                     bottomBar = {
-                        // Ações Rápidas Fixas ao Fundo (sem flutuar)
-                        Surface(
-                            color = MaterialTheme.colorScheme.surface,
-                            tonalElevation = 0.dp,
-                            shadowElevation = 8.dp,
-                            border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline)
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).navigationBarsPadding(),
-                                horizontalArrangement = Arrangement.SpaceEvenly,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                TextButton(onClick = { /* Abrir Nova Tarefa */ }) {
-                                    Icon(Icons.Default.Add, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Nova Tarefa", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelSmall)
-                                }
-                                Box(modifier = Modifier.width(1.dp).height(20.dp).background(MaterialTheme.colorScheme.outline))
-                                
-                                TextButton(onClick = { /* Abrir Novo Hábito */ }) {
-                                    Icon(Icons.Outlined.Spa, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Novo Hábito", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelSmall)
-                                }
-                                Box(modifier = Modifier.width(1.dp).height(20.dp).background(MaterialTheme.colorScheme.outline))
-                                
-                                TextButton(onClick = { /* Abrir Novo Evento */ }) {
-                                    Icon(Icons.Outlined.CalendarToday, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Novo Evento", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelSmall)
-                                }
+                        NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
+                            items.forEach { screen ->
+                                NavigationBarItem(
+                                    icon = { Icon(screen.icon, contentDescription = screen.label) },
+                                    label = { Text(screen.label) },
+                                    selected = currentRoute == screen.route,
+                                    onClick = {
+                                        navController.navigate(screen.route) {
+                                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                            launchSingleTop = true
+                                            restoreState = true
+                                        }
+                                    },
+                                    colors = NavigationBarItemDefaults.colors(
+                                        selectedIconColor = MaterialTheme.colorScheme.primary,
+                                        selectedTextColor = MaterialTheme.colorScheme.primary,
+                                        indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                )
                             }
                         }
                     }
@@ -120,21 +113,9 @@ class MainActivity : ComponentActivity() {
                                 onNavigateToHabits = { navController.navigate(Screen.Habits.route) }
                             )
                         }
-                        composable(Screen.Tasks.route) {
-                            TaskScreen(
-                                viewModel = taskViewModel,
-                                onOpenDrawer = { navController.popBackStack() }
-                            )
-                        }
-                        composable(Screen.Habits.route) {
-                            HabitScreen(
-                                viewModel = habitViewModel,
-                                onOpenDrawer = { navController.popBackStack() }
-                            )
-                        }
-                        composable(Screen.Gallery.route) {
-                            ComponentGalleryScreen(onBack = { navController.popBackStack() })
-                        }
+                        composable(Screen.Tasks.route) { TaskScreen(viewModel = taskViewModel) }
+                        composable(Screen.Habits.route) { HabitScreen(viewModel = habitViewModel) }
+                        composable(Screen.Gallery.route) { ComponentGalleryScreen(onBack = { }) }
                     }
                 }
             }
