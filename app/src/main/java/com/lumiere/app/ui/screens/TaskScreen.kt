@@ -14,7 +14,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.ui.draw.clip
-
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -41,17 +40,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lumiere.app.data.local.entity.Task
-import com.lumiere.app.ui.theme.LumiereDarkGray
-import com.lumiere.app.ui.theme.LumiereGold
 import com.lumiere.app.ui.utils.CategoryEngine
 import com.lumiere.app.ui.components.SummaryCard
 import com.lumiere.app.ui.theme.LumiereIcons
+import com.lumiere.app.ui.theme.Lumiere
 import com.lumiere.app.ui.viewmodel.TaskViewModel
 import java.util.Calendar
-
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -62,7 +58,7 @@ fun TaskScreen(viewModel: TaskViewModel, onOpenDrawer: () -> Unit = {}) {
     val tasks by viewModel.tasks.collectAsStateWithLifecycle()
     val appContext = LocalContext.current
     var taskAttachmentUris by remember { mutableStateOf<List<String>>(emptyList()) }
-    
+
     val filePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetMultipleContents()
     ) { uris: List<Uri>? ->
@@ -71,12 +67,11 @@ fun TaskScreen(viewModel: TaskViewModel, onOpenDrawer: () -> Unit = {}) {
         }
     }
     val projects by viewModel.projects.collectAsStateWithLifecycle()
-    
-    // ESTADOS ELEVADOS (Para não perder dados ao fechar o painel)
+
     var showSheet by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     var activeFilter by remember { mutableStateOf("ALL") }
-    var selectedProjectFilter by remember { mutableStateOf<Long?>(null) } // ALL, TODAY, OVERDUE, COMPLETED
+    var selectedProjectFilter by remember { mutableStateOf<Long?>(null) }
 
     var taskToEdit by remember { mutableStateOf<Task?>(null) }
     var taskMenu by remember { mutableStateOf<Task?>(null) }
@@ -85,7 +80,6 @@ fun TaskScreen(viewModel: TaskViewModel, onOpenDrawer: () -> Unit = {}) {
     var cancelReason by remember { mutableStateOf("") }
     var taskDetails by remember { mutableStateOf<Task?>(null) }
 
-    // Dados do formulário
     var title by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("") }
     var urgency by remember { mutableIntStateOf(1) }
@@ -110,32 +104,31 @@ fun TaskScreen(viewModel: TaskViewModel, onOpenDrawer: () -> Unit = {}) {
     var instructions by remember { mutableStateOf("") }
     var links by remember { mutableStateOf("") }
     var completionCriteria by remember { mutableStateOf("") }
-    
-    
+
     val completedTasks = tasks.count { it.isCompleted }
     val pendingTasks = tasks.count { !it.isCompleted }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("M01 — Tarefas", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold) },
+                title = { Text("M01 — Tarefas", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleLarge) },
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
-                        Icon(Icons.Default.Menu, contentDescription = "Menu", tint = LumiereGold)
+                        Icon(Icons.Default.Menu, contentDescription = "Menu", tint = MaterialTheme.colorScheme.primary)
                     }
                 },
                 actions = {
                     IconButton(onClick = { showSearchBar = !showSearchBar }) {
-                        Icon(LumiereIcons.Search, contentDescription = "Pesquisar", tint = LumiereGold)
+                        Icon(LumiereIcons.Search, contentDescription = "Pesquisar", tint = MaterialTheme.colorScheme.primary)
                     }
                     IconButton(onClick = { showFilterSheet = true }) {
-                        Icon(LumiereIcons.Filter, contentDescription = "Filtros", tint = LumiereGold)
+                        Icon(LumiereIcons.Filter, contentDescription = "Filtros", tint = MaterialTheme.colorScheme.primary)
                     }
                     IconButton(onClick = { showProjectsSheet = true }) {
-                        Icon(LumiereIcons.Folder, contentDescription = "Projetos", tint = LumiereGold)
+                        Icon(LumiereIcons.Folder, contentDescription = "Projetos", tint = MaterialTheme.colorScheme.primary)
                     }
                     IconButton(onClick = { showStatsSheet = true }) {
-                        Icon(Icons.Default.Info, contentDescription = "Estatísticas", tint = LumiereGold)
+                        Icon(Icons.Default.Info, contentDescription = "Estatísticas", tint = MaterialTheme.colorScheme.primary)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
@@ -143,11 +136,11 @@ fun TaskScreen(viewModel: TaskViewModel, onOpenDrawer: () -> Unit = {}) {
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { 
+                onClick = {
                     taskToEdit = null
                     title = ""; category = ""; context = ""; taskDueDate = null; taskPriority = 1; taskRecurrence = "NONE"
                     urgency = 1; importance = 1; energy = 1; estimatedDuration = ""; timeReserved = ""; instructions = ""; links = ""; completionCriteria = ""; taskAttachmentUris = emptyList()
-                    showSheet = true 
+                    showSheet = true
                 },
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
@@ -161,8 +154,8 @@ fun TaskScreen(viewModel: TaskViewModel, onOpenDrawer: () -> Unit = {}) {
         ) {
             item {
                 Column(modifier = Modifier.padding(top = 16.dp)) {
-                    Text("Olá!", color = MaterialTheme.colorScheme.onBackground, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-                    Text("Vamos fazer hoje ainda melhor.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 16.sp)
+                    Text("Olá!", color = MaterialTheme.colorScheme.onBackground, style = MaterialTheme.typography.headlineMedium)
+                    Text("Vamos fazer hoje ainda melhor.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyLarge)
                 }
             }
 
@@ -171,29 +164,28 @@ fun TaskScreen(viewModel: TaskViewModel, onOpenDrawer: () -> Unit = {}) {
                 val tasksForToday = tasks.filter { !it.isCompleted && it.dueDate != null && it.dueDate in System.currentTimeMillis()..todayEnd }
                 val tasksOverdue = tasks.filter { !it.isCompleted && it.dueDate != null && it.dueDate < System.currentTimeMillis() }
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SummaryCard(Modifier.weight(1f), "Hoje", tasksForToday.size.toString(), LumiereGold)
-                    SummaryCard(Modifier.weight(1f), "Concluídas", completedTasks.toString(), Color.Green)
-                    SummaryCard(Modifier.weight(1f), "Atrasadas", tasksOverdue.size.toString(), Color.Red)
+                    SummaryCard(Modifier.weight(1f), "Hoje", tasksForToday.size.toString(), MaterialTheme.colorScheme.primary)
+                    SummaryCard(Modifier.weight(1f), "Concluídas", completedTasks.toString(), Lumiere.colors.success)
+                    SummaryCard(Modifier.weight(1f), "Atrasadas", tasksOverdue.size.toString(), MaterialTheme.colorScheme.error)
                 }
             }
 
             val tasksOverdue = tasks.filter { !it.isCompleted && it.dueDate != null && it.dueDate < System.currentTimeMillis() }
             if (tasksOverdue.isNotEmpty()) {
                 item {
-                    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFF3E1A1A))) {
+                    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
                         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Info, contentDescription = null, tint = Color.Red)
+                            Icon(Icons.Default.Info, contentDescription = null, tint = MaterialTheme.colorScheme.error)
                             Spacer(modifier = Modifier.width(12.dp))
-                            Text("Atenção: ${tasksOverdue.size} tarefas atrasadas", color = Color.White, modifier = Modifier.weight(1f))
+                            Text("Atenção: ${tasksOverdue.size} tarefas atrasadas", color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
                             TextButton(onClick = { activeFilter = "OVERDUE" }) {
-                                Text("Ver detalhes >", color = LumiereGold, fontSize = 12.sp)
+                                Text("Ver detalhes >", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelMedium)
                             }
                         }
                     }
                 }
             }
 
-            
             if (showSearchBar) {
                 item {
                     OutlinedTextField(
@@ -201,13 +193,12 @@ fun TaskScreen(viewModel: TaskViewModel, onOpenDrawer: () -> Unit = {}) {
                         onValueChange = { searchQuery = it },
                         label = { Text("Pesquisar tarefas...") },
                         modifier = Modifier.fillMaxWidth(),
-                        leadingIcon = { Icon(LumiereIcons.Search, contentDescription = null, tint = LumiereGold) },
-                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = LumiereGold)
+                        leadingIcon = { Icon(LumiereIcons.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = MaterialTheme.colorScheme.primary)
                     )
                 }
             }
 
-            
             if (selectedProjectFilter != null) {
                 item {
                     val projName = projects.find { it.id == selectedProjectFilter }?.name ?: "Projeto"
@@ -215,45 +206,43 @@ fun TaskScreen(viewModel: TaskViewModel, onOpenDrawer: () -> Unit = {}) {
                         InputChip(
                             selected = true,
                             onClick = { selectedProjectFilter = null },
-                            label = { Text(projName, color = LumiereGold) },
-                            trailingIcon = { Icon(Icons.Default.Close, contentDescription = "Limpar filtro", tint = LumiereGold, modifier = Modifier.size(16.dp)) },
-                            colors = InputChipDefaults.inputChipColors(selectedContainerColor = LumiereGold.copy(alpha = 0.2f))
+                            label = { Text(projName, color = MaterialTheme.colorScheme.primary) },
+                            trailingIcon = { Icon(Icons.Default.Close, contentDescription = "Limpar filtro", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp)) },
+                            colors = InputChipDefaults.inputChipColors(selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
                         )
                     }
                 }
             }
-            
-            item { Text("Minhas Tarefas", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(top = 8.dp)) }
 
+            item { Text("Minhas Tarefas", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp)) }
 
             if (tasks.isEmpty()) {
                 item {
-                    Card(modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp), colors = CardDefaults.cardColors(containerColor = LumiereDarkGray), shape = RoundedCornerShape(24.dp)) {
+                    Card(modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), shape = RoundedCornerShape(24.dp)) {
                         Column(modifier = Modifier.padding(32.dp).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                            Box(modifier = Modifier.size(100.dp).background(LumiereGold.copy(alpha = 0.1f), CircleShape), contentAlignment = Alignment.Center) {
-                                Icon(LumiereIcons.Event, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(50.dp))
+                            Box(modifier = Modifier.size(100.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), CircleShape), contentAlignment = Alignment.Center) {
+                                Icon(LumiereIcons.Event, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(50.dp))
                             }
                             Spacer(modifier = Modifier.height(24.dp))
-                            Text("Ainda não tem tarefas", color = MaterialTheme.colorScheme.onBackground, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                            Text("Ainda não tem tarefas", color = MaterialTheme.colorScheme.onBackground, style = MaterialTheme.typography.headlineSmall)
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text("Comece por criar a sua primeira tarefa ou explore as recomendações.", color = Color.Gray, fontSize = 14.sp)
+                            Text("Comece por criar a sua primeira tarefa ou explore as recomendações.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
                             Spacer(modifier = Modifier.height(24.dp))
-                            Button(onClick = { showSheet = true }, colors = ButtonDefaults.buttonColors(containerColor = LumiereGold), modifier = Modifier.fillMaxWidth()) {
-                                Icon(Icons.Default.Add, contentDescription = null, tint = Color.Black)
+                            Button(onClick = { showSheet = true }, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary), modifier = Modifier.fillMaxWidth()) {
+                                Icon(Icons.Default.Add, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Criar Tarefa", color = Color.Black, fontWeight = FontWeight.Bold)
+                                Text("Criar Tarefa", color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.titleSmall)
                             }
                             Spacer(modifier = Modifier.height(12.dp))
-                            OutlinedButton(onClick = { }, modifier = Modifier.fillMaxWidth(), border = BorderStroke(1.dp, LumiereGold)) {
-                                Icon(Icons.Default.Star, contentDescription = null, tint = LumiereGold)
+                            OutlinedButton(onClick = { }, modifier = Modifier.fillMaxWidth(), border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)) {
+                                Icon(Icons.Default.Star, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Ver Recomendações", color = LumiereGold)
+                                Text("Ver Recomendações", color = MaterialTheme.colorScheme.primary)
                             }
                         }
                     }
                 }
             } else {
-                
                 val filteredTasks = tasks.filter { task ->
                     val matchesSearch = task.title.contains(searchQuery, ignoreCase = true)
                     val matchesFilter = when(activeFilter) {
@@ -276,51 +265,35 @@ fun TaskScreen(viewModel: TaskViewModel, onOpenDrawer: () -> Unit = {}) {
                     )
                 }
             }
-            
 
             item {
                 Card(modifier = Modifier.fillMaxWidth().padding(top = 8.dp), shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
-                    Box(modifier = Modifier.background(brush = Brush.horizontalGradient(colors = listOf(Color(0xFF2A200F), LumiereDarkGray))).padding(20.dp)) {
+                    Box(modifier = Modifier.background(brush = Brush.horizontalGradient(colors = listOf(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.surface))).padding(20.dp)) {
                         Column {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.Star, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(20.dp))
+                                Icon(Icons.Default.Star, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Inteligência Lumière", color = LumiereGold, fontWeight = FontWeight.Bold)
+                                Text("Inteligência Lumière", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleSmall)
                             }
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text("Você tem $pendingTasks tarefas pendentes e ${tasksOverdue.size} atrasadas. Vamos organizar o seu dia?", color = MaterialTheme.colorScheme.onBackground, fontSize = 14.sp)
+                            Text("Você tem $pendingTasks tarefas pendentes e ${tasksOverdue.size} atrasadas. Vamos organizar o seu dia?", color = MaterialTheme.colorScheme.onBackground, style = MaterialTheme.typography.bodyMedium)
                         }
                     }
                 }
             }
-
             item { Spacer(modifier = Modifier.height(80.dp)) }
         }
     }
 
-
-    // MODAL: Filtros (Bottom Sheet)
     if (showFilterSheet) {
-        ModalBottomSheet(onDismissRequest = { showFilterSheet = false }, containerColor = LumiereDarkGray) {
+        ModalBottomSheet(onDismissRequest = { showFilterSheet = false }, containerColor = MaterialTheme.colorScheme.surface) {
             Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
-                Text("Filtrar Tarefas", color = LumiereGold, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Text("Filtrar Tarefas", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.headlineMedium)
                 Spacer(modifier = Modifier.height(16.dp))
-                
-                listOf(
-                    "ALL" to "Todas as Tarefas",
-                    "TODAY" to "Apenas Hoje",
-                    "OVERDUE" to "Atrasadas",
-                    "COMPLETED" to "Concluídas"
-                ).forEach { (filter, label) ->
+                listOf("ALL" to "Todas as Tarefas", "TODAY" to "Apenas Hoje", "OVERDUE" to "Atrasadas", "COMPLETED" to "Concluídas").forEach { (filter, label) ->
                     ListItem(
-                        headlineContent = { Text(label, color = if (activeFilter == filter) LumiereGold else MaterialTheme.colorScheme.onBackground) },
-                        leadingContent = { 
-                            Icon(
-                                imageVector = if (activeFilter == filter) Icons.Default.CheckCircle else LumiereIcons.RadioButtonUnchecked,
-                                contentDescription = null, 
-                                tint = if (activeFilter == filter) LumiereGold else Color.Gray
-                            ) 
-                        },
+                        headlineContent = { Text(label, color = if (activeFilter == filter) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground) },
+                        leadingContent = { Icon(imageVector = if (activeFilter == filter) Icons.Default.CheckCircle else LumiereIcons.RadioButtonUnchecked, contentDescription = null, tint = if (activeFilter == filter) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant) },
                         modifier = Modifier.clickable { activeFilter = filter; showFilterSheet = false },
                         colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                     )
@@ -330,64 +303,61 @@ fun TaskScreen(viewModel: TaskViewModel, onOpenDrawer: () -> Unit = {}) {
         }
     }
 
-    // MODAL: Menu de Contexto (Long Press)
     if (taskMenu != null) {
-        ModalBottomSheet(onDismissRequest = { taskMenu = null }, containerColor = LumiereDarkGray) {
+        ModalBottomSheet(onDismissRequest = { taskMenu = null }, containerColor = MaterialTheme.colorScheme.surface) {
             Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
-                Text(taskMenu!!.title, color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(bottom = 16.dp))
+                Text(taskMenu!!.title, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 16.dp))
                 ListItem(
                     headlineContent = { Text("Editar Tarefa", color = MaterialTheme.colorScheme.onSurface) },
-                    leadingContent = { Icon(LumiereIcons.Edit, contentDescription = null, tint = LumiereGold) },
-                    modifier = Modifier.clickable { 
-                    taskToEdit = taskMenu
-                    title = taskMenu!!.title
-                    category = taskMenu!!.category ?: ""
-                    urgency = taskMenu!!.urgency
-                    importance = taskMenu!!.importance
-                    energy = taskMenu!!.energy
-                    context = taskMenu!!.context ?: ""
-                    estimatedDuration = taskMenu!!.estimatedDurationMinutes?.toString() ?: ""
-                    timeReserved = taskMenu!!.timeReservedMinutes?.toString() ?: ""
-                    instructions = taskMenu!!.instructions ?: ""
-                    links = taskMenu!!.links ?: ""
-                    completionCriteria = taskMenu!!.completionCriteria ?: ""
+                    leadingContent = { Icon(LumiereIcons.Edit, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                    modifier = Modifier.clickable {
+                        taskToEdit = taskMenu
+                        title = taskMenu!!.title
+                        category = taskMenu!!.category ?: ""
+                        urgency = taskMenu!!.urgency
+                        importance = taskMenu!!.importance
+                        energy = taskMenu!!.energy
+                        context = taskMenu!!.context ?: ""
+                        estimatedDuration = taskMenu!!.estimatedDurationMinutes?.toString() ?: ""
+                        timeReserved = taskMenu!!.timeReservedMinutes?.toString() ?: ""
+                        instructions = taskMenu!!.instructions ?: ""
+                        links = taskMenu!!.links ?: ""
+                        completionCriteria = taskMenu!!.completionCriteria ?: ""
                         taskAttachmentUris = taskMenu!!.attachmentUris?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
-                    showSheet = true; taskMenu = null 
-                },
+                        showSheet = true; taskMenu = null
+                    },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                 )
                 ListItem(
                     headlineContent = { Text("Duplicar", color = MaterialTheme.colorScheme.onSurface) },
-                    leadingContent = { Icon(LumiereIcons.Copy, contentDescription = null, tint = LumiereGold) },
+                    leadingContent = { Icon(LumiereIcons.Copy, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                     modifier = Modifier.clickable { viewModel.duplicateTask(taskMenu!!); taskMenu = null },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                 )
                 ListItem(
                     headlineContent = { Text("Arquivar", color = MaterialTheme.colorScheme.onSurface) },
-                    leadingContent = { Icon(LumiereIcons.Archive, contentDescription = null, tint = LumiereGold) },
+                    leadingContent = { Icon(LumiereIcons.Archive, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                     modifier = Modifier.clickable { viewModel.archiveTask(taskMenu!!); taskMenu = null },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                 )
-
                 if (taskMenu!!.status == 3) {
                     ListItem(
                         headlineContent = { Text("Retomar Tarefa", color = MaterialTheme.colorScheme.onSurface) },
-                        leadingContent = { Icon(Icons.Default.Refresh, contentDescription = null, tint = LumiereGold) },
+                        leadingContent = { Icon(Icons.Default.Refresh, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                         modifier = Modifier.clickable { viewModel.resumeTask(taskMenu!!); taskMenu = null },
                         colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                     )
                 } else if (taskMenu!!.status != 2) {
                     ListItem(
-                        headlineContent = { Text("Cancelar Tarefa", color = Color.Red) },
-                        leadingContent = { Icon(Icons.Default.Close, contentDescription = null, tint = Color.Red) },
+                        headlineContent = { Text("Cancelar Tarefa", color = MaterialTheme.colorScheme.error) },
+                        leadingContent = { Icon(Icons.Default.Close, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
                         modifier = Modifier.clickable { taskToCancel = taskMenu; taskMenu = null },
                         colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                     )
                 }
-
                 ListItem(
-                    headlineContent = { Text("Eliminar", color = Color.Red) },
-                    leadingContent = { Icon(LumiereIcons.Delete, contentDescription = null, tint = Color.Red) },
+                    headlineContent = { Text("Eliminar", color = MaterialTheme.colorScheme.error) },
+                    leadingContent = { Icon(LumiereIcons.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
                     modifier = Modifier.clickable { taskToDelete = taskMenu; taskMenu = null },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                 )
@@ -395,132 +365,73 @@ fun TaskScreen(viewModel: TaskViewModel, onOpenDrawer: () -> Unit = {}) {
         }
     }
 
-    // MODAL: Detalhes da Tarefa (Subtarefas e Histórico)
     if (taskDetails != null) {
         val subtasks by viewModel.getSubtasks(taskDetails!!.id).collectAsStateWithLifecycle(initialValue = emptyList())
         val history by viewModel.getHistory(taskDetails!!.id).collectAsStateWithLifecycle(initialValue = emptyList())
         var newSubtaskTitle by remember { mutableStateOf("") }
-
-        ModalBottomSheet(onDismissRequest = { taskDetails = null }, containerColor = LumiereDarkGray) {
+        ModalBottomSheet(onDismissRequest = { taskDetails = null }, containerColor = MaterialTheme.colorScheme.surface) {
             Column(modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState()).fillMaxWidth()) {
-                Text(taskDetails!!.title, color = LumiereGold, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Text(taskDetails!!.title, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.headlineMedium)
                 Spacer(modifier = Modifier.height(16.dp))
-
-                // Instruções, Links e Critérios
                 if (!taskDetails!!.instructions.isNullOrBlank()) {
-                    Text("Instruções:", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text("Instruções:", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleSmall)
                     Text(taskDetails!!.instructions!!, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(modifier = Modifier.height(8.dp))
                 }
                 if (!taskDetails!!.links.isNullOrBlank()) {
-                    Text("Links:", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text("Links:", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleSmall)
                     val appContext = LocalContext.current
-    var taskAttachmentUris by remember { mutableStateOf<List<String>>(emptyList()) }
-                    Text(
-                        text = taskDetails!!.links!!,
-                        color = Color.Cyan,
-                        textDecoration = TextDecoration.Underline,
-                        modifier = Modifier.clickable {
-                            try {
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(taskDetails!!.links))
-                                appContext.startActivity(intent)
-                            } catch (e: Exception) { }
-                        }
-                    )
+                    Text(text = taskDetails!!.links!!, color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline, modifier = Modifier.clickable {
+                        try { appContext.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(taskDetails!!.links))) } catch (e: Exception) { }
+                    })
                     Spacer(modifier = Modifier.height(8.dp))
                 }
                 if (!taskDetails!!.attachmentUris.isNullOrBlank()) {
-                    Text("Anexos:", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                    val uriList = taskDetails!!.attachmentUris!!.split(",")
-                    uriList.forEachIndexed { index, uriString ->
-                        Text(
-                            text = "📎 Abrir Ficheiro ${index + 1}",
-                            color = Color.Cyan,
-                            textDecoration = TextDecoration.Underline,
-                            modifier = Modifier.clickable {
-                                try {
-                                    val intent = Intent(Intent.ACTION_VIEW).apply {
-                                        setDataAndType(Uri.parse(uriString), "*/*")
-                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                    }
-                                    appContext.startActivity(intent)
-                                } catch (e: Exception) { }
-                            }
-                        )
+                    Text("Anexos:", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleSmall)
+                    taskDetails!!.attachmentUris!!.split(",").forEachIndexed { index, uriString ->
+                        Text(text = "📎 Abrir Ficheiro ${index + 1}", color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline, modifier = Modifier.clickable {
+                            try {
+                                appContext.startActivity(Intent(Intent.ACTION_VIEW).apply { setDataAndType(Uri.parse(uriString), "*/*"); addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) })
+                            } catch (e: Exception) { }
+                        })
                         Spacer(modifier = Modifier.height(4.dp))
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                 }
-
                 if (!taskDetails!!.completionCriteria.isNullOrBlank()) {
-                    Text("Critério de Conclusão:", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text("Critério de Conclusão:", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleSmall)
                     Text(taskDetails!!.completionCriteria!!, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                
-                Divider(modifier = Modifier.padding(vertical = 16.dp), color = Color.Gray)
-
-                // Secção de Subtarefas
-                Text("Subtarefas", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Divider(modifier = Modifier.padding(vertical = 16.dp), color = MaterialTheme.colorScheme.outline)
+                Text("Subtarefas", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleSmall)
                 Spacer(modifier = Modifier.height(8.dp))
-                
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    OutlinedTextField(
-                        value = newSubtaskTitle,
-                        onValueChange = { newSubtaskTitle = it },
-                        label = { Text("Nova subtarefa...") },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true
-                    )
+                    OutlinedTextField(value = newSubtaskTitle, onValueChange = { newSubtaskTitle = it }, label = { Text("Nova subtarefa...") }, modifier = Modifier.weight(1f), singleLine = true)
                     Spacer(modifier = Modifier.width(8.dp))
-                    IconButton(onClick = { 
-                        if (newSubtaskTitle.isNotBlank()) {
-                            viewModel.addSubtask(taskDetails!!.id, newSubtaskTitle)
-                            newSubtaskTitle = ""
-                        }
-                    }) {
-                        Icon(Icons.Default.Add, contentDescription = "Adicionar", tint = LumiereGold)
+                    IconButton(onClick = { if (newSubtaskTitle.isNotBlank()) { viewModel.addSubtask(taskDetails!!.id, newSubtaskTitle); newSubtaskTitle = "" } }) {
+                        Icon(Icons.Default.Add, contentDescription = "Adicionar", tint = MaterialTheme.colorScheme.primary)
                     }
                 }
-                
                 Spacer(modifier = Modifier.height(8.dp))
                 if (subtasks.isEmpty()) {
-                    Text("Sem subtarefas.", color = Color.Gray, fontSize = 12.sp)
+                    Text("Sem subtarefas.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                 } else {
                     subtasks.forEach { subtask ->
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().clickable { viewModel.toggleSubtask(subtask) }) {
-                            Checkbox(
-                                checked = subtask.isCompleted,
-                                onCheckedChange = { viewModel.toggleSubtask(subtask) },
-                                colors = CheckboxDefaults.colors(checkedColor = LumiereGold)
-                            )
-                            Text(
-                                text = subtask.title,
-                                color = if (subtask.isCompleted) Color.Gray else MaterialTheme.colorScheme.onBackground,
-                                textDecoration = if (subtask.isCompleted) TextDecoration.LineThrough else TextDecoration.None,
-                                modifier = Modifier.weight(1f)
-                            )
-                            IconButton(onClick = { viewModel.deleteSubtask(subtask) }) {
-                                Icon(Icons.Default.Delete, contentDescription = "Apagar", tint = Color.Red, modifier = Modifier.size(16.dp))
-                            }
+                            Checkbox(checked = subtask.isCompleted, onCheckedChange = { viewModel.toggleSubtask(subtask) }, colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.primary))
+                            Text(text = subtask.title, color = if (subtask.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onBackground, textDecoration = if (subtask.isCompleted) TextDecoration.LineThrough else TextDecoration.None, modifier = Modifier.weight(1f))
+                            IconButton(onClick = { viewModel.deleteSubtask(subtask) }) { Icon(Icons.Default.Delete, contentDescription = "Apagar", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(16.dp)) }
                         }
                     }
                 }
-
-                Divider(modifier = Modifier.padding(vertical = 16.dp), color = Color.Gray)
-
-                // Secção de Histórico
-                Text("Histórico", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Divider(modifier = Modifier.padding(vertical = 16.dp), color = MaterialTheme.colorScheme.outline)
+                Text("Histórico", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleSmall)
                 Spacer(modifier = Modifier.height(8.dp))
                 if (history.isEmpty()) {
-                    Text("Sem histórico.", color = Color.Gray, fontSize = 12.sp)
+                    Text("Sem histórico.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                 } else {
                     history.forEach { h ->
-                        Text(
-                            text = "${SimpleDateFormat("dd/MM HH:mm", Locale.getDefault()).format(Date(h.timestamp))} - ${h.action}",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = 12.sp,
-                            modifier = Modifier.padding(vertical = 2.dp)
-                        )
+                        Text(text = "${SimpleDateFormat("dd/MM HH:mm", Locale.getDefault()).format(Date(h.timestamp))} - ${h.action}", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(vertical = 2.dp))
                     }
                 }
                 Spacer(modifier = Modifier.height(24.dp))
@@ -528,60 +439,34 @@ fun TaskScreen(viewModel: TaskViewModel, onOpenDrawer: () -> Unit = {}) {
         }
     }
 
-
-    // MODAL: Gestão de Projetos
     if (showProjectsSheet) {
         var newProjectName by remember { mutableStateOf("") }
-        ModalBottomSheet(onDismissRequest = { showProjectsSheet = false }, containerColor = LumiereDarkGray) {
+        ModalBottomSheet(onDismissRequest = { showProjectsSheet = false }, containerColor = MaterialTheme.colorScheme.surface) {
             Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
-                Text("Gestão de Projetos", color = LumiereGold, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Text("Gestão de Projetos", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.headlineMedium)
                 Spacer(modifier = Modifier.height(16.dp))
-                
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    OutlinedTextField(
-                        value = newProjectName,
-                        onValueChange = { newProjectName = it },
-                        label = { Text("Nome do novo projeto") },
-                        modifier = Modifier.weight(1f),
-                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = LumiereGold)
-                    )
+                    OutlinedTextField(value = newProjectName, onValueChange = { newProjectName = it }, label = { Text("Nome do novo projeto") }, modifier = Modifier.weight(1f), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = MaterialTheme.colorScheme.primary))
                     Spacer(modifier = Modifier.width(8.dp))
-                    IconButton(onClick = {
-                        if (newProjectName.isNotBlank()) {
-                            viewModel.addProject(newProjectName)
-                            newProjectName = ""
-                        }
-                    }) {
-                        Icon(Icons.Default.Add, contentDescription = "Criar Projeto", tint = LumiereGold)
+                    IconButton(onClick = { if (newProjectName.isNotBlank()) { viewModel.addProject(newProjectName); newProjectName = "" } }) {
+                        Icon(Icons.Default.Add, contentDescription = "Criar Projeto", tint = MaterialTheme.colorScheme.primary)
                     }
                 }
-                
                 Spacer(modifier = Modifier.height(16.dp))
-                Text("Os teus projetos:", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
+                Text("Os teus projetos:", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
                 Spacer(modifier = Modifier.height(8.dp))
-                
                 if (projects.isEmpty()) {
-                    Text("Ainda não tens projetos criados.", color = Color.Gray, fontSize = 12.sp)
+                    Text("Ainda não tens projetos criados.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                 } else {
                     projects.forEach { proj ->
                         val projTasks = tasks.filter { it.projectId == proj.id }
                         val total = projTasks.size
                         val done = projTasks.count { it.isCompleted }
-                        
                         ListItem(
                             headlineContent = { Text(proj.name, color = MaterialTheme.colorScheme.onSurface) },
-                            supportingContent = { 
-                                Text(
-                                    text = if(total == 0) "Sem tarefas" else "$done de $total tarefas concluídas",
-                                    color = if(done == total && total > 0) Color.Green else Color.Gray,
-                                    fontSize = 12.sp
-                                )
-                            },
-                            leadingContent = { Icon(LumiereIcons.Folder, contentDescription = null, tint = LumiereGold) },
-                            modifier = Modifier.clickable {
-                                selectedProjectFilter = proj.id
-                                showProjectsSheet = false
-                            },
+                            supportingContent = { Text(text = if(total == 0) "Sem tarefas" else "$done de $total tarefas concluídas", color = if(done == total && total > 0) Lumiere.colors.success else MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall) },
+                            leadingContent = { Icon(LumiereIcons.Folder, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                            modifier = Modifier.clickable { selectedProjectFilter = proj.id; showProjectsSheet = false },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                         )
                     }
@@ -591,8 +476,6 @@ fun TaskScreen(viewModel: TaskViewModel, onOpenDrawer: () -> Unit = {}) {
         }
     }
 
-
-    // MODAL: Estatísticas
     if (showStatsSheet) {
         val totalTasks = tasks.size
         val completed = tasks.count { it.isCompleted }
@@ -600,65 +483,59 @@ fun TaskScreen(viewModel: TaskViewModel, onOpenDrawer: () -> Unit = {}) {
         val totalMinutes = tasks.sumOf { it.actualDurationMinutes }
         val hours = totalMinutes / 60
         val minutes = totalMinutes % 60
-
-        ModalBottomSheet(onDismissRequest = { showStatsSheet = false }, containerColor = LumiereDarkGray) {
+        ModalBottomSheet(onDismissRequest = { showStatsSheet = false }, containerColor = MaterialTheme.colorScheme.surface) {
             Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
-                Text("Estatísticas do M01", color = LumiereGold, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Text("Estatísticas do M01", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.headlineMedium)
                 Spacer(modifier = Modifier.height(16.dp))
-                
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Total", color = Color.Gray, fontSize = 12.sp)
-                        Text("$totalTasks", color = MaterialTheme.colorScheme.onBackground, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                        Text("Total", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium)
+                        Text("$totalTasks", color = MaterialTheme.colorScheme.onBackground, style = MaterialTheme.typography.headlineMedium)
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Concluídas", color = Color.Green, fontSize = 12.sp)
-                        Text("$completed", color = Color.Green, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                        Text("Concluídas", color = Lumiere.colors.success, style = MaterialTheme.typography.labelMedium)
+                        Text("$completed", color = Lumiere.colors.success, style = MaterialTheme.typography.headlineMedium)
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Atrasadas", color = Color.Red, fontSize = 12.sp)
-                        Text("$overdue", color = Color.Red, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                        Text("Atrasadas", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelMedium)
+                        Text("$overdue", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.headlineMedium)
                     }
                 }
-                
                 Spacer(modifier = Modifier.height(24.dp))
-                Divider(color = Color.Gray)
+                Divider(color = MaterialTheme.colorScheme.outline)
                 Spacer(modifier = Modifier.height(24.dp))
-                
-                Text("Tempo Total Investido", color = LumiereGold, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text("Tempo Total Investido", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleSmall)
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("${hours}h ${minutes}m", color = MaterialTheme.colorScheme.onBackground, fontSize = 32.sp, fontWeight = FontWeight.Bold)
-                
+                Text("${hours}h ${minutes}m", color = MaterialTheme.colorScheme.onBackground, style = MaterialTheme.typography.displayLarge)
                 Spacer(modifier = Modifier.height(32.dp))
             }
         }
     }
 
-    // MODAL: Criar / Editar Tarefa (Elevado)
     if (showSheet) {
-        ModalBottomSheet(onDismissRequest = { showSheet = false }, containerColor = LumiereDarkGray) {
+        ModalBottomSheet(onDismissRequest = { showSheet = false }, containerColor = MaterialTheme.colorScheme.surface) {
             Column(modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState()).fillMaxWidth()) {
-                Text(if (taskToEdit == null) "Nova Tarefa" else "Editar Tarefa", color = LumiereGold, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Text(if (taskToEdit == null) "Nova Tarefa" else "Editar Tarefa", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.headlineMedium)
                 Spacer(modifier = Modifier.height(16.dp))
 
                 var isPlanOpen by remember { mutableStateOf(true) }
                 AccordionSection("01 - Planeamento", isPlanOpen, { isPlanOpen = !isPlanOpen }) {
-                    OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Título da Tarefa") }, modifier = Modifier.fillMaxWidth(), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = LumiereGold))
+                    OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Título da Tarefa") }, modifier = Modifier.fillMaxWidth(), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = MaterialTheme.colorScheme.primary))
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                         OutlinedButton(onClick = { showDatePicker = true }, modifier = Modifier.weight(1f)) {
-                            Icon(Icons.Default.DateRange, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.DateRange, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(taskDueDate?.let { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date(it)) } ?: "Sem Data", color = LumiereGold, fontSize = 12.sp)
+                            Text(taskDueDate?.let { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date(it)) } ?: "Sem Data", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelMedium)
                         }
                         OutlinedButton(onClick = { showTimePicker = true }, modifier = Modifier.weight(1f), enabled = taskDueDate != null) {
-                            Icon(Icons.Default.Refresh, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Refresh, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(taskDueDate?.let { SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(it)) } ?: "Hora", color = if (taskDueDate != null) LumiereGold else Color.Gray, fontSize = 12.sp)
+                            Text(taskDueDate?.let { SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(it)) } ?: "Hora", color = if (taskDueDate != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium)
                         }
                     }
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Prioridade:", color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp)
+                    Text("Prioridade:", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodyMedium)
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                         FilterChip(selected = taskPriority == 1, onClick = { taskPriority = 1 }, label = { Text("Baixa") })
                         FilterChip(selected = taskPriority == 2, onClick = { taskPriority = 2 }, label = { Text("Média") })
@@ -669,18 +546,18 @@ fun TaskScreen(viewModel: TaskViewModel, onOpenDrawer: () -> Unit = {}) {
                 var isOrgOpen by remember { mutableStateOf(false) }
                 AccordionSection("02 - Organização", isOrgOpen, { isOrgOpen = !isOrgOpen }) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(value = category, onValueChange = { category = it }, label = { Text("Categoria") }, modifier = Modifier.weight(1f), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = LumiereGold))
-                        OutlinedTextField(value = context, onValueChange = { context = it }, label = { Text("Contexto") }, modifier = Modifier.weight(1f), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = LumiereGold))
+                        OutlinedTextField(value = category, onValueChange = { category = it }, label = { Text("Categoria") }, modifier = Modifier.weight(1f), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = MaterialTheme.colorScheme.primary))
+                        OutlinedTextField(value = context, onValueChange = { context = it }, label = { Text("Contexto") }, modifier = Modifier.weight(1f), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = MaterialTheme.colorScheme.primary))
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     var expandedBlocker by remember { mutableStateOf(false) }
                     Box(modifier = Modifier.fillMaxWidth()) {
                         OutlinedButton(onClick = { expandedBlocker = true }, modifier = Modifier.fillMaxWidth()) {
-                            Icon(LumiereIcons.Lock, contentDescription = null, tint = if(blockedByTaskId != null) Color.Red else LumiereGold, modifier = Modifier.size(16.dp))
+                            Icon(LumiereIcons.Lock, contentDescription = null, tint = if(blockedByTaskId != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(tasks.find { it.id == blockedByTaskId }?.title ?: "Sem bloqueio", color = if(blockedByTaskId != null) Color.Red else LumiereGold)
+                            Text(tasks.find { it.id == blockedByTaskId }?.title ?: "Sem bloqueio", color = if(blockedByTaskId != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
                         }
-                        DropdownMenu(expanded = expandedBlocker, onDismissRequest = { expandedBlocker = false }, modifier = Modifier.background(LumiereDarkGray)) {
+                        DropdownMenu(expanded = expandedBlocker, onDismissRequest = { expandedBlocker = false }, modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
                             DropdownMenuItem(text = { Text("Sem bloqueio", color = MaterialTheme.colorScheme.onBackground) }, onClick = { blockedByTaskId = null; expandedBlocker = false })
                             tasks.filter { it.id != taskToEdit?.id && !it.isCompleted }.forEach { t ->
                                 DropdownMenuItem(text = { Text(t.title, color = MaterialTheme.colorScheme.onBackground) }, onClick = { blockedByTaskId = t.id; expandedBlocker = false })
@@ -694,11 +571,11 @@ fun TaskScreen(viewModel: TaskViewModel, onOpenDrawer: () -> Unit = {}) {
                     var expandedRecurrence by remember { mutableStateOf(false) }
                     Box(modifier = Modifier.fillMaxWidth()) {
                         OutlinedButton(onClick = { expandedRecurrence = true }, modifier = Modifier.fillMaxWidth()) {
-                            Icon(Icons.Default.Refresh, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Refresh, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(when(taskRecurrence) { "DAILY" -> "Repetir: Diariamente"; "WEEKLY" -> "Semanalmente"; "MONTHLY" -> "Mensalmente"; "YEARLY" -> "Anualmente"; else -> "Repetir: Nunca" }, color = LumiereGold)
+                            Text(when(taskRecurrence) { "DAILY" -> "Repetir: Diariamente"; "WEEKLY" -> "Semanalmente"; "MONTHLY" -> "Mensalmente"; "YEARLY" -> "Anualmente"; else -> "Repetir: Nunca" }, color = MaterialTheme.colorScheme.primary)
                         }
-                        DropdownMenu(expanded = expandedRecurrence, onDismissRequest = { expandedRecurrence = false }, modifier = Modifier.background(LumiereDarkGray)) {
+                        DropdownMenu(expanded = expandedRecurrence, onDismissRequest = { expandedRecurrence = false }, modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
                             listOf("NONE" to "Nunca", "DAILY" to "Diariamente", "WEEKLY" to "Semanalmente", "MONTHLY" to "Mensalmente", "YEARLY" to "Anualmente").forEach { (rule, label) ->
                                 DropdownMenuItem(text = { Text(label, color = MaterialTheme.colorScheme.onBackground) }, onClick = { taskRecurrence = rule; expandedRecurrence = false })
                             }
@@ -722,9 +599,9 @@ fun TaskScreen(viewModel: TaskViewModel, onOpenDrawer: () -> Unit = {}) {
                     OutlinedTextField(value = links, onValueChange = { links = it }, label = { Text("Links") }, modifier = Modifier.fillMaxWidth())
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedButton(onClick = { filePickerLauncher.launch("*/*") }, modifier = Modifier.fillMaxWidth()) {
-                        Icon(Icons.Default.Add, contentDescription = null, tint = LumiereGold)
+                        Icon(Icons.Default.Add, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(if (taskAttachmentUris.isEmpty()) "Anexar Ficheiros" else "${taskAttachmentUris.size} Anexos", color = LumiereGold)
+                        Text(if (taskAttachmentUris.isEmpty()) "Anexar Ficheiros" else "${taskAttachmentUris.size} Anexos", color = MaterialTheme.colorScheme.primary)
                     }
                 }
 
@@ -743,63 +620,58 @@ fun TaskScreen(viewModel: TaskViewModel, onOpenDrawer: () -> Unit = {}) {
                         showSheet = false
                     },
                     modifier = Modifier.fillMaxWidth().height(50.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = LumiereGold)
-                ) { Text("Guardar Tarefa", color = Color.Black, fontWeight = FontWeight.Bold) }
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                ) { Text("Guardar Tarefa", color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.titleSmall) }
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
-
     }
 
-        // DIALOG: DatePicker
-        if (showDatePicker) {
-            val datePickerState = rememberDatePickerState(initialSelectedDateMillis = taskDueDate ?: System.currentTimeMillis())
-            DatePickerDialog(
-                onDismissRequest = { showDatePicker = false },
-                confirmButton = {
-                    TextButton(onClick = {
-                        val currentCalendar = Calendar.getInstance()
-                        if (taskDueDate != null) currentCalendar.timeInMillis = taskDueDate!!
-                        val newCalendar = Calendar.getInstance()
-                        newCalendar.timeInMillis = datePickerState.selectedDateMillis ?: System.currentTimeMillis()
-                        newCalendar.set(Calendar.HOUR_OF_DAY, currentCalendar.get(Calendar.HOUR_OF_DAY))
-                        newCalendar.set(Calendar.MINUTE, currentCalendar.get(Calendar.MINUTE))
-                        taskDueDate = newCalendar.timeInMillis
-                        showDatePicker = false
-                    }) { Text("OK", color = LumiereGold) }
-                },
-                dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") } }
-            ) { DatePicker(state = datePickerState) }
-        }
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = taskDueDate ?: System.currentTimeMillis())
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    val currentCalendar = Calendar.getInstance()
+                    if (taskDueDate != null) currentCalendar.timeInMillis = taskDueDate!!
+                    val newCalendar = Calendar.getInstance()
+                    newCalendar.timeInMillis = datePickerState.selectedDateMillis ?: System.currentTimeMillis()
+                    newCalendar.set(Calendar.HOUR_OF_DAY, currentCalendar.get(Calendar.HOUR_OF_DAY))
+                    newCalendar.set(Calendar.MINUTE, currentCalendar.get(Calendar.MINUTE))
+                    taskDueDate = newCalendar.timeInMillis
+                    showDatePicker = false
+                }) { Text("OK", color = MaterialTheme.colorScheme.primary) }
+            },
+            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") } }
+        ) { DatePicker(state = datePickerState) }
+    }
 
-        // DIALOG: TimePicker
-        if (showTimePicker) {
-            val timePickerState = rememberTimePickerState()
-            AlertDialog(
-                onDismissRequest = { showTimePicker = false },
-                title = { Text("Escolher Hora", color = LumiereGold) },
-                text = { TimePicker(state = timePickerState) },
-                confirmButton = {
-                    TextButton(onClick = {
-                        val cal = Calendar.getInstance()
-                        if (taskDueDate != null) cal.timeInMillis = taskDueDate!!
-                        cal.set(Calendar.HOUR_OF_DAY, timePickerState.hour)
-                        cal.set(Calendar.MINUTE, timePickerState.minute)
-                        taskDueDate = cal.timeInMillis
-                        showTimePicker = false
-                    }) { Text("OK", color = LumiereGold) }
-                },
-                dismissButton = { TextButton(onClick = { showTimePicker = false }) { Text("Cancelar") } },
-                containerColor = LumiereDarkGray
-            )
-        }
+    if (showTimePicker) {
+        val timePickerState = rememberTimePickerState()
+        AlertDialog(
+            onDismissRequest = { showTimePicker = false },
+            title = { Text("Escolher Hora", color = MaterialTheme.colorScheme.primary) },
+            text = { TimePicker(state = timePickerState) },
+            confirmButton = {
+                TextButton(onClick = {
+                    val cal = Calendar.getInstance()
+                    if (taskDueDate != null) cal.timeInMillis = taskDueDate!!
+                    cal.set(Calendar.HOUR_OF_DAY, timePickerState.hour)
+                    cal.set(Calendar.MINUTE, timePickerState.minute)
+                    taskDueDate = cal.timeInMillis
+                    showTimePicker = false
+                }) { Text("OK", color = MaterialTheme.colorScheme.primary) }
+            },
+            dismissButton = { TextButton(onClick = { showTimePicker = false }) { Text("Cancelar") } },
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    }
 
-
-    // DIALOG: Motivo de Cancelamento
     if (taskToCancel != null) {
         AlertDialog(
             onDismissRequest = { taskToCancel = null; cancelReason = "" },
-            title = { Text("Cancelar Tarefa", color = Color.Red) },
+            title = { Text("Cancelar Tarefa", color = MaterialTheme.colorScheme.error) },
             text = {
                 Column {
                     Text("Porque estás a cancelar '${taskToCancel?.title}'?", color = MaterialTheme.colorScheme.onBackground)
@@ -819,30 +691,27 @@ fun TaskScreen(viewModel: TaskViewModel, onOpenDrawer: () -> Unit = {}) {
                         taskToCancel = null
                         cancelReason = ""
                     }
-                }) { Text("Confirmar", color = Color.Red) }
+                }) { Text("Confirmar", color = MaterialTheme.colorScheme.error) }
             },
-            dismissButton = { TextButton(onClick = { taskToCancel = null; cancelReason = "" }) { Text("Voltar", color = LumiereGold) } },
+            dismissButton = { TextButton(onClick = { taskToCancel = null; cancelReason = "" }) { Text("Voltar", color = MaterialTheme.colorScheme.primary) } },
             containerColor = MaterialTheme.colorScheme.surface
         )
     }
 
-    // DIALOG: Confirmar Eliminação
     if (taskToDelete != null) {
         AlertDialog(
             onDismissRequest = { taskToDelete = null },
-            title = { Text("Apagar Tarefa", color = Color.Red) },
+            title = { Text("Apagar Tarefa", color = MaterialTheme.colorScheme.error) },
             text = { Text("Tens a certeza que queres apagar '${taskToDelete?.title}'?", color = MaterialTheme.colorScheme.onBackground) },
-            confirmButton = { TextButton(onClick = { viewModel.deleteTask(taskToDelete!!); taskToDelete = null }) { Text("Apagar", color = Color.Red) } },
+            confirmButton = { TextButton(onClick = { viewModel.deleteTask(taskToDelete!!); taskToDelete = null }) { Text("Apagar", color = MaterialTheme.colorScheme.error) } },
             dismissButton = { TextButton(onClick = { taskToDelete = null }) { Text("Cancelar", color = MaterialTheme.colorScheme.onSurfaceVariant) } },
             containerColor = MaterialTheme.colorScheme.surface
         )
     }
 }
 
-
 @Composable
 fun TimerBadge(task: Task, priorityColor: Color) {
-    // RECOMPOSE ISOLADO: Só este componente é redesenhado a cada segundo.
     var currentTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(task.timerStartedAt) {
         if (task.timerStartedAt != null) {
@@ -859,13 +728,13 @@ fun TimerBadge(task: Task, priorityColor: Color) {
 
     Spacer(modifier = Modifier.height(10.dp))
     Row(verticalAlignment = Alignment.CenterVertically) {
-         Icon(Icons.Default.Refresh, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(14.dp))
+         Icon(Icons.Default.Refresh, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(14.dp))
          Spacer(modifier = Modifier.width(4.dp))
-         Text(if (remaining > 0) "Restam: ${remaining}m" else "Excedeu: ${-remaining}m", color = if (progress >= 1f) Color.Red else Color.Gray, fontSize = 11.sp)
+         Text(if (remaining > 0) "Restam: ${remaining}m" else "Excedeu: ${-remaining}m", color = if (progress >= 1f) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
          Spacer(modifier = Modifier.width(8.dp))
-         LinearProgressIndicator(progress = progress, modifier = Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp)), color = LumiereGold, trackColor = Color.DarkGray)
+         LinearProgressIndicator(progress = progress, modifier = Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp)), color = MaterialTheme.colorScheme.primary, trackColor = MaterialTheme.colorScheme.outlineVariant)
          Spacer(modifier = Modifier.width(8.dp))
-         Text("${(progress * 100).toInt()}%", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+         Text("${(progress * 100).toInt()}%", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.labelMedium)
     }
 }
 
@@ -877,32 +746,32 @@ fun TaskItem(task: Task, blockerName: String?, onToggleComplete: () -> Unit, onO
     val isCancelled = task.status == 3
     val isBlocked = task.blockedByTaskId != null && !isCompleted && !isCancelled
     val isRunning = task.timerStartedAt != null
-    
-    val priorityColor = when(task.priority) { 3 -> Color(0xFFE53935); 2 -> LumiereGold; else -> Color(0xFF43A047) }
+
+    val priorityColor = when(task.priority) { 3 -> MaterialTheme.colorScheme.error; 2 -> MaterialTheme.colorScheme.primary; else -> Lumiere.colors.success }
     val priorityText = when(task.priority) { 3 -> "Alta"; 2 -> "Média"; else -> "Baixa" }
     val priorityIcon = if (task.priority == 3) Icons.Default.Warning else Icons.Default.Info
     val categoryTheme = CategoryEngine.getTheme(task.category)
     val categoryIcon = categoryTheme.icon
 
     val cardColor = when {
-        isCancelled -> Color(0xFF1E1E1E).copy(alpha = 0.5f)
-        isOverdue -> Color(0xFF3E1A1A)
-        isCompleted -> LumiereDarkGray.copy(alpha = 0.4f)
-        isBlocked -> Color(0xFF1E1E1E)
-        else -> LumiereDarkGray
+        isCancelled -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        isOverdue -> MaterialTheme.colorScheme.errorContainer
+        isCompleted -> MaterialTheme.colorScheme.surface.copy(alpha = 0.4f)
+        isBlocked -> MaterialTheme.colorScheme.surfaceVariant
+        else -> MaterialTheme.colorScheme.surface
     }
-    
+
     val borderColor = when {
-        isOverdue && !isCompleted && !isCancelled -> Color.Red
-        isBlocked -> Color(0xFFB8860B)
-        else -> Color(0xFF333333)
+        isOverdue && !isCompleted && !isCancelled -> MaterialTheme.colorScheme.error
+        isBlocked -> Lumiere.colors.warning
+        else -> MaterialTheme.colorScheme.outline
     }
 
     val mainIconTint = when {
-        isCompleted -> Color.Green
-        isCancelled -> Color.Gray
-        isBlocked -> Color(0xFFB8860B)
-        isOverdue -> Color.Red
+        isCompleted -> Lumiere.colors.success
+        isCancelled -> MaterialTheme.colorScheme.onSurfaceVariant
+        isBlocked -> Lumiere.colors.warning
+        isOverdue -> MaterialTheme.colorScheme.error
         else -> categoryTheme.iconColor
     }
 
@@ -935,27 +804,27 @@ fun TaskItem(task: Task, blockerName: String?, onToggleComplete: () -> Unit, onO
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = task.title,
-                    fontWeight = FontWeight.Bold, fontSize = 17.sp,
-                    color = if (isCompleted || isCancelled) Color.Gray else Color.White,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = if (isCompleted || isCancelled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
                     textDecoration = if (isCompleted) TextDecoration.LineThrough else TextDecoration.None,
                     maxLines = 1, overflow = TextOverflow.Ellipsis
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                
+
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (!task.category.isNullOrBlank() && !isCancelled) {
                         val catTheme = CategoryEngine.getTheme(task.category!!)
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.background(catTheme.backgroundColor.copy(alpha = 0.3f), RoundedCornerShape(20.dp)).padding(horizontal = 10.dp, vertical = 4.dp)) {
                              Icon(catTheme.icon, contentDescription = null, tint = catTheme.iconColor, modifier = Modifier.size(12.dp))
                              Spacer(modifier = Modifier.width(4.dp))
-                             Text(task.category!!, color = catTheme.iconColor, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines=1)
+                             Text(task.category!!, color = catTheme.iconColor, style = MaterialTheme.typography.labelSmall, maxLines=1)
                         }
                     }
                     if (!isCancelled) {
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.background(priorityColor.copy(alpha=0.15f), RoundedCornerShape(20.dp)).padding(horizontal = 10.dp, vertical = 4.dp)) {
                             Icon(priorityIcon, contentDescription = null, tint = priorityColor, modifier = Modifier.size(12.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(priorityText, color = priorityColor, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines=1)
+                            Text(priorityText, color = priorityColor, style = MaterialTheme.typography.labelSmall, maxLines=1)
                         }
                     }
                 }
@@ -963,52 +832,52 @@ fun TaskItem(task: Task, blockerName: String?, onToggleComplete: () -> Unit, onO
                 if (isCancelled) {
                     Spacer(modifier = Modifier.height(6.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Info, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(12.dp))
+                        Icon(Icons.Default.Info, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(12.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Motivo: ${task.cancellationReason ?: "Não especificado"}", color = Color.Gray, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text("Motivo: ${task.cancellationReason ?: "Não especificado"}", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 } else if (isBlocked) {
                     Spacer(modifier = Modifier.height(6.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(LumiereIcons.Lock, contentDescription = null, tint = Color(0xFFB8860B), modifier = Modifier.size(12.dp))
+                        Icon(LumiereIcons.Lock, contentDescription = null, tint = Lumiere.colors.warning, modifier = Modifier.size(12.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Depende de: ${blockerName ?: "outra tarefa"}", color = Color(0xFFB8860B), fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text("Depende de: ${blockerName ?: "outra tarefa"}", color = Lumiere.colors.warning, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 } else if (isCompleted) {
                     Spacer(modifier = Modifier.height(6.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.DateRange, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(12.dp))
+                        Icon(Icons.Default.DateRange, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(12.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         val dateStr = task.completedAt?.let { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date(it)) } ?: "Concluída"
-                        Text("Concluída • $dateStr", color = Color.Gray, fontSize = 12.sp)
+                        Text("Concluída • $dateStr", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                     }
                 } else if (task.dueDate != null) {
                      Spacer(modifier = Modifier.height(6.dp))
                      val dateStr = SimpleDateFormat("dd/MM • HH:mm", Locale.getDefault()).format(Date(task.dueDate))
                      Row(verticalAlignment = Alignment.CenterVertically) {
-                          Icon(Icons.Default.DateRange, contentDescription = null, tint = if(isOverdue) Color.Red else Color.Gray, modifier = Modifier.size(12.dp))
+                          Icon(Icons.Default.DateRange, contentDescription = null, tint = if(isOverdue) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(12.dp))
                           Spacer(modifier = Modifier.width(4.dp))
-                          Text(dateStr, color = if(isOverdue) Color.Red else Color.Gray, fontSize = 12.sp)
+                          Text(dateStr, color = if(isOverdue) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                      }
                 }
-                
+
                 if (task.estimatedDurationMinutes != null && task.estimatedDurationMinutes > 0 && !isCompleted && !isCancelled) {
                     TimerBadge(task, priorityColor)
                 }
             }
 
             Spacer(modifier = Modifier.width(12.dp))
-            Box(modifier = Modifier.width(1.dp).height(50.dp).background(Color(0xFF333333)))
+            Box(modifier = Modifier.width(1.dp).height(50.dp).background(MaterialTheme.colorScheme.outline))
             Spacer(modifier = Modifier.width(12.dp))
-            
+
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 if (!isCompleted && !isCancelled && !isBlocked) {
-                    IconButton(onClick = onTimerClick, modifier = Modifier.size(42.dp).border(1.5.dp, if (isRunning) Color.Red else LumiereGold, CircleShape)) {
-                        Icon(imageVector = if (isRunning) Icons.Default.Close else Icons.Default.PlayArrow, contentDescription = "Timer", tint = if (isRunning) Color.Red else LumiereGold, modifier = Modifier.size(24.dp))
+                    IconButton(onClick = onTimerClick, modifier = Modifier.size(42.dp).border(1.5.dp, if (isRunning) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary, CircleShape)) {
+                        Icon(imageVector = if (isRunning) Icons.Default.Close else Icons.Default.PlayArrow, contentDescription = "Timer", tint = if (isRunning) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
                     }
                     Spacer(modifier = Modifier.height(4.dp))
                 }
-                IconButton(onClick = onMenuClick, modifier = Modifier.size(24.dp)) { Icon(Icons.Default.MoreVert, contentDescription = "Menu", tint = Color.Gray) }
+                IconButton(onClick = onMenuClick, modifier = Modifier.size(24.dp)) { Icon(Icons.Default.MoreVert, contentDescription = "Menu", tint = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
         }
     }
@@ -1028,7 +897,7 @@ fun getEndOfDay(timestamp: Long): Long {
 fun AccordionSection(title: String, isExpanded: Boolean, onToggle: () -> Unit, content: @Composable () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         shape = RoundedCornerShape(12.dp)
     ) {
         Column {
@@ -1037,8 +906,8 @@ fun AccordionSection(title: String, isExpanded: Boolean, onToggle: () -> Unit, c
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(title, color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                Icon(if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown, contentDescription = null, tint = LumiereGold)
+                Text(title, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleSmall)
+                Icon(if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             }
             if (isExpanded) {
                 Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
