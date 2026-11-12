@@ -4,9 +4,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -43,8 +40,7 @@ fun DashboardScreen(
     val habits by habitViewModel.habits.collectAsStateWithLifecycle()
 
     val todayTasks = tasks.filter { !it.isCompleted && it.dueDate != null && it.dueDate >= System.currentTimeMillis() }
-    val overdueTasks = tasks.filter { !it.isCompleted && it.dueDate != null && it.dueDate < System.currentTimeMillis() }
-
+    
     val areas = listOf(
         AreaItem(Icons.Outlined.CheckCircle, "Tarefas", "${todayTasks.size} ativos"),
         AreaItem(Icons.Outlined.Star, "Hábitos", "${habits.size} em progresso"),
@@ -81,7 +77,7 @@ fun DashboardScreen(
             modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = LumiereSpacing.M),
             verticalArrangement = Arrangement.spacedBy(LumiereSpacing.L)
         ) {
-            // Hero Card (Índice de Evolução)
+            // 1. HERO CARD (Índice de Evolução)
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -112,41 +108,32 @@ fun DashboardScreen(
                 }
             }
 
-            // Grelha de Áreas
+            // 2. INSIGHT LUMIÈRE (O painel de inteligência de volta)
             item {
-                Text("Áreas", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
-                Spacer(modifier = Modifier.height(LumiereSpacing.M))
-            }
-            item {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    horizontalArrangement = Arrangement.spacedBy(LumiereSpacing.M),
-                    verticalArrangement = Arrangement.spacedBy(LumiereSpacing.M),
-                    modifier = Modifier.heightIn(max = 600.dp)
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    shape = RoundedCornerShape(16.dp),
+                    border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
-                    items(areas) { area ->
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                            shape = RoundedCornerShape(16.dp),
-                            border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                        ) {
-                            Column(modifier = Modifier.padding(LumiereSpacing.M)) {
-                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Icon(area.icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                                    Icon(Icons.Outlined.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                                }
-                                Spacer(modifier = Modifier.height(LumiereSpacing.M))
-                                Text(area.title, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
-                                Text(area.subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
-                            }
+                    Row(modifier = Modifier.padding(LumiereSpacing.M), verticalAlignment = Alignment.Top) {
+                        Icon(Icons.Outlined.Star, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.width(LumiereSpacing.M))
+                        Column {
+                            Text("Insight Lumière", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
+                            Spacer(modifier = Modifier.height(LumiereSpacing.S))
+                            Text(
+                                "Tudo em ordem! Aproveita para adiantar algum hábito ou planear a semana.",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
                         }
                     }
                 }
             }
 
-            // Lista de Foco (Tarefas e Hábitos)
+            // 3. FOCO DE HOJE (Tarefas e Hábitos)
             item {
                 Text("Foco de Hoje", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
                 Spacer(modifier = Modifier.height(LumiereSpacing.M))
@@ -158,6 +145,7 @@ fun DashboardScreen(
                         description = "Não tens tarefas nem hábitos pendentes para hoje."
                     )
                 } else {
+                    // Tarefas (Máx 3)
                     if (todayTasks.isNotEmpty()) {
                         Text("Tarefas", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
                         todayTasks.take(3).forEach { task ->
@@ -176,6 +164,7 @@ fun DashboardScreen(
                         }
                     }
                     
+                    // Hábitos (Máx 3)
                     if (habits.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(LumiereSpacing.M))
                         Text("Hábitos", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
@@ -190,6 +179,40 @@ fun DashboardScreen(
                                     Icon(Icons.Outlined.Star, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                                     Spacer(modifier = Modifier.width(LumiereSpacing.S))
                                     Text(habit.name, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 4. GRELHA DE ÁREAS (Agora em baixo)
+            item {
+                Text("Áreas", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.height(LumiereSpacing.M))
+            }
+            item {
+                // Substituindo o LazyVerticalGrid por Rows para evitar bugs de scroll no Compose
+                Column(verticalArrangement = Arrangement.spacedBy(LumiereSpacing.M)) {
+                    areas.chunked(2).forEach { rowItems ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(LumiereSpacing.M)) {
+                            rowItems.forEach { area ->
+                                Card(
+                                    modifier = Modifier.weight(1f),
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                    shape = RoundedCornerShape(16.dp),
+                                    border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                                ) {
+                                    Column(modifier = Modifier.padding(LumiereSpacing.M)) {
+                                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                            Icon(area.icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                            Icon(Icons.Outlined.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        }
+                                        Spacer(modifier = Modifier.height(LumiereSpacing.M))
+                                        Text(area.title, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
+                                        Text(area.subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                                    }
                                 }
                             }
                         }
