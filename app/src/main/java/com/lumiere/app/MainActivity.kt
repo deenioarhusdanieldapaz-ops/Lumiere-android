@@ -81,7 +81,7 @@ class MainActivity : ComponentActivity() {
                     containerColor = MaterialTheme.colorScheme.background,
                     bottomBar = {
                         // Barra Flutuante (Pílula)
-                        Box(modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp, start = 16.dp, end = 16.dp), contentAlignment = Alignment.BottomCenter) {
+                        Box(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp, start = 16.dp, end = 16.dp), contentAlignment = Alignment.BottomCenter) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 
                                 // Quick Actions (Ações Rápidas)
