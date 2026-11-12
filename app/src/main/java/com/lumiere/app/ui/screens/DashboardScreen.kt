@@ -3,6 +3,7 @@ package com.lumiere.app.ui.screens
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -38,7 +39,9 @@ fun DashboardScreen(
     taskViewModel: TaskViewModel,
     habitViewModel: HabitViewModel,
     isDark: Boolean,
-    onThemeToggle: () -> Unit
+    onThemeToggle: () -> Unit,
+    onNavigateToTasks: () -> Unit,
+    onNavigateToHabits: () -> Unit
 ) {
     val tasks by taskViewModel.tasks.collectAsStateWithLifecycle()
     val habits by habitViewModel.habits.collectAsStateWithLifecycle()
@@ -65,7 +68,7 @@ fun DashboardScreen(
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(horizontal = LumiereSpacing.M),
             verticalArrangement = Arrangement.spacedBy(LumiereSpacing.L),
-            contentPadding = PaddingValues(top = 40.dp, bottom = 200.dp)
+            contentPadding = PaddingValues(top = 40.dp, bottom = LumiereSpacing.M)
         ) {
             item {
                 Row(
@@ -162,7 +165,7 @@ fun DashboardScreen(
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(LumiereSpacing.M)) {
                     Card(
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).clickable { onNavigateToTasks() },
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                         shape = RoundedCornerShape(16.dp),
                         border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline)
@@ -187,7 +190,7 @@ fun DashboardScreen(
                     }
 
                     Card(
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).clickable { onNavigateToHabits() },
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                         shape = RoundedCornerShape(16.dp),
                         border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline)
