@@ -513,7 +513,7 @@ fun TaskScreen(viewModel: TaskViewModel, onOpenDrawer: () -> Unit = {}) {
     }
 
     if (showSheet) {
-        ModalBottomSheet(onDismissRequest = { showSheet = false }, containerColor = MaterialTheme.colorScheme.surface) {
+        ModalBottomSheet(onDismissRequest = { showSheet = false }, containerColor = MaterialTheme.colorScheme.background, contentColor = MaterialTheme.colorScheme.onBackground) {
             Column(modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState()).fillMaxWidth()) {
                 Text(if (taskToEdit == null) "Nova Tarefa" else "Editar Tarefa", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.headlineMedium)
                 Spacer(modifier = Modifier.height(16.dp))

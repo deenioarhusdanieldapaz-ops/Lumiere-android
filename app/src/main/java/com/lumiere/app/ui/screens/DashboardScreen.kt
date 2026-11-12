@@ -108,32 +108,7 @@ fun DashboardScreen(
                 }
             }
 
-            // 2. INSIGHT LUMIÈRE (O painel de inteligência de volta)
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    shape = RoundedCornerShape(16.dp),
-                    border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                ) {
-                    Row(modifier = Modifier.padding(LumiereSpacing.M), verticalAlignment = Alignment.Top) {
-                        Icon(Icons.Outlined.Star, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                        Spacer(modifier = Modifier.width(LumiereSpacing.M))
-                        Column {
-                            Text("Insight Lumière", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
-                            Spacer(modifier = Modifier.height(LumiereSpacing.S))
-                            Text(
-                                "Tudo em ordem! Aproveita para adiantar algum hábito ou planear a semana.",
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-                    }
-                }
-            }
-
-            // 3. FOCO DE HOJE (Tarefas e Hábitos)
+            // 2. FOCO DE HOJE (Tarefas e Hábitos)
             item {
                 Text("Foco de Hoje", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
                 Spacer(modifier = Modifier.height(LumiereSpacing.M))
@@ -219,6 +194,31 @@ fun DashboardScreen(
                     }
                 }
                 Spacer(modifier = Modifier.height(LumiereSpacing.L))
+            }
+
+            // 5. INSIGHT LUMIÈRE (Movido para o fim)
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    shape = RoundedCornerShape(16.dp),
+                    border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Row(modifier = Modifier.padding(LumiereSpacing.M), verticalAlignment = Alignment.Top) {
+                        Icon(Icons.Outlined.Star, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.width(LumiereSpacing.M))
+                        Column {
+                            Text("Insight Lumière", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
+                            Spacer(modifier = Modifier.height(LumiereSpacing.S))
+                            Text(
+                                "Tudo em ordem! Aproveita para adiantar algum hábito ou planear a semana.",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+                }
             }
         }
     }

@@ -288,7 +288,7 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
         val habit = habitDetails!!
         val habitCheckIns by viewModel.getCheckInsForHabit(habit.id).collectAsState(initial = emptyList())
 
-        ModalBottomSheet(onDismissRequest = { habitDetails = null }, containerColor = MaterialTheme.colorScheme.surface) {
+        ModalBottomSheet(onDismissRequest = { habitDetails = null }, containerColor = MaterialTheme.colorScheme.background, contentColor = MaterialTheme.colorScheme.onBackground) {
             Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
                 Text(habit.name, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.headlineMedium)
                 if (habit.category != null) {
@@ -331,7 +331,7 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
         val habit = habitDetails!!
         val habitCheckIns by viewModel.getCheckInsForHabit(habit.id).collectAsState(initial = emptyList())
 
-        ModalBottomSheet(onDismissRequest = { habitDetails = null }, containerColor = MaterialTheme.colorScheme.surface) {
+        ModalBottomSheet(onDismissRequest = { habitDetails = null }, containerColor = MaterialTheme.colorScheme.background, contentColor = MaterialTheme.colorScheme.onBackground) {
             Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
                 Text(habit.name, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.headlineMedium)
                 if (habit.category != null) {
