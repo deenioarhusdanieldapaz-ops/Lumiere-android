@@ -3,6 +3,7 @@ package com.lumiere.app.ui.screens
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -111,9 +112,10 @@ fun DashboardScreen(
                 ) {
                     Row(modifier = Modifier.padding(LumiereSpacing.M), verticalAlignment = Alignment.CenterVertically) {
                         Box(contentAlignment = Alignment.Center, modifier = Modifier.size(90.dp)) {
+                            val ringColor = MaterialTheme.colorScheme.primary
                             Canvas(modifier = Modifier.fillMaxSize()) {
-                                drawArc(color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f), startAngle = 0f, sweepAngle = 360f, useCenter = false, style = Stroke(width = 8.dp.toPx(), cap = StrokeCap.Round))
-                                drawArc(color = MaterialTheme.colorScheme.primary, startAngle = -90f, sweepAngle = 72f, useCenter = false, style = Stroke(width = 8.dp.toPx(), cap = StrokeCap.Round))
+                                drawArc(color = ringColor.copy(alpha = 0.2f), startAngle = 0f, sweepAngle = 360f, useCenter = false, style = Stroke(width = 8.dp.toPx(), cap = StrokeCap.Round))
+                                drawArc(color = ringColor, startAngle = -90f, sweepAngle = 72f, useCenter = false, style = Stroke(width = 8.dp.toPx(), cap = StrokeCap.Round))
                             }
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text("20%", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
