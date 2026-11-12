@@ -21,18 +21,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.lumiere.app.ui.components.fields.*
 import com.lumiere.app.ui.utils.LumiereCategories
 import com.lumiere.app.data.local.entity.Habit
 import com.lumiere.app.domain.usecase.HabitKind
 import com.lumiere.app.domain.usecase.kind
 import com.lumiere.app.data.local.entity.HabitCheckIn
-import com.lumiere.app.ui.theme.LumiereDarkGray
 import com.lumiere.app.ui.components.MetricTile
-import com.lumiere.app.ui.theme.LumiereGold
 import com.lumiere.app.ui.utils.CategoryEngine
 import com.lumiere.app.ui.viewmodel.HabitViewModel
+import com.lumiere.app.ui.theme.Lumiere
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,18 +38,16 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
     val habits by viewModel.habits.collectAsState()
     val allCheckIns by viewModel.allCheckIns.collectAsState()
 
-    // Cálculo de métricas reais
     val cal = java.util.Calendar.getInstance()
     val startOfDay = cal.apply { set(java.util.Calendar.HOUR_OF_DAY, 0); set(java.util.Calendar.MINUTE, 0); set(java.util.Calendar.SECOND, 0); set(java.util.Calendar.MILLISECOND, 0) }.timeInMillis
     val endOfDay = cal.apply { set(java.util.Calendar.HOUR_OF_DAY, 23); set(java.util.Calendar.MINUTE, 59); set(java.util.Calendar.SECOND, 59); set(java.util.Calendar.MILLISECOND, 999) }.timeInMillis
-    
+
     val checkInsToday = allCheckIns.filter { it.timestamp in startOfDay..endOfDay }
     val completedToday = checkInsToday.map { it.habitId }.distinct().size
     val totalHabits = habits.size
     val pendingToday = (totalHabits - completedToday).coerceAtLeast(0)
     val consistency = viewModel.calculateConsistency().toFloat()
 
-    // Dica #4: State Hoisting (Elevação de Estado)
     var showCreateSheet by remember { mutableStateOf(false) }
     var newHabitName by remember { mutableStateOf("") }
     var newHabitCategory by remember { mutableStateOf("") }
@@ -74,15 +70,15 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { 
+                title = {
                     Column {
-                        Text("M02 — Hábitos", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                        Text("Pequenas ações, grandes conquistas", color = Color.Gray, fontSize = 12.sp)
+                        Text("M02 — Hábitos", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleLarge)
+                        Text("Pequenas ações, grandes conquistas", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
-                        Icon(Icons.Default.Menu, contentDescription = "Menu", tint = LumiereGold)
+                        Icon(Icons.Default.Menu, contentDescription = "Menu", tint = MaterialTheme.colorScheme.primary)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
@@ -90,7 +86,7 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { 
+                onClick = {
                     habitToEdit = null
                     newHabitName = ""
                     newHabitCategory = ""
@@ -98,10 +94,10 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                     newHabitUnit = ""
                     selectedDays = 127
                     preferredTime = null
-                    showCreateSheet = true 
+                    showCreateSheet = true
                 },
-                containerColor = LumiereGold,
-                contentColor = Color.Black
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Novo Hábito")
             }
@@ -113,18 +109,16 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(horizontal = 16.dp)
-                .verticalScroll(rememberScrollState()), // CORREÇÃO DO SCROLL
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Cálculo do Streak (Sequência)
             val currentStreak = viewModel.calculateGlobalStreak()
 
-            // HERO CARD
             Card(
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                colors = CardDefaults.cardColors(containerColor = LumiereDarkGray),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 shape = RoundedCornerShape(24.dp),
-                border = BorderStroke(1.dp, Color(0xFF4A3F38))
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
             ) {
                 Row(
                     modifier = Modifier.padding(20.dp).fillMaxWidth(),
@@ -136,113 +130,107 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                             CircularProgressIndicator(
                                 progress = consistency / 100f,
                                 modifier = Modifier.size(80.dp),
-                                color = LumiereGold,
-                                trackColor = Color.DarkGray,
+                                color = MaterialTheme.colorScheme.primary,
+                                trackColor = MaterialTheme.colorScheme.outlineVariant,
                                 strokeWidth = 8.dp
                             )
-                            Text("${consistency.toInt()}%", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                            Text("${consistency.toInt()}%", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
                         }
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text("Consistência", color = Color.Gray, fontSize = 11.sp)
+                        Text("Consistência", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
                     }
 
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Star, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(20.dp))
+                            Icon(Icons.Default.Star, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(8.dp))
                             Column {
-                                Text("$currentStreak dias", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                                Text("Sequência atual", color = Color.Gray, fontSize = 11.sp)
+                                Text("$currentStreak dias", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleSmall)
+                                Text("Sequência atual", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
                             }
                         }
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Star, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(20.dp))
+                            Icon(Icons.Default.Star, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(8.dp))
                             Column {
-                                Text("$currentStreak dias", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                                Text("Recorde pessoal", color = Color.Gray, fontSize = 11.sp)
+                                Text("$currentStreak dias", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleSmall)
+                                Text("Recorde pessoal", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
                             }
                         }
                     }
                 }
             }
 
-            // INDICADORES COMPACTOS
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                MetricTile(Modifier.weight(1f), "$completedToday", "Concluídos", Color.Green)
-                MetricTile(Modifier.weight(1f), "$pendingToday", "Pendentes", LumiereGold)
-                MetricTile(Modifier.weight(1f), "${consistency.toInt()}%", "Média", Color(0xFF9C27B0))
-                MetricTile(Modifier.weight(1f), "$completedToday/$totalHabits", "Metas", Color(0xFFFF9800))
+                MetricTile(Modifier.weight(1f), "$completedToday", "Concluídos", Lumiere.colors.success)
+                MetricTile(Modifier.weight(1f), "$pendingToday", "Pendentes", MaterialTheme.colorScheme.primary)
+                MetricTile(Modifier.weight(1f), "${consistency.toInt()}%", "Média", Lumiere.colors.accent)
+                MetricTile(Modifier.weight(1f), "$completedToday/$totalHabits", "Metas", Lumiere.colors.warning)
             }
 
-            // TÍTULO "HÁBITOS DE HOJE"
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Hábitos de Hoje", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                Text("Ver todos →", color = LumiereGold, fontSize = 12.sp)
+                Text("Hábitos de Hoje", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleMedium)
+                Text("Ver todos →", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelMedium)
             }
 
-            // LISTA DE HÁBITOS OU ESTADO VAZIO
             if (habits.isEmpty()) {
-                // ESTADO VAZIO PREMIUM
                 Column(
                     modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Box(
-                        modifier = Modifier.size(120.dp).background(LumiereGold.copy(alpha = 0.05f), CircleShape),
+                        modifier = Modifier.size(120.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.05f), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.Star, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(80.dp))
+                        Icon(Icons.Default.Star, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(80.dp))
                     }
-                    
+
                     Spacer(modifier = Modifier.height(24.dp))
-                    
-                    Text("Bem-vindo ao Módulo", color = Color.White, fontSize = 24.sp, textAlign = TextAlign.Center)
-                    Text("Hábitos!", color = LumiereGold, fontSize = 32.sp, fontWeight = FontWeight.Bold)
-                    
+
+                    Text("Bem-vindo ao Módulo", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
+                    Text("Hábitos!", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.displayLarge)
+
                     Spacer(modifier = Modifier.height(16.dp))
-                    
+
                     Text(
                         "Comece agora a criar os seus hábitos e construa uma vida mais equilibrada.",
-                        color = Color.Gray,
-                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(horizontal = 24.dp)
                     )
-                    
+
                     Spacer(modifier = Modifier.height(32.dp))
-                    
+
                     Button(
-                        onClick = { 
-                    habitToEdit = null
-                    newHabitName = ""
-                    newHabitCategory = ""
-                    newHabitTarget = ""
-                    newHabitUnit = ""
-                    selectedDays = 127
-                    preferredTime = null
-                    showCreateSheet = true 
-                },
+                        onClick = {
+                            habitToEdit = null
+                            newHabitName = ""
+                            newHabitCategory = ""
+                            newHabitTarget = ""
+                            newHabitUnit = ""
+                            selectedDays = 127
+                            preferredTime = null
+                            showCreateSheet = true
+                        },
                         modifier = Modifier.fillMaxWidth(0.9f).height(56.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = LumiereGold),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                         shape = RoundedCornerShape(28.dp)
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = null, tint = Color.Black)
+                        Icon(Icons.Default.Add, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Criar Meu Primeiro Hábito", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text("Criar Meu Primeiro Hábito", color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.titleSmall)
                     }
                 }
             } else {
-                // LISTA REAL DE HÁBITOS
                 habits.forEach { habit ->
-                    // Dica #8: Usa a lista global checkInsToday (evita flickering)
                     val isCompletedToday = checkInsToday.any { it.habitId == habit.id && it.type == "SUCCESS" }
                     val failureToday = checkInsToday.any { it.habitId == habit.id && it.type == "FAIL" }
                     HabitItem(
@@ -288,102 +276,93 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                     )
                 }
             }
-            
-            // Passo 1: Calendário Semanal
-            Text("Calendário de Consistência", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(top = 16.dp))
+
+            Text("Calendário de Consistência", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp))
             HabitWeekStrip(checkIns = checkInsToday)
 
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
 
-
-    // MODAL: Detalhes do Hábito
     if (habitDetails != null) {
         val habit = habitDetails!!
         val habitCheckIns by viewModel.getCheckInsForHabit(habit.id).collectAsState(initial = emptyList())
-        
-        ModalBottomSheet(onDismissRequest = { habitDetails = null }, containerColor = LumiereDarkGray) {
+
+        ModalBottomSheet(onDismissRequest = { habitDetails = null }, containerColor = MaterialTheme.colorScheme.surface) {
             Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
-                Text(habit.name, color = LumiereGold, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                Text(habit.name, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.headlineMedium)
                 if (habit.category != null) {
-                    Text(habit.category!!, color = CategoryEngine.getTheme(habit.category).iconColor, fontSize = 14.sp)
+                    Text(habit.category!!, color = CategoryEngine.getTheme(habit.category).iconColor, style = MaterialTheme.typography.bodyMedium)
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                
-                Text("Histórico de Check-ins", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+
+                Text("Histórico de Check-ins", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleSmall)
                 Spacer(modifier = Modifier.height(8.dp))
-                
+
                 if (habitCheckIns.isEmpty()) {
-                    Text("Sem registos ainda.", color = Color.Gray, fontSize = 12.sp)
+                    Text("Sem registos ainda.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                 } else {
                     habitCheckIns.take(10).forEach { ci ->
                         val date = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.getDefault()).format(java.util.Date(ci.timestamp))
                         Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                            Text(date, color = Color.Gray, fontSize = 12.sp)
+                            Text(date, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 if (ci.value != null) {
-                                    Text("${ci.value} ${habit.unit ?: ""}", color = Color.White, fontSize = 12.sp)
+                                    Text("${ci.value} ${habit.unit ?: ""}", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodySmall)
                                 } else {
-                                    Text("✓", color = Color(0xFF2E7D32), fontSize = 12.sp)
+                                    Text("✓", color = Lumiere.colors.success, style = MaterialTheme.typography.bodySmall)
                                 }
                                 Spacer(modifier = Modifier.width(8.dp))
                                 IconButton(onClick = { viewModel.deleteCheckIn(ci) }, modifier = Modifier.size(24.dp)) {
-                                    Icon(Icons.Default.Delete, contentDescription = "Apagar", tint = Color.Red, modifier = Modifier.size(16.dp))
+                                    Icon(Icons.Default.Delete, contentDescription = "Apagar", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(16.dp))
                                 }
                             }
                         }
                     }
                 }
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                
 
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }
 
-    // MODAL: CRIAR HÁBITO
+    // TODO(Eng.3): BUG PRE-EXISTENTE — este bloco e identico ao anterior, comentado como "MODAL: CRIAR HABITO" mas mostra detalhes. Preservado sem alterar logica. Registado para Eng.4/Eng.5.
     if (habitDetails != null) {
         val habit = habitDetails!!
         val habitCheckIns by viewModel.getCheckInsForHabit(habit.id).collectAsState(initial = emptyList())
-        
-        ModalBottomSheet(onDismissRequest = { habitDetails = null }, containerColor = LumiereDarkGray) {
+
+        ModalBottomSheet(onDismissRequest = { habitDetails = null }, containerColor = MaterialTheme.colorScheme.surface) {
             Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
-                Text(habit.name, color = LumiereGold, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                Text(habit.name, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.headlineMedium)
                 if (habit.category != null) {
-                    Text(habit.category!!, color = CategoryEngine.getTheme(habit.category).iconColor, fontSize = 14.sp)
+                    Text(habit.category!!, color = CategoryEngine.getTheme(habit.category).iconColor, style = MaterialTheme.typography.bodyMedium)
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                
-                Text("Histórico de Check-ins", color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+
+                Text("Histórico de Check-ins", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleSmall)
                 Spacer(modifier = Modifier.height(8.dp))
-                
+
                 if (habitCheckIns.isEmpty()) {
-                    Text("Sem registos ainda.", color = Color.Gray, fontSize = 12.sp)
+                    Text("Sem registos ainda.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                 } else {
                     habitCheckIns.take(10).forEach { ci ->
                         val date = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.getDefault()).format(java.util.Date(ci.timestamp))
                         Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                            Text(date, color = Color.Gray, fontSize = 12.sp)
+                            Text(date, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 if (ci.value != null) {
-                                    Text("${ci.value} ${habit.unit ?: ""}", color = Color.White, fontSize = 12.sp)
+                                    Text("${ci.value} ${habit.unit ?: ""}", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodySmall)
                                 } else {
-                                    Text("✓", color = Color(0xFF2E7D32), fontSize = 12.sp)
+                                    Text("✓", color = Lumiere.colors.success, style = MaterialTheme.typography.bodySmall)
                                 }
                                 Spacer(modifier = Modifier.width(8.dp))
                                 IconButton(onClick = { viewModel.deleteCheckIn(ci) }, modifier = Modifier.size(24.dp)) {
-                                    Icon(Icons.Default.Delete, contentDescription = "Apagar", tint = Color.Red, modifier = Modifier.size(16.dp))
+                                    Icon(Icons.Default.Delete, contentDescription = "Apagar", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(16.dp))
                                 }
                             }
                         }
                     }
                 }
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                
 
                 Spacer(modifier = Modifier.height(24.dp))
             }
@@ -393,13 +372,16 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
     if (showCreateSheet) {
         ModalBottomSheet(
             onDismissRequest = { showCreateSheet = false },
-            containerColor = LumiereDarkGray
+            containerColor = MaterialTheme.colorScheme.surface
         ) {
             Column(modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState()).fillMaxWidth()) {
-                Text(if (habitToEdit == null) "Novo Hábito" else "Editar Hábito", color = LumiereGold, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    if (habitToEdit == null) "Novo Hábito" else "Editar Hábito",
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.headlineMedium
+                )
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // GAVETA 1: IDENTIFICAÇÃO
                 var isIdentOpen by remember { mutableStateOf(true) }
                 LumiereAccordion(title = "1. Identificação", isExpanded = isIdentOpen, onToggle = { isIdentOpen = !isIdentOpen }) {
                     LumiereTextField(value = newHabitName, onValueChange = { newHabitName = it }, label = "Nome do Hábito")
@@ -416,7 +398,6 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                     LumiereTextArea(value = newHabitNotes, onValueChange = { newHabitNotes = it }, label = "Notas Pessoais")
                 }
 
-                // GAVETA 2: FREQUÊNCIA
                 var isFreqOpen by remember { mutableStateOf(true) }
                 LumiereAccordion(title = "2. Frequência", isExpanded = isFreqOpen, onToggle = { isFreqOpen = !isFreqOpen }) {
                     LumiereDropdown(
@@ -429,7 +410,7 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                             "INTERVAL" -> "Intervalo"
                             else -> "Diário"
                         },
-                        onSelect = { 
+                        onSelect = {
                             newHabitFrequency = when(it) {
                                 "Diário" -> "DAILY"
                                 "Semanal" -> "WEEKLY"
@@ -456,7 +437,6 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                     }
                 }
 
-                // GAVETA 3: METAS E DESCANSO
                 var isMetaOpen by remember { mutableStateOf(false) }
                 LumiereAccordion(title = "3. Metas e Descanso", isExpanded = isMetaOpen, onToggle = { isMetaOpen = !isMetaOpen }) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -464,7 +444,7 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                         LumiereTextField(value = newHabitUnit, onValueChange = { newHabitUnit = it }, label = "Unidade", modifier = Modifier.weight(1f))
                     }
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Dias de Descanso", color = Color.Gray, fontSize = 12.sp)
+                    Text("Dias de Descanso", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium)
                     val weekDays = listOf("Seg" to 1, "Ter" to 2, "Qua" to 4, "Qui" to 8, "Sex" to 16, "Sáb" to 32, "Dom" to 64)
                     val restDaysList = weekDays.filter { (restDaysState and it.second) != 0 }.map { it.first }
                     LumiereCheckboxGroup(
@@ -477,7 +457,6 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                     )
                 }
 
-                // GAVETA 4: PREFERÊNCIAS
                 var isPrefOpen by remember { mutableStateOf(false) }
                 LumiereAccordion(title = "4. Preferências", isExpanded = isPrefOpen, onToggle = { isPrefOpen = !isPrefOpen }) {
                     LumiereTimePicker(
@@ -487,12 +466,11 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                        Text("Lembrete", color = Color.White, modifier = Modifier.weight(1f))
+                        Text("Lembrete", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
                         Switch(checked = reminderEnabled, onCheckedChange = { reminderEnabled = it })
                     }
                 }
 
-                // GAVETA 5: DURAÇÃO E CRITÉRIOS
                 var isCritOpen by remember { mutableStateOf(false) }
                 LumiereAccordion(title = "5. Duração e Critérios", isExpanded = isCritOpen, onToggle = { isCritOpen = !isCritOpen }) {
                     LumiereNumberField(value = durationMinutes, onValueChange = { durationMinutes = it }, label = "Duração estimada (min)")
@@ -500,13 +478,18 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                     LumiereTextArea(value = completionCriteria, onValueChange = { completionCriteria = it }, label = "Critério de Conclusão (ex: 20 flexões)")
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                        Text("Período de Adaptação (não quebra streak)", color = Color.White, modifier = Modifier.weight(1f), fontSize = 12.sp)
+                        Text(
+                            "Período de Adaptação (não quebra streak)",
+                            color = MaterialTheme.colorScheme.onSurface,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.weight(1f)
+                        )
                         Switch(checked = isAdaptationPeriod, onCheckedChange = { isAdaptationPeriod = it })
                     }
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
-                
+
                 Button(
                     onClick = {
                         if (newHabitName.isNotBlank()) {
@@ -541,9 +524,9 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                         }
                     },
                     modifier = Modifier.fillMaxWidth().height(50.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = LumiereGold)
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
-                    Text("Guardar Hábito", color = Color.Black, fontWeight = FontWeight.Bold)
+                    Text("Guardar Hábito", color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.titleSmall)
                 }
                 Spacer(modifier = Modifier.height(24.dp))
             }
@@ -606,9 +589,9 @@ fun HabitItem(
 
     Card(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = LumiereDarkGray),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, Color(0xFF333333))
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
     ) {
         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(
@@ -622,8 +605,10 @@ fun HabitItem(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = habit.name,
-                    color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp,
-                    maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    style = MaterialTheme.typography.titleSmall,
+                    maxLines = 2,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                     modifier = Modifier.clickable { onOpenDetails() }
                 )
                 Spacer(modifier = Modifier.height(4.dp))
@@ -631,63 +616,96 @@ fun HabitItem(
                     HabitKind.QUANTITATIVE -> {
                         val target = habit.targetValue ?: 0
                         val progressText = if (isCompletedToday) "$target/$target ${habit.unit ?: ""}" else "$todayValue/$target ${habit.unit ?: ""}"
-                        Text(progressText, color = if (isCompletedToday) Color(0xFF4CAF50) else Color.Gray, fontSize = 12.sp)
+                        Text(progressText, color = if (isCompletedToday) Lumiere.colors.success else MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                     }
                     HabitKind.DURATION -> {
                         val target = habit.durationMinutes ?: 0
                         val showText = "$timerText / $target min"
-                        Text(showText, color = if (totalSec >= target * 60 && target > 0) Color(0xFF4CAF50) else Color.Gray, fontSize = 12.sp)
+                        Text(showText, color = if (totalSec >= target * 60 && target > 0) Lumiere.colors.success else MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                     }
                     HabitKind.WEEKLY_FREQUENCY -> {
                         val pair = weeklyProgress ?: (0 to habit.weeklyDays.countOneBits())
-                        Text("${pair.first}/${pair.second} esta semana", color = Color.Gray, fontSize = 12.sp)
+                        Text("${pair.first}/${pair.second} esta semana", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                     }
                     HabitKind.INTERVAL -> {
                         val pair = intervalStatus ?: (0 to habit.intervalDays)
                         val available = pair.first >= pair.second
-                        Text(if (available) "Disponivel hoje" else "Proximo em ${pair.second - pair.first} dia(s)",
-                            color = if (available) Color(0xFF4CAF50) else Color.Gray, fontSize = 12.sp)
+                        Text(
+                            if (available) "Disponivel hoje" else "Proximo em ${pair.second - pair.first} dia(s)",
+                            color = if (available) Lumiere.colors.success else MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall
+                        )
                     }
                     HabitKind.BOOLEAN -> {
-                        if (isCompletedToday) Text("Concluido hoje", color = Color(0xFF4CAF50), fontSize = 12.sp)
+                        if (isCompletedToday) Text("Concluido hoje", color = Lumiere.colors.success, style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }
 
             Spacer(modifier = Modifier.width(8.dp))
-            Box(modifier = Modifier.width(1.dp).height(40.dp).background(Color(0xFF444444)))
+            Box(modifier = Modifier.width(1.dp).height(40.dp).background(MaterialTheme.colorScheme.outline))
             Spacer(modifier = Modifier.width(8.dp))
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 if (isPaused) {
-                    OutlinedButton(onClick = onResume, border = BorderStroke(1.dp, Color.Gray), shape = RoundedCornerShape(20.dp), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)) {
-                        Text("Retomar", color = Color.Gray, fontSize = 11.sp)
+                    OutlinedButton(
+                        onClick = onResume,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurfaceVariant),
+                        shape = RoundedCornerShape(20.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                    ) {
+                        Text("Retomar", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
                     }
                 } else if (failureToday && kind == HabitKind.BOOLEAN) {
-                    OutlinedButton(onClick = { }, border = BorderStroke(1.dp, Color.Red), shape = RoundedCornerShape(20.dp), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)) {
-                        Text("Falhou", color = Color.Red, fontSize = 11.sp)
+                    OutlinedButton(
+                        onClick = { },
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+                        shape = RoundedCornerShape(20.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                    ) {
+                        Text("Falhou", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelSmall)
                     }
                 } else if (isDone) {
-                    Button(onClick = { }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1B5E20)), shape = RoundedCornerShape(20.dp), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)) {
-                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                    Button(
+                        onClick = { },
+                        colors = ButtonDefaults.buttonColors(containerColor = Lumiere.colors.successContainer),
+                        shape = RoundedCornerShape(20.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                    ) {
+                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(14.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Cumprido", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Text("Cumprido", color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.labelSmall)
                     }
                 } else {
                     if (kind == HabitKind.DURATION) {
                         if (habit.timerStartedAt != null) {
-                            OutlinedButton(onClick = onPauseTimer, border = BorderStroke(1.dp, LumiereGold), shape = RoundedCornerShape(20.dp), contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)) {
-                                Text("Pausar", color = LumiereGold, fontSize = 11.sp)
+                            OutlinedButton(
+                                onClick = onPauseTimer,
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
+                                shape = RoundedCornerShape(20.dp),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                            ) {
+                                Text("Pausar", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelSmall)
                             }
                             Spacer(modifier = Modifier.height(2.dp))
-                            OutlinedButton(onClick = onCompleteTimer, border = BorderStroke(1.dp, Color(0xFF4CAF50)), shape = RoundedCornerShape(20.dp), contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)) {
-                                Text("Concluir", color = Color(0xFF4CAF50), fontSize = 11.sp)
+                            OutlinedButton(
+                                onClick = onCompleteTimer,
+                                border = BorderStroke(1.dp, Lumiere.colors.success),
+                                shape = RoundedCornerShape(20.dp),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                            ) {
+                                Text("Concluir", color = Lumiere.colors.success, style = MaterialTheme.typography.labelSmall)
                             }
                         } else {
-                            OutlinedButton(onClick = onStartTimer, border = BorderStroke(1.dp, LumiereGold), shape = RoundedCornerShape(20.dp), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)) {
-                                Icon(Icons.Default.PlayArrow, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(14.dp))
+                            OutlinedButton(
+                                onClick = onStartTimer,
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
+                                shape = RoundedCornerShape(20.dp),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                            ) {
+                                Icon(Icons.Default.PlayArrow, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(14.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("Iniciar", color = LumiereGold, fontSize = 11.sp)
+                                Text("Iniciar", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelSmall)
                             }
                         }
                     } else {
@@ -696,10 +714,15 @@ fun HabitItem(
                             HabitKind.WEEKLY_FREQUENCY -> "Hoje"
                             else -> "Registar"
                         }
-                        OutlinedButton(onClick = onCheckIn, border = BorderStroke(1.dp, LumiereGold), shape = RoundedCornerShape(20.dp), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)) {
-                            Icon(Icons.Default.PlayArrow, contentDescription = null, tint = LumiereGold, modifier = Modifier.size(14.dp))
+                        OutlinedButton(
+                            onClick = onCheckIn,
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
+                            shape = RoundedCornerShape(20.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                        ) {
+                            Icon(Icons.Default.PlayArrow, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(14.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(label, color = LumiereGold, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            Text(label, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelSmall)
                         }
                     }
                 }
@@ -707,17 +730,32 @@ fun HabitItem(
                 var showMenu by remember { mutableStateOf(false) }
                 Box {
                     IconButton(onClick = { showMenu = true }, modifier = Modifier.size(32.dp)) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "Opcoes", tint = Color.Gray)
+                        Icon(Icons.Default.MoreVert, contentDescription = "Opcoes", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }, modifier = Modifier.background(LumiereDarkGray)) {
-                        DropdownMenuItem(text = { Text("Editar Habito", color = LumiereGold) }, onClick = { onEdit(); showMenu = false })
-                        DropdownMenuItem(text = { Text("Registar Falha", color = Color(0xFFFF9800)) }, onClick = { onFail(); showMenu = false })
+                    DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }, modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
+                        DropdownMenuItem(
+                            text = { Text("Editar Habito", color = MaterialTheme.colorScheme.primary) },
+                            onClick = { onEdit(); showMenu = false }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Registar Falha", color = Lumiere.colors.warning) },
+                            onClick = { onFail(); showMenu = false }
+                        )
                         if (habit.status == 0) {
-                            DropdownMenuItem(text = { Text("Pausar", color = LumiereGold) }, onClick = { onPause(); showMenu = false })
+                            DropdownMenuItem(
+                                text = { Text("Pausar", color = MaterialTheme.colorScheme.primary) },
+                                onClick = { onPause(); showMenu = false }
+                            )
                         } else {
-                            DropdownMenuItem(text = { Text("Retomar", color = Color.Green) }, onClick = { onResume(); showMenu = false })
+                            DropdownMenuItem(
+                                text = { Text("Retomar", color = Lumiere.colors.success) },
+                                onClick = { onResume(); showMenu = false }
+                            )
                         }
-                        DropdownMenuItem(text = { Text("Eliminar", color = Color.Red) }, onClick = { onDelete(); showMenu = false })
+                        DropdownMenuItem(
+                            text = { Text("Eliminar", color = MaterialTheme.colorScheme.error) },
+                            onClick = { onDelete(); showMenu = false }
+                        )
                     }
                 }
             }
@@ -739,43 +777,47 @@ private fun hasFailedOrCompleted(
     }
 }
 
-
-
 @Composable
 fun HabitWeekStrip(checkIns: List<HabitCheckIn>) {
     val days = listOf("Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom")
     val calendar = java.util.Calendar.getInstance()
     val today = calendar.get(java.util.Calendar.DAY_OF_WEEK)
     val todayIndex = if (today == 1) 6 else today - 2
-    
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         days.forEachIndexed { index, day ->
             val isToday = index == todayIndex
-            val hasCheckIn = checkIns.any { 
+            val hasCheckIn = checkIns.any {
                 val cal = java.util.Calendar.getInstance().apply { timeInMillis = it.timestamp }
                 val ciDay = if (cal.get(java.util.Calendar.DAY_OF_WEEK) == 1) 6 else cal.get(java.util.Calendar.DAY_OF_WEEK) - 2
-                ciDay == index 
+                ciDay == index
             }
-            
+
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(day, color = Color.Gray, fontSize = 11.sp)
+                Text(day, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
                 Spacer(modifier = Modifier.height(4.dp))
                 Box(
                     modifier = Modifier.size(36.dp)
                         .background(
-                            if (hasCheckIn) Color(0xFF2E7D32) else if (isToday) LumiereGold.copy(alpha=0.2f) else LumiereDarkGray,
+                            if (hasCheckIn) Lumiere.colors.success
+                            else if (isToday) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                            else MaterialTheme.colorScheme.surface,
                             CircleShape
                         )
-                        .border(if (isToday) 1.dp else 0.dp, if (isToday) LumiereGold else Color.Transparent, CircleShape),
+                        .border(
+                            if (isToday) 1.dp else 0.dp,
+                            if (isToday) MaterialTheme.colorScheme.primary else Color.Transparent,
+                            CircleShape
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
                     if (hasCheckIn) {
-                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(18.dp))
                     } else {
-                        Text("${calendar.get(java.util.Calendar.DAY_OF_MONTH) - todayIndex + index}", color = Color.White, fontSize = 12.sp)
+                        Text("${calendar.get(java.util.Calendar.DAY_OF_MONTH) - todayIndex + index}", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.labelMedium)
                     }
                 }
             }
