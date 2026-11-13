@@ -92,7 +92,7 @@ fun DashboardScreen(
 
             item {
                 Column {
-                    Text("Bom dia, Daniel!", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.displaySmall, fontFamily = FontFamily.Serif)
+                    Text("Bom dia, Proprietário!", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.displaySmall, fontFamily = FontFamily.Serif)
                     Text("Que hoje seja um dia produtivo e extraordinário.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                 }
             }
@@ -105,13 +105,19 @@ fun DashboardScreen(
                     border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
                 ) {
                     Row(modifier = Modifier.padding(LumiereSpacing.M), verticalAlignment = Alignment.CenterVertically) {
+                        val totalTasks = tasks.size
+                        val completedTasks = tasks.count { it.isCompleted }
+                        val progress = if (totalTasks > 0) completedTasks.toFloat() / totalTasks.toFloat() else 0f
+                        val progressPercentage = (progress * 100).toInt()
+                        val streak = habitViewModel.calculateGlobalStreak()
+
                         Box(contentAlignment = Alignment.Center, modifier = Modifier.size(70.dp)) {
                             val ringColor = MaterialTheme.colorScheme.primary
                             Canvas(modifier = Modifier.fillMaxSize()) {
                                 drawArc(color = ringColor.copy(alpha = 0.2f), startAngle = 0f, sweepAngle = 360f, useCenter = false, style = Stroke(width = 6.dp.toPx(), cap = StrokeCap.Round))
-                                drawArc(color = ringColor, startAngle = -90f, sweepAngle = 72f, useCenter = false, style = Stroke(width = 6.dp.toPx(), cap = StrokeCap.Round))
+                                drawArc(color = ringColor, startAngle = -90f, sweepAngle = (progress * 360f), useCenter = false, style = Stroke(width = 6.dp.toPx(), cap = StrokeCap.Round))
                             }
-                            Text("20%", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Text("$progressPercentage%", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         }
                         Spacer(modifier = Modifier.width(LumiereSpacing.M))
                         Column(modifier = Modifier.weight(1f)) {
@@ -127,12 +133,12 @@ fun DashboardScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Filled.LocalFireDepartment, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("7 dias", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.labelMedium)
+                                Text("$streak dias", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.labelMedium)
                             }
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Outlined.EmojiEvents, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("25 dias", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.labelMedium)
+                                Text("$completedTasks/$totalTasks", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.labelMedium)
                             }
                         }
                     }
@@ -218,7 +224,9 @@ fun DashboardScreen(
                         Spacer(modifier = Modifier.width(LumiereSpacing.M))
                         Column(modifier = Modifier.weight(1f)) {
                             Text("Inteligência Lumière", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleSmall, fontFamily = FontFamily.Serif)
-                            Text("Excelente progresso! Mantém o foco.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, maxLines = 1)
+                            val overdue = tasks.count { !it.isCompleted && it.dueDate != null && it.dueDate < System.currentTimeMillis() }
+                            val bannerText = if (overdue > 0) "Atenção: Tens $overdue tarefa(s) atrasada(s)." else "Excelente progresso! Mantém o foco."
+                            Text(bannerText, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, maxLines = 1)
                         }
                         OutlinedButton(onClick = { }, border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary), shape = RoundedCornerShape(50), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp), modifier = Modifier.height(28.dp)) {
                             Text("Ver dica", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelSmall)
