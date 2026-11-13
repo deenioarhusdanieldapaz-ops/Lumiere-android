@@ -191,7 +191,7 @@ fun SettingsCategory(title: String, content: @Composable ColumnScope.() -> Unit)
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = LumiereSpacing.S)) {
         Text(title, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium, letterSpacing = 1.sp)
         Spacer(modifier = Modifier.width(LumiereSpacing.S))
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
+        Divider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
     }
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -223,7 +223,7 @@ fun SettingsItem(
             Icon(Icons.Default.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         if (showDivider) {
-            HorizontalDivider(
+            Divider(
                 color = MaterialTheme.colorScheme.outlineVariant,
                 thickness = 0.5.dp,
                 modifier = Modifier.padding(horizontal = LumiereSpacing.M)
