@@ -29,3 +29,4 @@ release-keystore-jks.zip
 *.zip
 .github/workflows/generate-keystore.yml
 *.bak-pre-secrets
+baixar_rapido.sh
