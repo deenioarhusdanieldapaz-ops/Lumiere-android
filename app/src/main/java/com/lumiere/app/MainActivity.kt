@@ -35,8 +35,8 @@ sealed class Screen(val route: String, val label: String, val icon: androidx.com
     object Dashboard : Screen("dashboard", "Início", Icons.Filled.Home)
     object Tasks : Screen("tasks", "Tarefas", Icons.Filled.CheckCircle)
     object Habits : Screen("habits", "Hábitos", Icons.Filled.Star)
-    object Settings : Screen("settings", "Mais", Icons.Filled.MoreHoriz)
-    object WeeklyReview : Screen("weekly_review", "Revisão", Icons.Filled.BarChart)
+    object Settings : Screen("settings", "Definições", Icons.Filled.Settings)
+    object WeeklyReview : Screen("weekly_review", "Mais", Icons.Filled.MoreHoriz)
 }
 
 class MainActivity : ComponentActivity() {
@@ -68,7 +68,7 @@ class MainActivity : ComponentActivity() {
                 val drawerState = rememberDrawerState(DrawerValue.Closed)
                 val scope = rememberCoroutineScope()
 
-                val bottomItems = listOf(Screen.Dashboard, Screen.Tasks, Screen.Habits, Screen.Settings)
+                val bottomItems = listOf(Screen.Dashboard, Screen.Tasks, Screen.Habits, Screen.WeeklyReview)
 
                 ModalNavigationDrawer(
                     drawerState = drawerState,
@@ -145,8 +145,7 @@ class MainActivity : ComponentActivity() {
                                     themeMode = themeMode,
                                     isDark = (themeMode == LumiereThemeMode.Dark),
                                     onThemeChange = { themeModeInt = when(it) { LumiereThemeMode.Light -> 1; LumiereThemeMode.System -> 0; else -> 2 }; prefs.edit().putInt("theme_mode", themeModeInt).apply() },
-                                    onOpenDrawer = { scope.launch { drawerState.open() } },
-                                    onNavigateToWeeklyReview = { navController.navigate(Screen.WeeklyReview.route) }
+                                    onOpenDrawer = { scope.launch { drawerState.open() } }
                                 )
                             }
                         }

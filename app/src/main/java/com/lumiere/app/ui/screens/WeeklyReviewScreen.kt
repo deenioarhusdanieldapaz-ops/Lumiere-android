@@ -118,10 +118,10 @@ fun WeeklyReviewScreen(
                 Text("Revisão Semanal", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.displayMedium, fontFamily = FontFamily.Serif)
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                         Icon(Icons.Outlined.CalendarToday, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(weekRangeText, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
+                        Text(weekRangeText, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                     }
                     Surface(shape = RoundedCornerShape(50), color = Color.Transparent, border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)) {
                         Row(modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -202,7 +202,7 @@ fun WeeklyReviewScreen(
             var showSnackbar by remember { mutableStateOf(false) }
             Button(
                 onClick = { showSnackbar = true },
-                modifier = Modifier.fillMaxWidth().height(56.dp).padding(bottom = LumiereSpacing.L),
+                modifier = Modifier.fillMaxWidth().height(56.dp).padding(bottom = LumiereSpacing.M),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 shape = RoundedCornerShape(50)
             ) {

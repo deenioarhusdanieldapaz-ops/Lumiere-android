@@ -35,8 +35,7 @@ fun SettingsScreen(
     themeMode: LumiereThemeMode,
     isDark: Boolean,
     onThemeChange: (LumiereThemeMode) -> Unit,
-    onOpenDrawer: () -> Unit,
-    onNavigateToWeeklyReview: () -> Unit
+    onOpenDrawer: () -> Unit
 ) {
     val context = LocalContext.current
     val prefs = context.getSharedPreferences("lumiere_prefs", Context.MODE_PRIVATE)
@@ -154,7 +153,6 @@ fun SettingsScreen(
 
             // Secções de Definições
             SettingsCategory("PREFERÊNCIAS") {
-                SettingsItem(Icons.Outlined.BarChart, "Revisão Semanal", "Analise o seu progresso e planeie a próxima semana", showDivider = true, onClick = onNavigateToWeeklyReview)
                 SettingsItem(Icons.Outlined.Notifications, "Notificações", "Alertas e lembretes personalizados", showDivider = true)
                 SettingsItem(Icons.Outlined.Tune, "Módulos e Funcionalidades", "Ative ou organize os módulos", showDivider = true)
                 SettingsItem(Icons.Outlined.Palette, "Tema e Estilo", "Personalize a aparência da aplicação", showDivider = false)
