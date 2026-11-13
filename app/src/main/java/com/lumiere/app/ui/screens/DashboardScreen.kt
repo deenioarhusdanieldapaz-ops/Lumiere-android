@@ -145,7 +145,7 @@ fun DashboardScreen(
                 }
             }
 
-            // 4. Tarefas e Hábitos (com Modo Vazio)
+            // 4. Tarefas e Hábitos (Design Premium)
             item {
                 if (recentTasks.isEmpty() && recentHabits.isEmpty()) {
                     LumiereEmptyState(
@@ -154,63 +154,102 @@ fun DashboardScreen(
                         description = "Não tens tarefas nem hábitos pendentes. Aproveita para descansar ou planear a semana."
                     )
                 } else {
-                    Row(horizontalArrangement = Arrangement.spacedBy(LumiereSpacing.M)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(LumiereSpacing.S)) {
+                        // CARTÃO TAREFAS
                         Card(
-                            modifier = Modifier.weight(1f).clickable { onNavigateToTasks() },
+                            modifier = Modifier.weight(1f),
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                            shape = RoundedCornerShape(12.dp),
-                            border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline)
+                            shape = RoundedCornerShape(16.dp),
+                            border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
                         ) {
-                            Column(modifier = Modifier.padding(LumiereSpacing.S)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Outlined.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Tarefas", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleSmall, maxLines = 1)
+                            Column(modifier = Modifier.padding(top = LumiereSpacing.M, start = LumiereSpacing.M, end = LumiereSpacing.M, bottom = LumiereSpacing.S)) {
+                                // Header
+                                Row(modifier = Modifier.fillMaxWidth().clickable { onNavigateToTasks() }, horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Outlined.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text("Tarefas", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleSmall, fontFamily = FontFamily.Serif)
+                                    }
+                                    Icon(Icons.Default.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
                                 }
-                                Spacer(modifier = Modifier.height(LumiereSpacing.S))
+                                Spacer(modifier = Modifier.height(LumiereSpacing.M))
+                                // Lista
                                 if (recentTasks.isEmpty()) {
                                     Text("Nenhuma", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                                 } else {
                                     recentTasks.forEach { task ->
-                                        Row(verticalAlignment = Alignment.Top, modifier = Modifier.padding(vertical = 2.dp)) {
-                                            Icon(Icons.Outlined.Circle, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(12.dp).padding(top = 2.dp))
-                                            Spacer(modifier = Modifier.width(4.dp))
+                                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 6.dp)) {
+                                            Icon(if (task.isCompleted) Icons.Filled.CheckCircle else Icons.Outlined.Circle, contentDescription = null, tint = if (task.isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, modifier = Modifier.size(18.dp))
+                                            Spacer(modifier = Modifier.width(8.dp))
                                             Column {
-                                                Text(task.title, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodySmall)
-                                                val dateStr = task.dueDate?.let { java.text.SimpleDateFormat("dd/MM", java.util.Locale.getDefault()).format(java.util.Date(it)) } ?: "Sem data"
+                                                Text(task.title, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                                val dateStr = task.dueDate?.let { java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date(it)) } ?: "Sem hora"
                                                 Text(dateStr, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
                                             }
                                         }
                                     }
                                 }
+                                Spacer(modifier = Modifier.weight(1f))
+                                // Botão Fundo
+                                Surface(
+                                    modifier = Modifier.fillMaxWidth().padding(top = LumiereSpacing.M).clickable { onNavigateToTasks() },
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = MaterialTheme.colorScheme.surfaceVariant
+                                ) {
+                                    Row(modifier = Modifier.padding(vertical = 6.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Outlined.List, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(14.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("Ver todas", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelMedium)
+                                    }
+                                }
                             }
                         }
+
+                        // CARTÃO HÁBITOS
                         Card(
-                            modifier = Modifier.weight(1f).clickable { onNavigateToHabits() },
+                            modifier = Modifier.weight(1f),
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                            shape = RoundedCornerShape(12.dp),
-                            border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline)
+                            shape = RoundedCornerShape(16.dp),
+                            border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
                         ) {
-                            Column(modifier = Modifier.padding(LumiereSpacing.S)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Outlined.Spa, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Hábitos", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleSmall, maxLines = 1)
+                            Column(modifier = Modifier.padding(top = LumiereSpacing.M, start = LumiereSpacing.M, end = LumiereSpacing.M, bottom = LumiereSpacing.S)) {
+                                // Header
+                                Row(modifier = Modifier.fillMaxWidth().clickable { onNavigateToHabits() }, horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Outlined.Spa, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text("Hábitos", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleSmall, fontFamily = FontFamily.Serif)
+                                    }
+                                    Icon(Icons.Default.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
                                 }
-                                Spacer(modifier = Modifier.height(LumiereSpacing.S))
+                                Spacer(modifier = Modifier.height(LumiereSpacing.M))
+                                // Lista
                                 if (recentHabits.isEmpty()) {
                                     Text("Nenhum", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                                 } else {
                                     recentHabits.forEach { habit ->
-                                        Row(verticalAlignment = Alignment.Top, modifier = Modifier.padding(vertical = 2.dp)) {
-                                            Icon(Icons.Outlined.Circle, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(12.dp).padding(top = 2.dp))
-                                            Spacer(modifier = Modifier.width(4.dp))
+                                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 6.dp)) {
+                                            Icon(Icons.Outlined.Circle, contentDescription = null, tint = MaterialTheme.colorScheme.outline, modifier = Modifier.size(18.dp))
+                                            Spacer(modifier = Modifier.width(8.dp))
                                             Column {
-                                                Text(habit.name, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodySmall)
+                                                Text(habit.name, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                                 val target = habit.targetValue ?: 0
                                                 Text("Meta: $target", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
                                             }
                                         }
+                                    }
+                                }
+                                Spacer(modifier = Modifier.weight(1f))
+                                // Botão Fundo
+                                Surface(
+                                    modifier = Modifier.fillMaxWidth().padding(top = LumiereSpacing.M).clickable { onNavigateToHabits() },
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = MaterialTheme.colorScheme.surfaceVariant
+                                ) {
+                                    Row(modifier = Modifier.padding(vertical = 6.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Outlined.BarChart, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(14.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("Ver todos", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelMedium)
                                     }
                                 }
                             }
