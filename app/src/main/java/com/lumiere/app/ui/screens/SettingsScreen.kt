@@ -148,21 +148,21 @@ fun SettingsScreen(
 
             // Secções de Definições
             SettingsCategory("PREFERÊNCIAS") {
-                SettingsItem(Icons.Outlined.Notifications, "Notificações", "Alertas e lembretes personalizados")
-                SettingsItem(Icons.Outlined.Tune, "Módulos e Funcionalidades", "Ative ou organize os módulos")
-                SettingsItem(Icons.Outlined.Palette, "Tema e Estilo", "Personalize a aparência da aplicação")
+                SettingsItem(Icons.Outlined.Notifications, "Notificações", "Alertas e lembretes personalizados", showDivider = true)
+                SettingsItem(Icons.Outlined.Tune, "Módulos e Funcionalidades", "Ative ou organize os módulos", showDivider = true)
+                SettingsItem(Icons.Outlined.Palette, "Tema e Estilo", "Personalize a aparência da aplicação", showDivider = false)
             }
 
             SettingsCategory("PRIVACIDADE E SEGURANÇA") {
-                SettingsItem(Icons.Outlined.Shield, "Privacidade dos Dados", "Controle os seus dados")
-                SettingsItem(Icons.Outlined.Fingerprint, "Autenticação Biométrica", "Use a biometria para maior segurança")
-                SettingsItem(Icons.Outlined.Lock, "Cópia de Segurança e Restauração", "Proteja os seus dados")
+                SettingsItem(Icons.Outlined.Shield, "Privacidade dos Dados", "Controle os seus dados", showDivider = true)
+                SettingsItem(Icons.Outlined.Fingerprint, "Autenticação Biométrica", "Use a biometria para maior segurança", showDivider = true)
+                SettingsItem(Icons.Outlined.Lock, "Cópia de Segurança e Restauração", "Proteja os seus dados", showDivider = false)
             }
 
             SettingsCategory("SISTEMA") {
-                SettingsItem(Icons.Outlined.Info, "Sobre o Lumière", "Versão ${BuildConfig.VERSION_NAME} • Build ${BuildConfig.VERSION_CODE}")
-                SettingsItem(Icons.Outlined.HelpOutline, "Ajuda e Suporte", "Obtenha ajuda e tire dúvidas")
-                SettingsItem(Icons.Outlined.Description, "Termos e Condições", "Leia os termos de utilização")
+                SettingsItem(Icons.Outlined.Info, "Sobre o Lumière", "Versão ${BuildConfig.VERSION_NAME} • Build ${BuildConfig.VERSION_CODE}", showDivider = true)
+                SettingsItem(Icons.Outlined.HelpOutline, "Ajuda e Suporte", "Obtenha ajuda e tire dúvidas", showDivider = true)
+                SettingsItem(Icons.Outlined.Description, "Termos e Condições", "Leia os termos de utilização", showDivider = false)
             }
 
             // Ação Destrutiva
@@ -188,7 +188,11 @@ fun SettingsScreen(
 
 @Composable
 fun SettingsCategory(title: String, content: @Composable ColumnScope.() -> Unit) {
-    Text(title, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium, letterSpacing = 1.sp, modifier = Modifier.padding(top = LumiereSpacing.S))
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = LumiereSpacing.S)) {
+        Text(title, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium, letterSpacing = 1.sp)
+        Spacer(modifier = Modifier.width(LumiereSpacing.S))
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
+    }
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -202,14 +206,28 @@ fun SettingsCategory(title: String, content: @Composable ColumnScope.() -> Unit)
 }
 
 @Composable
-fun SettingsItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, subtitle: String) {
-    Row(modifier = Modifier.fillMaxWidth().clickable { /* TODO: Navegar */ }.padding(LumiereSpacing.M), verticalAlignment = Alignment.CenterVertically) {
-        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-        Spacer(modifier = Modifier.width(LumiereSpacing.M))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(title, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodyLarge)
-            Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+fun SettingsItem(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    subtitle: String,
+    showDivider: Boolean = true
+) {
+    Column {
+        Row(modifier = Modifier.fillMaxWidth().clickable { /* TODO: Navegar */ }.padding(LumiereSpacing.M), verticalAlignment = Alignment.CenterVertically) {
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Spacer(modifier = Modifier.width(LumiereSpacing.M))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(title, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodyLarge)
+                Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+            }
+            Icon(Icons.Default.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Icon(Icons.Default.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (showDivider) {
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant,
+                thickness = 0.5.dp,
+                modifier = Modifier.padding(horizontal = LumiereSpacing.M)
+            )
+        }
     }
 }
