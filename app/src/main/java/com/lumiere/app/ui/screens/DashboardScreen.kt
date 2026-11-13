@@ -43,7 +43,8 @@ fun DashboardScreen(
     onThemeToggle: () -> Unit,
     onOpenDrawer: () -> Unit,
     onNavigateToTasks: () -> Unit,
-    onNavigateToHabits: () -> Unit
+    onNavigateToHabits: () -> Unit,
+    onNavigateToNotifications: () -> Unit
 ) {
     val tasks by taskViewModel.tasks.collectAsStateWithLifecycle()
     val habits by habitViewModel.habits.collectAsStateWithLifecycle()
@@ -88,7 +89,7 @@ fun DashboardScreen(
                         IconButton(onClick = onThemeToggle, modifier = Modifier.size(32.dp)) {
                             Icon(if (isDark) Icons.Default.DarkMode else Icons.Default.LightMode, contentDescription = "Tema", tint = MaterialTheme.colorScheme.primary)
                         }
-                        Box(contentAlignment = Alignment.TopEnd) {
+                        Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.clickable { onNavigateToNotifications() }) {
                             Icon(Icons.Outlined.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
                             Box(modifier = Modifier.size(14.dp).background(Color.Red, CircleShape), contentAlignment = Alignment.Center) {
                                 Text("3", color = Color.White, fontSize = 8.sp)

@@ -37,6 +37,7 @@ sealed class Screen(val route: String, val label: String, val icon: androidx.com
     object Habits : Screen("habits", "Hábitos", Icons.Filled.Star)
     object Settings : Screen("settings", "Definições", Icons.Filled.Settings)
     object WeeklyReview : Screen("weekly_review", "Mais", Icons.Filled.MoreHoriz)
+    object Notifications : Screen("notifications", "Notificações", Icons.Filled.Notifications)
 }
 
 class MainActivity : ComponentActivity() {
@@ -132,7 +133,8 @@ class MainActivity : ComponentActivity() {
                                     onThemeToggle = { themeModeInt = if (themeMode == LumiereThemeMode.Dark) 1 else 2; prefs.edit().putInt("theme_mode", themeModeInt).apply() },
                                     onOpenDrawer = { scope.launch { drawerState.open() } },
                                     onNavigateToTasks = { navController.navigate(Screen.Tasks.route) },
-                                    onNavigateToHabits = { navController.navigate(Screen.Habits.route) }
+                                    onNavigateToHabits = { navController.navigate(Screen.Habits.route) },
+                                    onNavigateToNotifications = { navController.navigate(Screen.Notifications.route) }
                                 )
                             }
                             composable(Screen.Tasks.route) { TaskScreen(viewModel = taskViewModel, onOpenDrawer = { scope.launch { drawerState.open() } }) }
@@ -140,7 +142,14 @@ class MainActivity : ComponentActivity() {
                             composable(Screen.WeeklyReview.route) {
                                 WeeklyReviewScreen(taskViewModel = taskViewModel, habitViewModel = habitViewModel, isDark = (themeMode == LumiereThemeMode.Dark), onBack = { navController.popBackStack() })
                             }
-                            composable(Screen.Settings.route) {
+                            composable(Screen.Notifications.route) {
+                            NotificationScreen(
+                                taskViewModel = taskViewModel,
+                                habitViewModel = habitViewModel,
+                                onBack = { navController.popBackStack() }
+                            )
+                        }
+                        composable(Screen.Settings.route) {
                                 SettingsScreen(
                                     themeMode = themeMode,
                                     isDark = (themeMode == LumiereThemeMode.Dark),
