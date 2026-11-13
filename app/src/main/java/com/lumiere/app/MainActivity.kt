@@ -8,12 +8,10 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -34,6 +32,7 @@ import com.lumiere.app.ui.viewmodel.HabitViewModel
 import com.lumiere.app.ui.viewmodel.HabitViewModelFactory
 import com.lumiere.app.ui.viewmodel.TaskViewModel
 import com.lumiere.app.ui.viewmodel.TaskViewModelFactory
+import kotlinx.coroutines.launch
 
 sealed class Screen(val route: String, val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
     object Dashboard : Screen("dashboard", "Início", Icons.Filled.Home)
@@ -64,17 +63,27 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
-                
+                val drawerState = rememberDrawerState(DrawerValue.Closed)
+                val scope = rememberCoroutineScope()
+
                 val items = listOf(Screen.Dashboard, Screen.Tasks, Screen.Habits, Screen.Gallery)
 
-                Scaffold(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    bottomBar = {
-                        NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
+                ModalNavigationDrawer(
+                    drawerState = drawerState,
+                    drawerContent = {
+                        ModalDrawerSheet(drawerContainerColor = MaterialTheme.colorScheme.surface) {
+                            Spacer(modifier = Modifier.height(32.dp))
+                            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Filled.LocalFireDepartment, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("LUMIÈRE", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.headlineMedium)
+                            }
+                            Divider(color = MaterialTheme.colorScheme.outline)
+                            Spacer(modifier = Modifier.height(16.dp))
+
                             items.forEach { screen ->
-                                NavigationBarItem(
-                                    icon = { Icon(screen.icon, contentDescription = screen.label) },
-                                    label = { Text(screen.label) },
+                                NavigationDrawerItem(
+                                    label = { Text(screen.label, color = if (currentRoute == screen.route) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface) },
                                     selected = currentRoute == screen.route,
                                     onClick = {
                                         navController.navigate(screen.route) {
@@ -82,40 +91,70 @@ class MainActivity : ComponentActivity() {
                                             launchSingleTop = true
                                             restoreState = true
                                         }
+                                        scope.launch { drawerState.close() }
                                     },
-                                    colors = NavigationBarItemDefaults.colors(
-                                        selectedIconColor = MaterialTheme.colorScheme.primary,
-                                        selectedTextColor = MaterialTheme.colorScheme.primary,
-                                        indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+                                    icon = { Icon(screen.icon, contentDescription = null, tint = if (currentRoute == screen.route) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant) }
+                                )
+                            }
+                            Spacer(modifier = Modifier.weight(1f))
+                            Divider(color = MaterialTheme.colorScheme.outline)
+                            Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                Text(if (isDark) "Tema Escuro" else "Tema Claro", color = MaterialTheme.colorScheme.onSurface)
+                                Switch(
+                                    checked = isDark,
+                                    onCheckedChange = { checked ->
+                                        isDark = checked
+                                        prefs.edit().putBoolean("is_dark_theme", checked).apply()
+                                    }
                                 )
                             }
                         }
                     }
-                ) { innerPadding ->
-                    NavHost(
-                        navController = navController,
-                        startDestination = Screen.Dashboard.route,
-                        modifier = Modifier.padding(innerPadding)
-                    ) {
-                        composable(Screen.Dashboard.route) {
-                            DashboardScreen(
-                                taskViewModel = taskViewModel,
-                                habitViewModel = habitViewModel,
-                                isDark = isDark,
-                                onThemeToggle = {
-                                    isDark = !isDark
-                                    prefs.edit().putBoolean("is_dark_theme", isDark).apply()
-                                },
-                                onNavigateToTasks = { navController.navigate(Screen.Tasks.route) },
-                                onNavigateToHabits = { navController.navigate(Screen.Habits.route) }
-                            )
+                ) {
+                    Scaffold(
+                        containerColor = MaterialTheme.colorScheme.background,
+                        bottomBar = {
+                            NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
+                                items.forEach { screen ->
+                                    NavigationBarItem(
+                                        icon = { Icon(screen.icon, contentDescription = screen.label) },
+                                        label = { Text(screen.label) },
+                                        selected = currentRoute == screen.route,
+                                        onClick = {
+                                            navController.navigate(screen.route) {
+                                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                                launchSingleTop = true
+                                                restoreState = true
+                                            }
+                                        }
+                                    )
+                                }
+                            }
                         }
-                        composable(Screen.Tasks.route) { TaskScreen(viewModel = taskViewModel) }
-                        composable(Screen.Habits.route) { HabitScreen(viewModel = habitViewModel) }
-                        composable(Screen.Gallery.route) { ComponentGalleryScreen(onBack = { }) }
+                    ) { innerPadding ->
+                        NavHost(
+                            navController = navController,
+                            startDestination = Screen.Dashboard.route,
+                            modifier = Modifier.padding(innerPadding)
+                        ) {
+                            composable(Screen.Dashboard.route) {
+                                DashboardScreen(
+                                    taskViewModel = taskViewModel,
+                                    habitViewModel = habitViewModel,
+                                    isDark = isDark,
+                                    onThemeToggle = {
+                                        isDark = !isDark
+                                        prefs.edit().putBoolean("is_dark_theme", isDark).apply()
+                                    },
+                                    onOpenDrawer = { scope.launch { drawerState.open() } },
+                                    onNavigateToTasks = { navController.navigate(Screen.Tasks.route) },
+                                    onNavigateToHabits = { navController.navigate(Screen.Habits.route) }
+                                )
+                            }
+                            composable(Screen.Tasks.route) { TaskScreen(viewModel = taskViewModel) }
+                            composable(Screen.Habits.route) { HabitScreen(viewModel = habitViewModel) }
+                            composable(Screen.Gallery.route) { ComponentGalleryScreen(onBack = { }) }
+                        }
                     }
                 }
             }

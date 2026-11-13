@@ -41,6 +41,7 @@ fun DashboardScreen(
     habitViewModel: HabitViewModel,
     isDark: Boolean,
     onThemeToggle: () -> Unit,
+    onOpenDrawer: () -> Unit,
     onNavigateToTasks: () -> Unit,
     onNavigateToHabits: () -> Unit
 ) {
@@ -70,6 +71,11 @@ fun DashboardScreen(
             item {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        // Botão do Menu (Hambúrguer) de volta
+                        IconButton(onClick = onOpenDrawer, modifier = Modifier.size(32.dp)) {
+                            Icon(Icons.Default.Menu, contentDescription = "Menu", tint = MaterialTheme.colorScheme.primary)
+                        }
+                        Spacer(modifier = Modifier.width(LumiereSpacing.S))
                         Icon(Icons.Filled.LocalFireDepartment, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
                         Spacer(modifier = Modifier.width(LumiereSpacing.S))
                         Column {
@@ -78,6 +84,10 @@ fun DashboardScreen(
                         }
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        // Botão de Tema (Sol/Lua) de volta
+                        IconButton(onClick = onThemeToggle, modifier = Modifier.size(32.dp)) {
+                            Icon(if (isDark) Icons.Default.DarkMode else Icons.Default.LightMode, contentDescription = "Tema", tint = MaterialTheme.colorScheme.primary)
+                        }
                         Box(contentAlignment = Alignment.TopEnd) {
                             Icon(Icons.Outlined.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
                             Box(modifier = Modifier.size(14.dp).background(Color.Red, CircleShape), contentAlignment = Alignment.Center) {
