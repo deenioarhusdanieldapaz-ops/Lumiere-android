@@ -33,6 +33,7 @@ import com.lumiere.app.ui.theme.LumiereThemeMode
 @Composable
 fun SettingsScreen(
     themeMode: LumiereThemeMode,
+    isDark: Boolean,
     onThemeChange: (LumiereThemeMode) -> Unit,
     onOpenDrawer: () -> Unit
 ) {
@@ -48,7 +49,11 @@ fun SettingsScreen(
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(Color(0xFF1A150B), MaterialTheme.colorScheme.background)
+                    colors = if (isDark) {
+                        listOf(Color(0xFF1A150B), MaterialTheme.colorScheme.background)
+                    } else {
+                        listOf(Color(0xFFFFF8E1), MaterialTheme.colorScheme.background) // Marfim claro
+                    }
                 )
             )
     ) {

@@ -113,6 +113,7 @@ class MainActivity : ComponentActivity() {
                         composable(Screen.Settings.route) {
                             SettingsScreen(
                                 themeMode = themeMode,
+                                isDark = (themeMode == LumiereThemeMode.Dark),
                                 onThemeChange = { 
                                     themeModeInt = when(it) { LumiereThemeMode.Light -> 1; LumiereThemeMode.System -> 0; else -> 2 }
                                     prefs.edit().putInt("theme_mode", themeModeInt).apply()
