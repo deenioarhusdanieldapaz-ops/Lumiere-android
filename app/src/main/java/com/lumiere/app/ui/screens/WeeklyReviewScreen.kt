@@ -41,7 +41,8 @@ import java.util.Locale
 fun WeeklyReviewScreen(
     taskViewModel: TaskViewModel,
     habitViewModel: HabitViewModel,
-    isDark: Boolean
+    isDark: Boolean,
+    onBack: () -> Unit
 ) {
     val tasks by taskViewModel.tasks.collectAsStateWithLifecycle()
     val habits by habitViewModel.habits.collectAsStateWithLifecycle()
@@ -94,7 +95,9 @@ fun WeeklyReviewScreen(
             // TopBar
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.LocalFireDepartment, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
+                    IconButton(onClick = onBack, modifier = Modifier.size(32.dp)) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = MaterialTheme.colorScheme.primary)
+                    }
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
                         Text("LUMIÈRE", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.headlineMedium, fontFamily = FontFamily.Serif)

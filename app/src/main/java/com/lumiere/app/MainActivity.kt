@@ -138,14 +138,14 @@ class MainActivity : ComponentActivity() {
                             composable(Screen.Tasks.route) { TaskScreen(viewModel = taskViewModel, onOpenDrawer = { scope.launch { drawerState.open() } }) }
                             composable(Screen.Habits.route) { HabitScreen(viewModel = habitViewModel, onOpenDrawer = { scope.launch { drawerState.open() } }) }
                             composable(Screen.WeeklyReview.route) {
-                                WeeklyReviewScreen(taskViewModel = taskViewModel, habitViewModel = habitViewModel, isDark = (themeMode == LumiereThemeMode.Dark))
+                                WeeklyReviewScreen(taskViewModel = taskViewModel, habitViewModel = habitViewModel, isDark = (themeMode == LumiereThemeMode.Dark), onBack = { navController.popBackStack() })
                             }
                             composable(Screen.Settings.route) {
                                 SettingsScreen(
                                     themeMode = themeMode,
                                     isDark = (themeMode == LumiereThemeMode.Dark),
                                     onThemeChange = { themeModeInt = when(it) { LumiereThemeMode.Light -> 1; LumiereThemeMode.System -> 0; else -> 2 }; prefs.edit().putInt("theme_mode", themeModeInt).apply() },
-                                    onOpenDrawer = { scope.launch { drawerState.open() } }
+                                    onBack = { navController.popBackStack() }
                                 )
                             }
                         }

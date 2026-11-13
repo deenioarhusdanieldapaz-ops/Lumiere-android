@@ -35,7 +35,7 @@ fun SettingsScreen(
     themeMode: LumiereThemeMode,
     isDark: Boolean,
     onThemeChange: (LumiereThemeMode) -> Unit,
-    onOpenDrawer: () -> Unit
+    onBack: () -> Unit
 ) {
     val context = LocalContext.current
     val prefs = context.getSharedPreferences("lumiere_prefs", Context.MODE_PRIVATE)
@@ -66,8 +66,8 @@ fun SettingsScreen(
             // TopBar
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onOpenDrawer, modifier = Modifier.size(28.dp)) {
-                        Icon(Icons.Filled.LocalFireDepartment, contentDescription = "Menu", tint = MaterialTheme.colorScheme.primary)
+                    IconButton(onClick = onBack, modifier = Modifier.size(32.dp)) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = MaterialTheme.colorScheme.primary)
                     }
                     Spacer(modifier = Modifier.width(LumiereSpacing.S))
                     Text("LUMIÈRE", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.headlineMedium, fontFamily = FontFamily.Serif)
