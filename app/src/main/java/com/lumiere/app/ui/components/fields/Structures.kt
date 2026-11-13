@@ -17,7 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.lumiere.app.ui.theme.LumiereGold
+import com.lumiere.app.ui.theme.MaterialTheme.colorScheme.primary
 
 @Composable
 fun LumiereAccordion(
@@ -37,11 +37,11 @@ fun LumiereAccordion(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(title, color = LumiereGold, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                Text(title, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                 Icon(
                     imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                     contentDescription = null,
-                    tint = LumiereGold
+                    tint = MaterialTheme.colorScheme.primary
                 )
             }
             if (isExpanded) {
@@ -64,8 +64,8 @@ fun LumiereSearchBar(
         onValueChange = onQueryChange,
         placeholder = { Text(placeholder) },
         modifier = Modifier.fillMaxWidth(),
-        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = LumiereGold) },
-        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = LumiereGold)
+        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = MaterialTheme.colorScheme.primary)
     )
 }
 
@@ -94,7 +94,7 @@ fun LumiereFilterChips(
 fun LumiereProgressBar(
     progress: Float,
     label: String? = null,
-    color: Color = LumiereGold
+    color: Color = MaterialTheme.colorScheme.primary
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         if (label != null) {

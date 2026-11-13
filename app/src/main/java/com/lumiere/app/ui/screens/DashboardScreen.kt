@@ -47,7 +47,6 @@ fun DashboardScreen(
     val tasks by taskViewModel.tasks.collectAsStateWithLifecycle()
     val habits by habitViewModel.habits.collectAsStateWithLifecycle()
     
-    // Dados reais (máximo 3 de cada)
     val recentTasks = tasks.filter { !it.isCompleted }.take(3)
     val recentHabits = habits.take(3)
 
@@ -65,8 +64,8 @@ fun DashboardScreen(
 
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(horizontal = LumiereSpacing.M),
-            verticalArrangement = Arrangement.spacedBy(LumiereSpacing.M), // Espaçamento reduzido
-            contentPadding = PaddingValues(top = 24.dp, bottom = LumiereSpacing.M)
+            verticalArrangement = Arrangement.spacedBy(LumiereSpacing.M),
+            contentPadding = PaddingValues(top = 32.dp, bottom = LumiereSpacing.M)
         ) {
             item {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -112,9 +111,7 @@ fun DashboardScreen(
                                 drawArc(color = ringColor.copy(alpha = 0.2f), startAngle = 0f, sweepAngle = 360f, useCenter = false, style = Stroke(width = 6.dp.toPx(), cap = StrokeCap.Round))
                                 drawArc(color = ringColor, startAngle = -90f, sweepAngle = 72f, useCenter = false, style = Stroke(width = 6.dp.toPx(), cap = StrokeCap.Round))
                             }
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("20%", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            }
+                            Text("20%", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         }
                         Spacer(modifier = Modifier.width(LumiereSpacing.M))
                         Column(modifier = Modifier.weight(1f)) {
@@ -126,7 +123,7 @@ fun DashboardScreen(
                         }
                         Box(modifier = Modifier.width(1.dp).height(50.dp).background(MaterialTheme.colorScheme.outline))
                         Spacer(modifier = Modifier.width(LumiereSpacing.S))
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Column(modifier = Modifier.weight(0.6f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Filled.LocalFireDepartment, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
@@ -142,10 +139,9 @@ fun DashboardScreen(
                 }
             }
 
-            // 4. Foco de Hoje (Tarefas e Hábitos Reais)
+            // 4. Tarefas e Hábitos (com Modo Vazio)
             item {
                 if (recentTasks.isEmpty() && recentHabits.isEmpty()) {
-                    // MODO VAZIO
                     LumiereEmptyState(
                         icon = Icons.Outlined.WbSunny,
                         title = "Dia Limpo",
@@ -153,7 +149,6 @@ fun DashboardScreen(
                     )
                 } else {
                     Row(horizontalArrangement = Arrangement.spacedBy(LumiereSpacing.M)) {
-                        // Tarefas
                         Card(
                             modifier = Modifier.weight(1f).clickable { onNavigateToTasks() },
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -180,8 +175,6 @@ fun DashboardScreen(
                                 }
                             }
                         }
-
-                        // Hábitos
                         Card(
                             modifier = Modifier.weight(1f).clickable { onNavigateToHabits() },
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -212,7 +205,7 @@ fun DashboardScreen(
                 }
             }
 
-            // 5. Banner Inteligência Lumière
+            // 5. Banner Inteligência
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -234,7 +227,7 @@ fun DashboardScreen(
                 }
             }
 
-            // 6. Grelha "As Tuas Áreas"
+            // 6. Grelha Áreas
             item {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(modifier = Modifier.weight(1f).height(1.dp).background(MaterialTheme.colorScheme.outline))
@@ -242,7 +235,6 @@ fun DashboardScreen(
                     Box(modifier = Modifier.weight(1f).height(1.dp).background(MaterialTheme.colorScheme.outline))
                 }
             }
-            
             item {
                 val areas = listOf("Vida Pessoal" to "Equilíbrio", "Desenvolvimento" to "Evoluir", "Produtividade" to "Foco", "Gestão Financeira" to "Prosperar", "Saúde" to "Bem-estar", "Planeamento" to "Futuro")
                 val icons = listOf(Icons.Outlined.Person, Icons.Outlined.School, Icons.Outlined.TrendingUp, Icons.Outlined.MonetizationOn, Icons.Outlined.FavoriteBorder, Icons.Outlined.CalendarToday)
@@ -273,40 +265,7 @@ fun DashboardScreen(
                 }
             }
 
-            // 7. Ações Rápidas (no fim do scroll)
-            item {
-                Card(
-                    shape = RoundedCornerShape(50),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)),
-                    modifier = Modifier.fillMaxWidth().padding(top = LumiereSpacing.S)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        TextButton(onClick = { }, contentPadding = PaddingValues(0.dp), modifier = Modifier.height(24.dp)) {
-                            Icon(Icons.Default.Add, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Nova Tarefa", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.labelSmall)
-                        }
-                        Box(modifier = Modifier.width(1.dp).height(16.dp).background(MaterialTheme.colorScheme.outline))
-                        TextButton(onClick = { }, contentPadding = PaddingValues(0.dp), modifier = Modifier.height(24.dp)) {
-                            Icon(Icons.Outlined.Spa, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Novo Hábito", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.labelSmall)
-                        }
-                        Box(modifier = Modifier.width(1.dp).height(16.dp).background(MaterialTheme.colorScheme.outline))
-                        TextButton(onClick = { }, contentPadding = PaddingValues(0.dp), modifier = Modifier.height(24.dp)) {
-                            Icon(Icons.Outlined.CalendarToday, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Novo Evento", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.labelSmall)
-                        }
-                    }
-                }
-
-            // Ações Rápidas (no fim do scroll)
+            // 7. Ações Rápidas (Única, no fim do scroll)
             item {
                 Card(
                     shape = RoundedCornerShape(50),
