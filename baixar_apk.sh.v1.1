@@ -1,0 +1,51 @@
+#!/data/data/com.termux/files/usr/bin/bash
+set -uo pipefail
+
+WORKFLOW="build-apk.yml"
+DEST="/sdcard/Download/lumiere-fase2.apk"
+TMP="$HOME/lumiere-android/temp-apk"
+WATCH_TIMEOUT="${WATCH_TIMEOUT:-300}"
+
+FAST=0
+[ "${1:-}" = "--fast" ] && FAST=1
+
+echo "🔍 A procurar último build-apk.yml..."
+RUN_ID=$(gh run list --workflow="$WORKFLOW" --limit 10 \
+  --json databaseId,conclusion \
+  -q '[.[] | select(.conclusion=="success")][0].databaseId')
+
+if [ -z "${RUN_ID:-}" ] || [ "$RUN_ID" = "null" ]; then
+  echo "❌ Nenhuma run com sucesso encontrada."
+  exit 3
+fi
+echo "⏳ Run: $RUN_ID"
+
+if [ "$FAST" -eq 0 ]; then
+  timeout "$WATCH_TIMEOUT" gh run watch "$RUN_ID" --exit-status
+  RC=$?
+  if [ "$RC" -eq 124 ]; then
+    echo "⚠️  Watch excedeu ${WATCH_TIMEOUT}s — a continuar com download."
+  elif [ "$RC" -ne 0 ]; then
+    echo "⚠️  Watch terminou com código $RC — a tentar download mesmo assim."
+  fi
+else
+  echo "⚡ Modo --fast: a saltar watch."
+fi
+
+echo ""
+echo "📥 A descarregar APK..."
+
+rm -rf "$TMP" && mkdir -p "$TMP"
+timeout 300 gh run download "$RUN_ID" -D "$TMP" \
+  || { echo "❌ Download falhou ou excedeu 300s."; rm -rf "$TMP"; exit 4; }
+
+APK=$(find "$TMP" -name "*.apk" -type f | head -1)
+[ -z "$APK" ] && { echo "❌ APK não encontrado dentro do artefacto."; rm -rf "$TMP"; exit 5; }
+
+cp "$APK" "$DEST"
+rm -rf "$TMP"
+
+SIZE=$(stat -c%s "$DEST" 2>/dev/null || stat -f%z "$DEST" 2>/dev/null || echo "?")
+echo ""
+echo "✅ APK: $DEST"
+echo "   Tamanho: $SIZE bytes"
