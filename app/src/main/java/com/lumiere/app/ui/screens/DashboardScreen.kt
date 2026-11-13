@@ -117,9 +117,9 @@ fun DashboardScreen(
                             }
                         }
                         Spacer(modifier = Modifier.width(LumiereSpacing.M))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Índice de Evolução", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleSmall, fontFamily = FontFamily.Serif)
-                            Text("Você está no caminho!", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                        Column(modifier = Modifier.weight(1.2f)) {
+                            Text("Índice de Evolução", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleSmall, fontFamily = FontFamily.Serif, maxLines = 1)
+                            Text("Você está no caminho!", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, maxLines = 1)
                             TextButton(onClick = { }, contentPadding = PaddingValues(0.dp), modifier = Modifier.height(20.dp)) {
                                 Text("Ver detalhes →", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelSmall)
                             }
