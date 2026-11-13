@@ -17,7 +17,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.lumiere.app.ui.theme.MaterialTheme.colorScheme.primary
 
 @Composable
 fun LumiereAccordion(
@@ -98,7 +97,7 @@ fun LumiereProgressBar(
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         if (label != null) {
-            Text(label, color = Color.Gray, fontSize = 12.sp)
+            Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
             Spacer(modifier = Modifier.height(4.dp))
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -106,10 +105,10 @@ fun LumiereProgressBar(
                 progress = progress.coerceIn(0f, 1f),
                 modifier = Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp)),
                 color = color,
-                trackColor = Color.DarkGray
+                trackColor = MaterialTheme.colorScheme.surfaceVariant
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text("${(progress * 100).toInt()}%", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text("${(progress * 100).toInt()}%", color = MaterialTheme.colorScheme.onSurface, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
