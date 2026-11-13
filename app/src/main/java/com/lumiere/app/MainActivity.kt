@@ -33,6 +33,7 @@ sealed class Screen(val route: String, val label: String, val icon: androidx.com
     object Tasks : Screen("tasks", "Tarefas", Icons.Filled.CheckCircle)
     object Habits : Screen("habits", "Hábitos", Icons.Filled.Star)
     object Settings : Screen("settings", "Mais", Icons.Filled.MoreHoriz)
+    object WeeklyReview : Screen("weekly_review", "Revisão", Icons.Filled.BarChart)
 }
 
 class MainActivity : ComponentActivity() {
@@ -110,6 +111,13 @@ class MainActivity : ComponentActivity() {
                         }
                         composable(Screen.Tasks.route) { TaskScreen(viewModel = taskViewModel) }
                         composable(Screen.Habits.route) { HabitScreen(viewModel = habitViewModel) }
+                        composable(Screen.WeeklyReview.route) {
+                            WeeklyReviewScreen(
+                                taskViewModel = taskViewModel,
+                                habitViewModel = habitViewModel,
+                                isDark = (themeMode == LumiereThemeMode.Dark)
+                            )
+                        }
                         composable(Screen.Settings.route) {
                             SettingsScreen(
                                 themeMode = themeMode,
