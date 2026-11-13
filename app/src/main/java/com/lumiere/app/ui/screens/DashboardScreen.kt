@@ -172,10 +172,14 @@ fun DashboardScreen(
                                     Text("Nenhuma", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                                 } else {
                                     recentTasks.forEach { task ->
-                                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 2.dp)) {
-                                            Icon(Icons.Outlined.Circle, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(12.dp))
+                                        Row(verticalAlignment = Alignment.Top, modifier = Modifier.padding(vertical = 2.dp)) {
+                                            Icon(Icons.Outlined.Circle, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(12.dp).padding(top = 2.dp))
                                             Spacer(modifier = Modifier.width(4.dp))
-                                            Text(task.title, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                            Column {
+                                                Text(task.title, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodySmall)
+                                                val dateStr = task.dueDate?.let { java.text.SimpleDateFormat("dd/MM", java.util.Locale.getDefault()).format(java.util.Date(it)) } ?: "Sem data"
+                                                Text(dateStr, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
+                                            }
                                         }
                                     }
                                 }
@@ -198,10 +202,14 @@ fun DashboardScreen(
                                     Text("Nenhum", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                                 } else {
                                     recentHabits.forEach { habit ->
-                                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 2.dp)) {
-                                            Icon(Icons.Outlined.Circle, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(12.dp))
+                                        Row(verticalAlignment = Alignment.Top, modifier = Modifier.padding(vertical = 2.dp)) {
+                                            Icon(Icons.Outlined.Circle, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(12.dp).padding(top = 2.dp))
                                             Spacer(modifier = Modifier.width(4.dp))
-                                            Text(habit.name, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                            Column {
+                                                Text(habit.name, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodySmall)
+                                                val target = habit.targetValue ?: 0
+                                                Text("Meta: $target", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
+                                            }
                                         }
                                     }
                                 }
@@ -225,8 +233,15 @@ fun DashboardScreen(
                         Column(modifier = Modifier.weight(1f)) {
                             Text("Inteligência Lumière", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleSmall, fontFamily = FontFamily.Serif)
                             val overdue = tasks.count { !it.isCompleted && it.dueDate != null && it.dueDate < System.currentTimeMillis() }
-                            val bannerText = if (overdue > 0) "Atenção: Tens $overdue tarefa(s) atrasada(s)." else "Excelente progresso! Mantém o foco."
-                            Text(bannerText, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, maxLines = 1)
+                            val pending = tasks.count { !it.isCompleted }
+                            val bannerText = if (overdue > 0) {
+                                "Tens $overdue tarefa(s) atrasada(s) e $pending por fazer. Sugiro focares-te primeiro nas atrasadas."
+                            } else if (pending > 0) {
+                                "Tens $pending tarefa(s) pendente(s). Vamos começar a riscá-las da lista?"
+                            } else {
+                                "Tudo em ordem! Todas as tarefas estão concluídas. Aproveita para relaxar."
+                            }
+                            Text(bannerText, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                         }
                         OutlinedButton(onClick = { }, border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary), shape = RoundedCornerShape(50), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp), modifier = Modifier.height(28.dp)) {
                             Text("Ver dica", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelSmall)
