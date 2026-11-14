@@ -44,7 +44,8 @@ fun DashboardScreen(
     onOpenDrawer: () -> Unit,
     onNavigateToTasks: () -> Unit,
     onNavigateToHabits: () -> Unit,
-    onNavigateToNotifications: () -> Unit
+    onNavigateToNotifications: () -> Unit,
+    isNotificationsEnabled: Boolean
 ) {
     val tasks by taskViewModel.tasks.collectAsStateWithLifecycle()
     val habits by habitViewModel.habits.collectAsStateWithLifecycle()
@@ -89,11 +90,10 @@ fun DashboardScreen(
                         IconButton(onClick = onThemeToggle, modifier = Modifier.size(32.dp)) {
                             Icon(if (isDark) Icons.Default.DarkMode else Icons.Default.LightMode, contentDescription = "Tema", tint = MaterialTheme.colorScheme.primary)
                         }
-                        Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.clickable { onNavigateToNotifications() }) {
-                            Icon(Icons.Outlined.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
-                            Box(modifier = Modifier.size(14.dp).background(Color.Red, CircleShape), contentAlignment = Alignment.Center) {
-                                Text("3", color = Color.White, fontSize = 8.sp)
-                            }
+                        if (isNotificationsEnabled) {
+                            Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.clickable { onNavigateToNotifications() }) {
+                                Icon(Icons.Outlined.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
+                                                    }
                         }
                         Spacer(modifier = Modifier.width(LumiereSpacing.M))
                         Box(modifier = Modifier.size(36.dp).border(1.dp, MaterialTheme.colorScheme.primary, CircleShape).padding(2.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant))

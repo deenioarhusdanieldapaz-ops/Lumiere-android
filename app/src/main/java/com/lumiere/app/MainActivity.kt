@@ -1,5 +1,11 @@
 package com.lumiere.app
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.lumiere.app.data.repository.NotificationsRepository
+import com.lumiere.app.ui.viewmodel.NotificationsViewModel
+
 import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -45,9 +51,11 @@ class MainActivity : ComponentActivity() {
     private val database by lazy { AppDatabase.getDatabase(this) }
     private val habitRepository by lazy { HabitRepository(database.habitDao(), database.habitCheckInDao(), database.habitExceptionDao()) }
     private val repository by lazy { TaskRepository(database.taskDao(), database.subtaskDao(), database.projectDao(), database.taskHistoryDao()) }
+    private val notificationsRepository by lazy { NotificationsRepository.fromContext(this) }
 
     private val habitViewModel: HabitViewModel by viewModels { HabitViewModelFactory(habitRepository) }
     private val taskViewModel: TaskViewModel by viewModels { TaskViewModelFactory(repository) }
+    private val notificationsViewModel: NotificationsViewModel by viewModels { viewModelFactory { initializer { NotificationsViewModel(notificationsRepository) } } }
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -62,6 +70,7 @@ class MainActivity : ComponentActivity() {
                 else -> LumiereThemeMode.Dark
             }
 
+            val notificationsEnabled by notificationsViewModel.enabled.collectAsStateWithLifecycle()
             LumiereTheme(mode = themeMode) {
                 val navController = rememberNavController()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -134,13 +143,14 @@ class MainActivity : ComponentActivity() {
                                     onOpenDrawer = { scope.launch { drawerState.open() } },
                                     onNavigateToTasks = { navController.navigate(Screen.Tasks.route) },
                                     onNavigateToHabits = { navController.navigate(Screen.Habits.route) },
-                                    onNavigateToNotifications = { navController.navigate(Screen.Notifications.route) }
+                                    onNavigateToNotifications = { navController.navigate(Screen.Notifications.route) },
+                                    isNotificationsEnabled = notificationsEnabled
                                 )
                             }
                             composable(Screen.Tasks.route) { TaskScreen(viewModel = taskViewModel, onOpenDrawer = { scope.launch { drawerState.open() } }) }
                             composable(Screen.Habits.route) { HabitScreen(viewModel = habitViewModel, onOpenDrawer = { scope.launch { drawerState.open() } }) }
                             composable(Screen.WeeklyReview.route) {
-                                WeeklyReviewScreen(taskViewModel = taskViewModel, habitViewModel = habitViewModel, isDark = (themeMode == LumiereThemeMode.Dark), onBack = { navController.popBackStack() })
+                                WeeklyReviewScreen(taskViewModel = taskViewModel, habitViewModel = habitViewModel, isDark = (themeMode == LumiereThemeMode.Dark), onBack = { navController.popBackStack() }, notificationsEnabled = notificationsEnabled)
                             }
                             composable(Screen.Notifications.route) {
                             NotificationScreen(
@@ -152,6 +162,7 @@ class MainActivity : ComponentActivity() {
                         composable(Screen.Settings.route) {
                                 SettingsScreen(
                                     themeMode = themeMode,
+                                    notificationsViewModel = notificationsViewModel,
                                     isDark = (themeMode == LumiereThemeMode.Dark),
                                     onThemeChange = { themeModeInt = when(it) { LumiereThemeMode.Light -> 1; LumiereThemeMode.System -> 0; else -> 2 }; prefs.edit().putInt("theme_mode", themeModeInt).apply() },
                                     onBack = { navController.popBackStack() }

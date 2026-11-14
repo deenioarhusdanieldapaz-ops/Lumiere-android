@@ -28,6 +28,8 @@ import androidx.compose.ui.unit.sp
 import com.lumiere.app.BuildConfig
 import com.lumiere.app.ui.theme.LumiereSpacing
 import com.lumiere.app.ui.theme.LumiereThemeMode
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.lumiere.app.ui.viewmodel.NotificationsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,7 +37,8 @@ fun SettingsScreen(
     themeMode: LumiereThemeMode,
     isDark: Boolean,
     onThemeChange: (LumiereThemeMode) -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    notificationsViewModel: NotificationsViewModel
 ) {
     val context = LocalContext.current
     val prefs = context.getSharedPreferences("lumiere_prefs", Context.MODE_PRIVATE)
@@ -43,6 +46,7 @@ fun SettingsScreen(
     // Dados do utilizador (lidos do SharedPreferences, com fallback seguro)
     val userName = prefs.getString("user_name", "Proprietário") ?: "Proprietário"
     val userEmail = prefs.getString("user_email", "email@lumiere.app") ?: "email@lumiere.app"
+    val notificationsEnabled by notificationsViewModel.enabled.collectAsStateWithLifecycle()
 
     Box(
         modifier = Modifier
@@ -73,11 +77,8 @@ fun SettingsScreen(
                     Text("LUMIÈRE", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.headlineMedium, fontFamily = FontFamily.Serif)
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(contentAlignment = Alignment.TopEnd) {
+                    if (notificationsEnabled) {
                         Icon(Icons.Outlined.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
-                        Box(modifier = Modifier.size(14.dp).background(Color.Red, CircleShape), contentAlignment = Alignment.Center) {
-                            Text("3", color = Color.White, fontSize = 8.sp)
-                        }
                     }
                     Spacer(modifier = Modifier.width(LumiereSpacing.M))
                     Box(modifier = Modifier.size(36.dp).border(1.dp, MaterialTheme.colorScheme.primary, CircleShape).padding(2.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant))
@@ -153,7 +154,18 @@ fun SettingsScreen(
 
             // Secções de Definições
             SettingsCategory("PREFERÊNCIAS") {
-                SettingsItem(Icons.Outlined.Notifications, "Notificações", "Alertas e lembretes personalizados", showDivider = true)
+                SettingsItem(
+                    icon = Icons.Outlined.Notifications,
+                    title = "Notificações",
+                    subtitle = "Alertas e lembretes personalizados",
+                    showDivider = true,
+                    trailingContent = {
+                        Switch(
+                            checked = notificationsEnabled,
+                            onCheckedChange = { notificationsViewModel.setEnabled(it) }
+                        )
+                    }
+                )
                 SettingsItem(Icons.Outlined.Tune, "Módulos e Funcionalidades", "Ative ou organize os módulos", showDivider = true)
                 SettingsItem(Icons.Outlined.Palette, "Tema e Estilo", "Personalize a aparência da aplicação", showDivider = false)
             }
@@ -216,17 +228,27 @@ fun SettingsItem(
     title: String,
     subtitle: String,
     showDivider: Boolean = true,
-    onClick: () -> Unit = {}
+    onClick: (() -> Unit)? = null,
+    trailingContent: (@Composable () -> Unit)? = null
 ) {
     Column {
-        Row(modifier = Modifier.fillMaxWidth().clickable { onClick() }.padding(LumiereSpacing.M), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(if (onClick != null && trailingContent == null) Modifier.clickable { onClick() } else Modifier)
+                .padding(LumiereSpacing.M),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             Spacer(modifier = Modifier.width(LumiereSpacing.M))
             Column(modifier = Modifier.weight(1f)) {
                 Text(title, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodyLarge)
                 Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
             }
-            Icon(Icons.Default.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            when {
+                trailingContent != null -> trailingContent()
+                onClick != null -> Icon(Icons.Default.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         }
         if (showDivider) {
             Divider(

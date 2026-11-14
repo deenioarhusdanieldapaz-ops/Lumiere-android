@@ -42,7 +42,8 @@ fun WeeklyReviewScreen(
     taskViewModel: TaskViewModel,
     habitViewModel: HabitViewModel,
     isDark: Boolean,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    notificationsEnabled: Boolean
 ) {
     val tasks by taskViewModel.tasks.collectAsStateWithLifecycle()
     val habits by habitViewModel.habits.collectAsStateWithLifecycle()
@@ -105,11 +106,8 @@ fun WeeklyReviewScreen(
                     }
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(contentAlignment = Alignment.TopEnd) {
+                    if (notificationsEnabled) {
                         Icon(Icons.Outlined.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
-                        Box(modifier = Modifier.size(14.dp).background(Color.Red, CircleShape), contentAlignment = Alignment.Center) {
-                            Text("3", color = Color.White, fontSize = 8.sp)
-                        }
                     }
                     Spacer(modifier = Modifier.width(LumiereSpacing.M))
                     Box(modifier = Modifier.size(36.dp).border(1.dp, MaterialTheme.colorScheme.primary, CircleShape).padding(2.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant))
