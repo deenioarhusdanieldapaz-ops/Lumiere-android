@@ -107,9 +107,9 @@ fun NotificationSettingsScreen(
             modifier = Modifier.fillMaxWidth().alpha(alphaDisabled)
         ) {
             Column {
-                SettingsItem(icon = Icons.Outlined.Shield, title = "Aprovações", subtitle = "", enabled = enabled, onClick = { /* TODO */ })
-                SettingsItem(icon = Icons.Outlined.History, title = "Atividade e histórico", subtitle = "", enabled = enabled, onClick = { /* TODO */ })
-                SettingsItem(icon = LumiereIcons.Event, title = "Lembretes", subtitle = "", enabled = enabled, onClick = { /* TODO */ }, showDivider = false)
+                SettingsItem(icon = Icons.Outlined.Shield, title = "Aprovações", subtitle = "", onClick = { /* TODO */ })
+                SettingsItem(icon = Icons.Outlined.History, title = "Atividade e histórico", subtitle = "", onClick = { /* TODO */ })
+                SettingsItem(icon = LumiereIcons.Event, title = "Lembretes", subtitle = "", onClick = { /* TODO */ }, showDivider = false)
             }
         }
 
@@ -124,16 +124,16 @@ fun NotificationSettingsScreen(
             modifier = Modifier.fillMaxWidth().alpha(alphaDisabled)
         ) {
             Column {
-                SettingsItem(icon = LumiereIcons.Settings, title = "Tipos de alerta", subtitle = "", enabled = enabled, onClick = { /* TODO */ })
+                SettingsItem(icon = LumiereIcons.Settings, title = "Tipos de alerta", subtitle = "", onClick = { /* TODO */ })
                 SettingsItem(
-                    icon = Icons.Outlined.VolumeUp, title = "Som e vibração", subtitle = "", enabled = enabled, onClick = { if(enabled) notificationsViewModel.setSoundEnabled(!soundEnabled) },
+                    icon = Icons.Outlined.VolumeUp, title = "Som e vibração", subtitle = "", onClick = { if(enabled) notificationsViewModel.setSoundEnabled(!soundEnabled) },
                     trailingContent = {
-                        Switch(checked = soundEnabled, onCheckedChange = { notificationsViewModel.setSoundEnabled(it) }, enabled = enabled)
+                        Switch(checked = soundEnabled, onCheckedChange = { notificationsViewModel.setSoundEnabled(it) })
                     }
                 )
-                SettingsItem(icon = Icons.Outlined.DarkMode, title = "Horário de silêncio", subtitle = "", enabled = enabled, onClick = { /* TODO */ }, showDivider = false)
+                SettingsItem(icon = Icons.Outlined.DarkMode, title = "Horário de silêncio", subtitle = "", onClick = { /* TODO */ }, showDivider = false)
             }
         }
-        Spacer(modifier = Modifier.height(LumiereSpacing.XL))
+        Spacer(modifier = Modifier.height(48.dp))
     }
 }
