@@ -26,7 +26,8 @@ import com.lumiere.app.ui.viewmodel.NotificationsViewModel
 @Composable
 fun NotificationSettingsScreen(
     notificationsViewModel: NotificationsViewModel,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onNavigate: (String) -> Unit
 ) {
     val enabled by notificationsViewModel.enabled.collectAsStateWithLifecycle()
     val soundEnabled by notificationsViewModel.soundEnabled.collectAsStateWithLifecycle()
@@ -107,9 +108,9 @@ fun NotificationSettingsScreen(
             modifier = Modifier.fillMaxWidth().alpha(alphaDisabled)
         ) {
             Column {
-                SettingsItem(icon = Icons.Outlined.Shield, title = "Aprovações", subtitle = "", onClick = { /* TODO */ })
-                SettingsItem(icon = Icons.Outlined.History, title = "Atividade e histórico", subtitle = "", onClick = { /* TODO */ })
-                SettingsItem(icon = LumiereIcons.Event, title = "Lembretes", subtitle = "", onClick = { /* TODO */ }, showDivider = false)
+                SettingsItem(icon = Icons.Outlined.Shield, title = "Aprovações", subtitle = "", onClick = { onNavigate("approvals") })
+                SettingsItem(icon = Icons.Outlined.History, title = "Atividade e histórico", subtitle = "", onClick = { onNavigate("approvals") })
+                SettingsItem(icon = LumiereIcons.Event, title = "Lembretes", subtitle = "", onClick = { onNavigate("history") }, showDivider = false)
             }
         }
 
@@ -124,14 +125,14 @@ fun NotificationSettingsScreen(
             modifier = Modifier.fillMaxWidth().alpha(alphaDisabled)
         ) {
             Column {
-                SettingsItem(icon = LumiereIcons.Settings, title = "Tipos de alerta", subtitle = "", onClick = { /* TODO */ })
+                SettingsItem(icon = LumiereIcons.Settings, title = "Tipos de alerta", subtitle = "", onClick = { onNavigate("approvals") })
                 SettingsItem(
                     icon = Icons.Outlined.VolumeUp, title = "Som e vibração", subtitle = "", onClick = { if(enabled) notificationsViewModel.setSoundEnabled(!soundEnabled) },
                     trailingContent = {
                         Switch(checked = soundEnabled, onCheckedChange = { notificationsViewModel.setSoundEnabled(it) })
                     }
                 )
-                SettingsItem(icon = Icons.Outlined.DarkMode, title = "Horário de silêncio", subtitle = "", onClick = { /* TODO */ }, showDivider = false)
+                SettingsItem(icon = Icons.Outlined.DarkMode, title = "Horário de silêncio", subtitle = "", onClick = { onNavigate("history") }, showDivider = false)
             }
         }
         Spacer(modifier = Modifier.height(48.dp))
