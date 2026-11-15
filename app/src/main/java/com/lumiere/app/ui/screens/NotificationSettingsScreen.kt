@@ -1,13 +1,14 @@
 package com.lumiere.app.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -18,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.lumiere.app.ui.theme.LumiereIcons
 import com.lumiere.app.ui.theme.LumiereSpacing
 import com.lumiere.app.ui.viewmodel.NotificationsViewModel
 
@@ -30,7 +32,7 @@ fun NotificationSettingsScreen(
     val soundEnabled by notificationsViewModel.soundEnabled.collectAsStateWithLifecycle()
     val vibrationEnabled by notificationsViewModel.vibrationEnabled.collectAsStateWithLifecycle()
 
-    val subAlpha = if (enabled) 1f else 0.4f
+    val alphaDisabled = if (enabled) 1f else 0.4f
 
     Column(
         modifier = Modifier
@@ -62,6 +64,8 @@ fun NotificationSettingsScreen(
                 modifier = Modifier.padding(LumiereSpacing.M),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                Icon(LumiereIcons.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Spacer(modifier = Modifier.width(LumiereSpacing.M))
                 Column(modifier = Modifier.weight(1f)) {
                     Text("Notificações ativas", style = MaterialTheme.typography.titleMedium)
                     Text("Recebe alertas no Lumière", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -74,35 +78,62 @@ fun NotificationSettingsScreen(
         }
 
         if (!enabled) {
-            Text(
-                "Notificações desativadas. Ative para receber alertas.",
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(top = LumiereSpacing.S)
-            )
+            Spacer(modifier = Modifier.height(LumiereSpacing.S))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
+                    .padding(LumiereSpacing.M),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Outlined.Info, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(modifier = Modifier.width(LumiereSpacing.M))
+                Text(
+                    "Notificações desativadas. Ative para receber alertas.",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(LumiereSpacing.L))
 
-        // Sub-menus
-        Text("ALERTAS", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium)
-        Spacer(modifier = Modifier.height(LumiereSpacing.S))
-
-        Column(modifier = Modifier.alpha(subAlpha)) {
-            SettingsItem(
-                icon = Icons.Outlined.Notifications,
-                title = "Som",
-                subtitle = "Tocar som ao receber alerta",
-                onClick = if (enabled) ({ notificationsViewModel.setSoundEnabled(!soundEnabled) }) else null,
-                trailingContent = { Switch(checked = soundEnabled, onCheckedChange = { notificationsViewModel.setSoundEnabled(it) }, enabled = enabled) }
-            )
-            SettingsItem(
-                icon = Icons.Outlined.Notifications,
-                title = "Vibração",
-                subtitle = "Vibrar ao receber alerta",
-                onClick = if (enabled) ({ notificationsViewModel.setVibrationEnabled(!vibrationEnabled) }) else null,
-                trailingContent = { Switch(checked = vibrationEnabled, onCheckedChange = { notificationsViewModel.setVibrationEnabled(it) }, enabled = enabled) }
-            )
+        // Secção ALERTAS
+        Text("ALERTAS", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(bottom = LumiereSpacing.S))
+        
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.fillMaxWidth().alpha(alphaDisabled)
+        ) {
+            Column {
+                SettingsItem(icon = Icons.Outlined.Shield, title = "Aprovações", subtitle = "", enabled = enabled, onClick = { /* TODO */ })
+                SettingsItem(icon = Icons.Outlined.History, title = "Atividade e histórico", subtitle = "", enabled = enabled, onClick = { /* TODO */ })
+                SettingsItem(icon = LumiereIcons.Event, title = "Lembretes", subtitle = "", enabled = enabled, onClick = { /* TODO */ }, showDivider = false)
+            }
         }
+
+        Spacer(modifier = Modifier.height(LumiereSpacing.L))
+
+        // Secção PERSONALIZAÇÃO
+        Text("PERSONALIZAÇÃO", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(bottom = LumiereSpacing.S))
+        
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.fillMaxWidth().alpha(alphaDisabled)
+        ) {
+            Column {
+                SettingsItem(icon = LumiereIcons.Settings, title = "Tipos de alerta", subtitle = "", enabled = enabled, onClick = { /* TODO */ })
+                SettingsItem(
+                    icon = Icons.Outlined.VolumeUp, title = "Som e vibração", subtitle = "", enabled = enabled, onClick = { if(enabled) notificationsViewModel.setSoundEnabled(!soundEnabled) },
+                    trailingContent = {
+                        Switch(checked = soundEnabled, onCheckedChange = { notificationsViewModel.setSoundEnabled(it) }, enabled = enabled)
+                    }
+                )
+                SettingsItem(icon = Icons.Outlined.DarkMode, title = "Horário de silêncio", subtitle = "", enabled = enabled, onClick = { /* TODO */ }, showDivider = false)
+            }
+        }
+        Spacer(modifier = Modifier.height(LumiereSpacing.XL))
     }
 }
