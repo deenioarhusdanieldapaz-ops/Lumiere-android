@@ -157,8 +157,7 @@ class MainActivity : ComponentActivity() {
                             composable(Screen.NotificationSettings.route) {
                                 NotificationSettingsScreen(
                                     notificationsViewModel = notificationsViewModel,
-                                    onBack = { navController.popBackStack() },
-                                    onNavigateToNotificationSettings = { navController.navigate(Screen.NotificationSettings.route) }
+                                    onBack = { navController.popBackStack() }
                                 )
                             }
                             composable(Screen.Notifications.route) {
@@ -174,7 +173,8 @@ class MainActivity : ComponentActivity() {
                                     notificationsViewModel = notificationsViewModel,
                                     isDark = (themeMode == LumiereThemeMode.Dark),
                                     onThemeChange = { themeModeInt = when(it) { LumiereThemeMode.Light -> 1; LumiereThemeMode.System -> 0; else -> 2 }; prefs.edit().putInt("theme_mode", themeModeInt).apply() },
-                                    onBack = { navController.popBackStack() }
+                                    onBack = { navController.popBackStack() },
+                                    onNavigateToNotificationSettings = { navController.navigate(Screen.NotificationSettings.route) }
                                 )
                             }
                         }
