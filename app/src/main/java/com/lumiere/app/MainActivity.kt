@@ -19,6 +19,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -43,6 +44,7 @@ sealed class Screen(val route: String, val label: String, val icon: androidx.com
     object Habits : Screen("habits", "Hábitos", Icons.Filled.Star)
     object Settings : Screen("settings", "Definições", Icons.Filled.Settings)
     object WeeklyReview : Screen("weekly_review", "Mais", Icons.Filled.MoreHoriz)
+    object NotificationSettings : Screen("notification_settings", "Notificações", Icons.Filled.Notifications)
     object Notifications : Screen("notifications", "Notificações", Icons.Filled.Notifications)
 }
 
@@ -151,6 +153,13 @@ class MainActivity : ComponentActivity() {
                             composable(Screen.Habits.route) { HabitScreen(viewModel = habitViewModel, onOpenDrawer = { scope.launch { drawerState.open() } }) }
                             composable(Screen.WeeklyReview.route) {
                                 WeeklyReviewScreen(taskViewModel = taskViewModel, habitViewModel = habitViewModel, isDark = (themeMode == LumiereThemeMode.Dark), onBack = { navController.popBackStack() }, notificationsEnabled = notificationsEnabled)
+                            }
+                            composable(Screen.NotificationSettings.route) {
+                                NotificationSettingsScreen(
+                                    notificationsViewModel = notificationsViewModel,
+                                    onBack = { navController.popBackStack() },
+                                    onNavigateToNotificationSettings = { navController.navigate(Screen.NotificationSettings.route) }
+                                )
                             }
                             composable(Screen.Notifications.route) {
                             NotificationScreen(

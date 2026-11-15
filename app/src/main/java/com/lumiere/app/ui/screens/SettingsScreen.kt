@@ -38,7 +38,8 @@ fun SettingsScreen(
     isDark: Boolean,
     onThemeChange: (LumiereThemeMode) -> Unit,
     onBack: () -> Unit,
-    notificationsViewModel: NotificationsViewModel
+    notificationsViewModel: NotificationsViewModel,
+    onNavigateToNotificationSettings: () -> Unit
 ) {
     val context = LocalContext.current
     val prefs = context.getSharedPreferences("lumiere_prefs", Context.MODE_PRIVATE)
@@ -157,14 +158,9 @@ fun SettingsScreen(
                 SettingsItem(
                     icon = Icons.Outlined.Notifications,
                     title = "Notificações",
-                    subtitle = "Alertas e lembretes personalizados",
+                    subtitle = if (notificationsEnabled) "Ativadas" else "Desativadas",
                     showDivider = true,
-                    trailingContent = {
-                        Switch(
-                            checked = notificationsEnabled,
-                            onCheckedChange = { notificationsViewModel.setEnabled(it) }
-                        )
-                    }
+                    onClick = onNavigateToNotificationSettings
                 )
                 SettingsItem(Icons.Outlined.Tune, "Módulos e Funcionalidades", "Ative ou organize os módulos", showDivider = true)
                 SettingsItem(Icons.Outlined.Palette, "Tema e Estilo", "Personalize a aparência da aplicação", showDivider = false)
