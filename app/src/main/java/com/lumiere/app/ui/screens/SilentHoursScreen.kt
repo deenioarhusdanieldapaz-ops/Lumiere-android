@@ -18,6 +18,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lumiere.app.ui.theme.LumiereSpacing
 import com.lumiere.app.ui.viewmodel.NotificationsViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SilentHoursScreen(viewModel: NotificationsViewModel, onBack: () -> Unit) {
     val silenceEnabled by viewModel.silenceEnabled.collectAsStateWithLifecycle()
