@@ -22,7 +22,6 @@ fun RemindersScreen(onBack: () -> Unit) {
             Text("Lembretes", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.headlineMedium, fontFamily = FontFamily.Serif)
         }
         Spacer(modifier = Modifier.height(LumiereSpacing.L))
-
         Column(modifier = Modifier.padding(horizontal = LumiereSpacing.M), verticalArrangement = Arrangement.spacedBy(LumiereSpacing.M)) {
             ReminderCard(title = "Tarefas (M01)", defaultOption = "15 min antes")
             ReminderCard(title = "Calendário (M05)", defaultOption = "1 hora antes")
@@ -35,7 +34,6 @@ fun RemindersScreen(onBack: () -> Unit) {
 fun ReminderCard(title: String, defaultOption: String) {
     var expanded by remember { mutableStateOf(false) }
     var selected by remember { mutableStateOf(defaultOption) }
-
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(LumiereSpacing.M)) {
             Text(title, style = MaterialTheme.typography.titleSmall)

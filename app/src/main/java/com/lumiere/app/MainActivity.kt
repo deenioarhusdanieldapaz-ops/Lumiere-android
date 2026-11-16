@@ -164,6 +164,9 @@ class MainActivity : ComponentActivity() {
                             composable("approvals") { ApprovalsScreen(onBack = { navController.popBackStack() }) }
                             composable("history") { HistoryScreen(onBack = { navController.popBackStack() }) }
                             composable("reminders") { RemindersScreen(onBack = { navController.popBackStack() }) }
+                            composable("approvals") { ApprovalsScreen(onBack = { navController.popBackStack() }) }
+                            composable("history") { HistoryScreen(onBack = { navController.popBackStack() }) }
+                            composable("reminders") { RemindersScreen(onBack = { navController.popBackStack() }) }
                             composable(Screen.Notifications.route) {
                             NotificationScreen(
                                 taskViewModel = taskViewModel,

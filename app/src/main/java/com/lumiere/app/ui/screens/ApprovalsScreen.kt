@@ -24,7 +24,6 @@ fun ApprovalsScreen(onBack: () -> Unit) {
             Text("Aprovações", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.headlineMedium, fontFamily = FontFamily.Serif)
         }
         Spacer(modifier = Modifier.height(LumiereSpacing.L))
-
         LazyColumn(modifier = Modifier.padding(horizontal = LumiereSpacing.M), verticalArrangement = Arrangement.spacedBy(LumiereSpacing.M)) {
             item {
                 Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), modifier = Modifier.fillMaxWidth()) {
