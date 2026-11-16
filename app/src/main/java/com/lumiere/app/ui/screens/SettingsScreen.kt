@@ -231,7 +231,7 @@ fun SettingsItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .then(if (onClick != null && trailingContent == null) Modifier.clickable { onClick() } else Modifier)
+                .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
                 .padding(LumiereSpacing.M),
             verticalAlignment = Alignment.CenterVertically
         ) {
