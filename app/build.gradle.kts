@@ -14,9 +14,9 @@ plugins {
 android {
     signingConfigs {
         create("release") {
-            storeFile = file("../signing.keystore")
+            storeFile = file("../release.jks")
             storePassword = localProps.getProperty("LUMIERE_STORE_PASSWORD") ?: System.getenv("LUMIERE_STORE_PASSWORD")
-            keyAlias = localProps.getProperty("LUMIERE_KEY_ALIAS") ?: System.getenv("LUMIERE_KEY_ALIAS") ?: "lumiere-release-v2"
+            keyAlias = localProps.getProperty("LUMIERE_KEY_ALIAS") ?: System.getenv("LUMIERE_KEY_ALIAS") ?: "lumiere_key"
             keyPassword = localProps.getProperty("LUMIERE_KEY_PASSWORD") ?: System.getenv("LUMIERE_KEY_PASSWORD")
         }
     }
