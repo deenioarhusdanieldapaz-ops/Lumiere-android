@@ -16,7 +16,7 @@ android {
         create("release") {
             storeFile = file("../release.jks")
             storePassword = localProps.getProperty("LUMIERE_STORE_PASSWORD") ?: System.getenv("LUMIERE_STORE_PASSWORD")
-            keyAlias = localProps.getProperty("LUMIERE_KEY_ALIAS") ?: System.getenv("LUMIERE_KEY_ALIAS") ?: "lumiere_key"
+            keyAlias = localProps.getProperty("LUMIERE_KEY_ALIAS") ?: System.getenv("LUMIERE_KEY_ALIAS") ?: "lumiere-release-v2"
             keyPassword = localProps.getProperty("LUMIERE_KEY_PASSWORD") ?: System.getenv("LUMIERE_KEY_PASSWORD")
         }
     }
