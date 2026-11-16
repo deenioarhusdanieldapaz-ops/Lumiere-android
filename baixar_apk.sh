@@ -14,44 +14,27 @@ done
 if [ -z "$RUN_ID" ]; then echo "❌ Não foi possível obter o build."; exit 1; fi
 
 echo "⏳ Run: $RUN_ID"
+echo "⏱️ A acompanhar o build..."
 gh run watch "$RUN_ID"
 
 CONCLUSION=$(gh run view "$RUN_ID" --json conclusion -q ".conclusion")
 if [ "$CONCLUSION" != "success" ]; then
-  echo "❌ O BUILD FALHOU."
+  echo "❌ O BUILD FALHOU. Logs:"
   gh run view "$RUN_ID" --log-failed 2>/dev/null | grep -A 15 -E "e: file:///|error:|Caused by|FAILURE: Build failed" | sed "s/^[0-9T:.-]*Z //" | head -200
   exit 1
 fi
 
 echo ""
-echo "✅ Build com sucesso! A preparar download..."
-# Fixar o repositório diretamente para evitar falhas de rede do gh repo view
-REPO="deenioarhusdanieldapaz-ops/Lumiere-android"
-TOKEN=$(gh auth token)
-ARTIFACT_URL=$(gh api repos/$REPO/actions/runs/$RUN_ID/artifacts --jq '.artifacts[] | select(.name=="debug-apk") | .archive_download_url')
-
-if [ -z "$ARTIFACT_URL" ]; then echo "❌ Artefato não encontrado."; exit 1; fi
+echo "✅ Build com sucesso! A descarregar via GitHub CLI (Seguro)..."
 
 if ! command -v unzip &> /dev/null; then pkg install unzip -y >/dev/null 2>&1; fi
-if ! command -v aria2c &> /dev/null; then pkg install aria2 -y >/dev/null 2>&1; fi
 
-echo "📥 A descarregar..."
 rm -rf temp-apk && mkdir -p temp-apk
+# O comando oficial do GitHub faz o download de forma segura e encriptada
+gh run download "$RUN_ID" -n debug-apk -D temp-apk
 
-while true; do
-    aria2c -c -x16 -s16 --max-tries=0 --retry-wait=3 \
-      --header="Authorization: token $TOKEN" \
-      -o debug-apk.zip -d temp-apk "$ARTIFACT_URL"
-    
-    if [ $? -eq 0 ]; then
-        cd temp-apk
-        unzip -o -q debug-apk.zip
-        cd ..
-        if [ -f temp-apk/app-debug.apk ]; then break; fi
-    fi
-    echo "⚠️ A rede falhou. A retomar em 5 segundos..."
-    sleep 5
-done
+if [ ! -f temp-apk/app-debug.apk ]; then echo "❌ APK não encontrado."; exit 1; fi
 
 cp temp-apk/app-debug.apk /sdcard/Download/lumiere-fase2.apk
+echo ""
 echo "✅ SUCESSO! APK guardado em: /sdcard/Download/lumiere-fase2.apk"
