@@ -57,6 +57,6 @@ fun ModuleSwitch(title: String, checked: Boolean, onCheckedChange: (Boolean) -> 
             Text(title, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
             Switch(checked = checked, onCheckedChange = onCheckedChange)
         }
-        if (showDivider) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        if (showDivider) Divider(color = MaterialTheme.colorScheme.outlineVariant)
     }
 }

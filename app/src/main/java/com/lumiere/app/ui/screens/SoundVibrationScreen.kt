@@ -41,7 +41,7 @@ fun SoundVibrationScreen(viewModel: NotificationsViewModel, onBack: () -> Unit) 
                     Text("Som de Notificação", modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
                     Switch(checked = soundEnabled, onCheckedChange = viewModel::setSoundEnabled)
                 }
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                Divider(color = MaterialTheme.colorScheme.outlineVariant)
                 Row(modifier = Modifier.fillMaxWidth().padding(LumiereSpacing.M), verticalAlignment = Alignment.CenterVertically) {
                     Text("Vibração Tátil", modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
                     Switch(checked = vibrationEnabled, onCheckedChange = viewModel::setVibrationEnabled)
