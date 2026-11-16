@@ -28,8 +28,7 @@ fun NotificationSettingsScreen(
     onNavigate: (String) -> Unit
 ) {
     val enabled by notificationsViewModel.enabled.collectAsStateWithLifecycle()
-    val soundEnabled by notificationsViewModel.soundEnabled.collectAsStateWithLifecycle()
-    val alphaDisabled = if (enabled) 1f else 0.4f
+        val alphaDisabled = if (enabled) 1f else 0.4f
 
     Column(
         modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).verticalScroll(rememberScrollState()).padding(horizontal = LumiereSpacing.M)
@@ -82,8 +81,7 @@ fun NotificationSettingsScreen(
                 SettingsItem(icon = LumiereIcons.Settings, title = "Tipos de alerta", subtitle = "", onClick = { if(enabled) onNavigate("types") })
                 SettingsItem(
                     icon = Icons.Outlined.VolumeUp, title = "Som e vibração", subtitle = "", 
-                    onClick = { if(enabled) onNavigate("sound") },
-                    trailingContent = { Switch(checked = soundEnabled, onCheckedChange = { notificationsViewModel.setSoundEnabled(it) }, enabled = enabled) }
+                    onClick = { if(enabled) onNavigate("sound") }
                 )
                 SettingsItem(icon = Icons.Outlined.DarkMode, title = "Horário de silêncio", subtitle = "", onClick = { if(enabled) onNavigate("silence") }, showDivider = false)
             }
