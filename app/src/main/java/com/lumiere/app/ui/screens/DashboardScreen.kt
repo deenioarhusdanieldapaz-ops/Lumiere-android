@@ -45,6 +45,8 @@ fun DashboardScreen(
     onNavigateToTasks: () -> Unit,
     onNavigateToHabits: () -> Unit,
     onNavigateToNotifications: () -> Unit,
+    onNavigateToSearch: () -> Unit,
+    onNavigateToProfile: () -> Unit,
     isNotificationsEnabled: Boolean
 ) {
     val tasks by taskViewModel.tasks.collectAsStateWithLifecycle()
