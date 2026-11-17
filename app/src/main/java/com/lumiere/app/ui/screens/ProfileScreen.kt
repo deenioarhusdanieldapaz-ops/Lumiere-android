@@ -33,7 +33,7 @@ import com.lumiere.app.ui.viewmodel.NotificationsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(
+fun ProfileScreen(
     themeMode: LumiereThemeMode,
     isDark: Boolean,
     onThemeChange: (LumiereThemeMode) -> Unit,

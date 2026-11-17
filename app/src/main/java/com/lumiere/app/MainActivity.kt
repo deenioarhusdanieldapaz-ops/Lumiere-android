@@ -97,7 +97,7 @@ class MainActivity : ComponentActivity() {
                             Spacer(modifier = Modifier.height(16.dp))
 
                             // Itens do Menu Lateral
-                            listOf(Screen.Dashboard, Screen.Tasks, Screen.Habits, Screen.WeeklyReview, Screen.GlobalSearch, Screen.Settings).forEach { screen ->
+                            listOf(Screen.Dashboard, Screen.Tasks, Screen.Habits, Screen.WeeklyReview, Screen.GlobalSearch, Screen.Profile).forEach { screen ->
                                 NavigationDrawerItem(
                                     label = { Text(screen.label, color = if (currentRoute == screen.route) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface) },
                                     selected = currentRoute == screen.route,
@@ -148,6 +148,7 @@ class MainActivity : ComponentActivity() {
                                     onNavigateToHabits = { navController.navigate(Screen.Habits.route) },
                                     onNavigateToNotifications = { navController.navigate(Screen.Notifications.route) },
                                     onNavigateToSearch = { navController.navigate(Screen.GlobalSearch.route) },
+                                    onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
                                     isNotificationsEnabled = notificationsEnabled
                                 )
                             }

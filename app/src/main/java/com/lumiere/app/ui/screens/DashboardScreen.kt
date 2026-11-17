@@ -100,7 +100,7 @@ fun DashboardScreen(
                                                     }
                         }
                         Spacer(modifier = Modifier.width(LumiereSpacing.M))
-                        Box(modifier = Modifier.size(36.dp).border(1.dp, MaterialTheme.colorScheme.primary, CircleShape).padding(2.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant))
+                        Box(modifier = Modifier.size(36.dp).border(1.dp, MaterialTheme.colorScheme.primary, CircleShape).padding(2.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant).clickable { onNavigateToProfile() })
                     }
                 }
             }
