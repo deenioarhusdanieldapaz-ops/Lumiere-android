@@ -189,6 +189,10 @@ class MainActivity : ComponentActivity() {
                                 themeMode = themeMode,
                                 notificationsViewModel = notificationsViewModel,
                                 isDark = isDark,
+                                onThemeToggle = { 
+                                    themeModeInt = if (isDark) 1 else 2
+                                    prefs.edit().putInt("theme_mode", themeModeInt).apply() 
+                                },
                                 onThemeChange = { mode -> 
                                     themeModeInt = when(mode) { 
                                         LumiereThemeMode.Light -> 1

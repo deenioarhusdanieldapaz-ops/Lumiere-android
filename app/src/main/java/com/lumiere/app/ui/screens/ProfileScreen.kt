@@ -37,6 +37,7 @@ fun ProfileScreen(
     themeMode: LumiereThemeMode,
     isDark: Boolean,
     onThemeChange: (LumiereThemeMode) -> Unit,
+    onThemeToggle: () -> Unit,
     onBack: () -> Unit,
     notificationsViewModel: NotificationsViewModel,
     onNavigateToNotificationSettings: () -> Unit
