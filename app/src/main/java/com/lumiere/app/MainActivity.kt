@@ -43,10 +43,12 @@ sealed class Screen(val route: String, val label: String, val icon: androidx.com
     object Tasks : Screen("tasks", "Tarefas", Icons.Filled.CheckCircle)
     object Habits : Screen("habits", "Hábitos", Icons.Filled.Star)
     object Settings : Screen("settings", "Definições", Icons.Filled.Settings)
-    object WeeklyReview : Screen("weekly_review", "Mais", Icons.Filled.MoreHoriz)
+    object WeeklyReview : Screen("weekly_review", "Revisão", Icons.Filled.BarChart)
+    object More : Screen("more", "Mais", Icons.Filled.MoreHoriz)
     object NotificationSettings : Screen("notification_settings", "Notificações", Icons.Filled.Notifications)
     object Notifications : Screen("notifications", "Notificações", Icons.Filled.Notifications)
     object GlobalSearch : Screen("global_search", "Pesquisa", Icons.Filled.Search)
+    object Profile : Screen("profile", "Perfil", Icons.Filled.Person)
 }
 
 class MainActivity : ComponentActivity() {
@@ -81,7 +83,7 @@ class MainActivity : ComponentActivity() {
                 val drawerState = rememberDrawerState(DrawerValue.Closed)
                 val scope = rememberCoroutineScope()
 
-                val bottomItems = listOf(Screen.Dashboard, Screen.Tasks, Screen.Habits, Screen.WeeklyReview)
+                val bottomItems = listOf(Screen.Dashboard, Screen.Tasks, Screen.Habits, Screen.More)
 
                 ModalNavigationDrawer(
                     drawerState = drawerState,
@@ -154,6 +156,13 @@ class MainActivity : ComponentActivity() {
                             }
                             composable(Screen.Tasks.route) { TaskScreen(viewModel = taskViewModel, onOpenDrawer = { scope.launch { drawerState.open() } }) }
                             composable(Screen.Habits.route) { HabitScreen(viewModel = habitViewModel, onOpenDrawer = { scope.launch { drawerState.open() } }) }
+                            composable(Screen.More.route) {
+                                MoreScreen(
+                                    onNavigateToSearch = { navController.navigate(Screen.GlobalSearch.route) },
+                                    onNavigateToReview = { navController.navigate(Screen.WeeklyReview.route) },
+                                    onNavigateToNotifications = { navController.navigate(Screen.Notifications.route) }
+                                )
+                            }
                             composable(Screen.WeeklyReview.route) {
                                 WeeklyReviewScreen(taskViewModel = taskViewModel, habitViewModel = habitViewModel, isDark = (themeMode == LumiereThemeMode.Dark), onBack = { navController.popBackStack() }, notificationsEnabled = notificationsEnabled)
                             }
@@ -171,7 +180,15 @@ class MainActivity : ComponentActivity() {
                             composable("sound") { SoundVibrationScreen(viewModel = notificationsViewModel, onBack = { navController.popBackStack() }) }
                             composable("silence") { SilentHoursScreen(viewModel = notificationsViewModel, onBack = { navController.popBackStack() }) }
                             
-                            composable(Screen.GlobalSearch.route) {
+                            composable(Screen.Profile.route) {
+                            ProfileScreen(
+                                themeMode = themeMode,
+                                isDark = (themeMode == LumiereThemeMode.Dark),
+                                onThemeChange = { mode -> themeModeInt = when(mode) { LumiereThemeMode.Light -> 1; LumiereThemeMode.System -> 0; else -> 2 }; prefs.edit().putInt("theme_mode", themeModeInt).apply() },
+                                onBack = { navController.popBackStack() }
+                            )
+                        }
+                        composable(Screen.GlobalSearch.route) {
                             GlobalSearchScreen(
                                 taskViewModel = taskViewModel,
                                 habitViewModel = habitViewModel,
