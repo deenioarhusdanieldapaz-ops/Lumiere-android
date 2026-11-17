@@ -81,10 +81,7 @@ fun WeeklyReviewScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = if (isDark) listOf(Color(0xFF1A150B), MaterialTheme.colorScheme.background) else listOf(Color(0xFFFFF8E1), MaterialTheme.colorScheme.background)
-                )
+            .background(MaterialTheme.colorScheme.background)
             )
     ) {
         Column(
@@ -93,32 +90,17 @@ fun WeeklyReviewScreen(
         ) {
             Spacer(modifier = Modifier.height(24.dp))
 
-            // TopBar
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onBack, modifier = Modifier.size(32.dp)) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = MaterialTheme.colorScheme.primary)
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Column {
-                        Text("LUMIÈRE", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.headlineMedium, fontFamily = FontFamily.Serif)
-                        Text("Life Manager", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
-                    }
+            // TopBar Limpa (Apenas Seta e Título)
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onBack, modifier = Modifier.size(32.dp)) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = MaterialTheme.colorScheme.primary)
                 }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (notificationsEnabled) {
-                        Icon(Icons.Outlined.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
-                    }
-                    Spacer(modifier = Modifier.width(LumiereSpacing.M))
-                    Box(modifier = Modifier.size(36.dp).border(1.dp, MaterialTheme.colorScheme.primary, CircleShape).padding(2.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant))
-                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Revisão Semanal", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.displayMedium, fontFamily = FontFamily.Serif)
             }
 
-            // Título e Data
-            Column(modifier = Modifier.padding(top = LumiereSpacing.M)) {
-                Text("Revisão Semanal", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.displayMedium, fontFamily = FontFamily.Serif)
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+            // Linha da Data e do Badge
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth().padding(top = LumiereSpacing.M)) {
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                         Icon(Icons.Outlined.CalendarToday, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
@@ -132,7 +114,6 @@ fun WeeklyReviewScreen(
                         }
                     }
                 }
-            }
 
             // Secção de Resumo (3 Anéis)
             Row(horizontalArrangement = Arrangement.spacedBy(LumiereSpacing.S)) {

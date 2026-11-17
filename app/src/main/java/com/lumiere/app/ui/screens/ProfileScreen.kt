@@ -53,15 +53,7 @@ fun ProfileScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = if (isDark) {
-                        listOf(Color(0xFF1A150B), MaterialTheme.colorScheme.background)
-                    } else {
-                        listOf(Color(0xFFFFF8E1), MaterialTheme.colorScheme.background) // Marfim claro
-                    }
-                )
-            )
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = LumiereSpacing.M),
