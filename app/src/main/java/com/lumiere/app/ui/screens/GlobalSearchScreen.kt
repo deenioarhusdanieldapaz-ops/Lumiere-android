@@ -101,7 +101,7 @@ fun GlobalSearchScreen(
                                 containerColor = Color.Transparent,
                                 selectedContainerColor = MaterialTheme.colorScheme.surfaceVariant
                             ),
-                            border = FilterChipDefaults.filterChipBorder(enabled = true, selected = isSelected)
+                            border = FilterChipDefaults.filterChipBorder()
                         )
                     }
                 }
