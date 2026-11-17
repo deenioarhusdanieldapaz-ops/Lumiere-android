@@ -91,7 +91,11 @@ fun DashboardScreen(
                             Icon(if (isDark) Icons.Default.DarkMode else Icons.Default.LightMode, contentDescription = "Tema", tint = MaterialTheme.colorScheme.primary)
                         }
                         if (isNotificationsEnabled) {
-                            Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.clickable { onNavigateToNotifications() }) {
+                            IconButton(onClick = onNavigateToSearch) {
+                            Icon(Icons.Default.Search, contentDescription = "Pesquisar", tint = MaterialTheme.colorScheme.onSurface)
+                        }
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.clickable { onNavigateToNotifications() }) {
                                 Icon(Icons.Outlined.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
                                                     }
                         }

@@ -46,6 +46,7 @@ sealed class Screen(val route: String, val label: String, val icon: androidx.com
     object WeeklyReview : Screen("weekly_review", "Mais", Icons.Filled.MoreHoriz)
     object NotificationSettings : Screen("notification_settings", "Notificações", Icons.Filled.Notifications)
     object Notifications : Screen("notifications", "Notificações", Icons.Filled.Notifications)
+    object GlobalSearch : Screen("global_search", "Pesquisa", Icons.Filled.Search)
 }
 
 class MainActivity : ComponentActivity() {
@@ -96,7 +97,7 @@ class MainActivity : ComponentActivity() {
                             Spacer(modifier = Modifier.height(16.dp))
 
                             // Itens do Menu Lateral
-                            listOf(Screen.Dashboard, Screen.Tasks, Screen.Habits, Screen.WeeklyReview, Screen.Settings).forEach { screen ->
+                            listOf(Screen.Dashboard, Screen.Tasks, Screen.Habits, Screen.WeeklyReview, Screen.GlobalSearch, Screen.Settings).forEach { screen ->
                                 NavigationDrawerItem(
                                     label = { Text(screen.label, color = if (currentRoute == screen.route) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface) },
                                     selected = currentRoute == screen.route,
@@ -146,6 +147,7 @@ class MainActivity : ComponentActivity() {
                                     onNavigateToTasks = { navController.navigate(Screen.Tasks.route) },
                                     onNavigateToHabits = { navController.navigate(Screen.Habits.route) },
                                     onNavigateToNotifications = { navController.navigate(Screen.Notifications.route) },
+                                    onNavigateToSearch = { navController.navigate(Screen.GlobalSearch.route) },
                                     isNotificationsEnabled = notificationsEnabled
                                 )
                             }
@@ -168,7 +170,14 @@ class MainActivity : ComponentActivity() {
                             composable("sound") { SoundVibrationScreen(viewModel = notificationsViewModel, onBack = { navController.popBackStack() }) }
                             composable("silence") { SilentHoursScreen(viewModel = notificationsViewModel, onBack = { navController.popBackStack() }) }
                             
-                            composable(Screen.Notifications.route) {
+                            composable(Screen.GlobalSearch.route) {
+                            GlobalSearchScreen(
+                                taskViewModel = taskViewModel,
+                                habitViewModel = habitViewModel,
+                                onBack = { navController.popBackStack() }
+                            )
+                        }
+                        composable(Screen.Notifications.route) {
                             NotificationScreen(
                                 taskViewModel = taskViewModel,
                                 habitViewModel = habitViewModel,
