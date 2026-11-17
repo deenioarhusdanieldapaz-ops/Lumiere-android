@@ -74,6 +74,11 @@ class MainActivity : ComponentActivity() {
                 0 -> LumiereThemeMode.System
                 else -> LumiereThemeMode.Dark
             }
+            val isDark = when(themeMode) {
+                LumiereThemeMode.Dark -> true
+                LumiereThemeMode.Light -> false
+                LumiereThemeMode.System -> isSystemInDarkTheme()
+            }
 
             val notificationsEnabled by notificationsViewModel.enabled.collectAsStateWithLifecycle()
             LumiereTheme(mode = themeMode) {
@@ -143,9 +148,8 @@ class MainActivity : ComponentActivity() {
                                 DashboardScreen(
                                     taskViewModel = taskViewModel,
                                     habitViewModel = habitViewModel,
-                                    isDark = (themeMode == LumiereThemeMode.Dark),
-                                    onThemeToggle = { themeModeInt = if (themeMode == LumiereThemeMode.Dark) 1 else 2; prefs.edit().putInt("theme_mode", themeModeInt).apply() },
-                                    onOpenDrawer = { scope.launch { drawerState.open() } },
+                                    isDark = isDark,
+                                        onOpenDrawer = { scope.launch { drawerState.open() } },
                                     onNavigateToTasks = { navController.navigate(Screen.Tasks.route) },
                                     onNavigateToHabits = { navController.navigate(Screen.Habits.route) },
                                     onNavigateToNotifications = { navController.navigate(Screen.Notifications.route) },
@@ -164,7 +168,7 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                             composable(Screen.WeeklyReview.route) {
-                                WeeklyReviewScreen(taskViewModel = taskViewModel, habitViewModel = habitViewModel, isDark = (themeMode == LumiereThemeMode.Dark), onBack = { navController.popBackStack() }, notificationsEnabled = notificationsEnabled)
+                                WeeklyReviewScreen(taskViewModel = taskViewModel, habitViewModel = habitViewModel, isDark = isDark, onBack = { navController.popBackStack() }, notificationsEnabled = notificationsEnabled)
                             }
                             composable(Screen.NotificationSettings.route) {
                                 NotificationSettingsScreen(
@@ -184,8 +188,15 @@ class MainActivity : ComponentActivity() {
                             ProfileScreen(
                                 themeMode = themeMode,
                                 notificationsViewModel = notificationsViewModel,
-                                isDark = (themeMode == LumiereThemeMode.Dark),
-                                onThemeChange = { mode -> themeModeInt = when(mode) { LumiereThemeMode.Light -> 1; LumiereThemeMode.System -> 0; else -> 2 }; prefs.edit().putInt("theme_mode", themeModeInt).apply() },
+                                isDark = isDark,
+                                onThemeChange = { mode -> 
+                                    themeModeInt = when(mode) { 
+                                        LumiereThemeMode.Light -> 1
+                                        LumiereThemeMode.System -> 0
+                                        else -> 2 
+                                    }; 
+                                    prefs.edit().putInt("theme_mode", themeModeInt).apply() 
+                                },
                                 onBack = { navController.popBackStack() },
                                 onNavigateToNotificationSettings = { navController.navigate(Screen.NotificationSettings.route) }
                             )

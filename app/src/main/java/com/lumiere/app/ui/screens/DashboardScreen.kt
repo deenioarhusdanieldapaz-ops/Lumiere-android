@@ -40,7 +40,6 @@ fun DashboardScreen(
     taskViewModel: TaskViewModel,
     habitViewModel: HabitViewModel,
     isDark: Boolean,
-    onThemeToggle: () -> Unit,
     onOpenDrawer: () -> Unit,
     onNavigateToTasks: () -> Unit,
     onNavigateToHabits: () -> Unit,
@@ -89,9 +88,6 @@ fun DashboardScreen(
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         // Botão de Tema (Sol/Lua) de volta
-                        IconButton(onClick = onThemeToggle, modifier = Modifier.size(32.dp)) {
-                            Icon(if (isDark) Icons.Default.DarkMode else Icons.Default.LightMode, contentDescription = "Tema", tint = MaterialTheme.colorScheme.primary)
-                        }
                         if (isNotificationsEnabled) {
                             IconButton(onClick = onNavigateToSearch) {
                             Icon(Icons.Default.Search, contentDescription = "Pesquisar", tint = MaterialTheme.colorScheme.onSurface)
