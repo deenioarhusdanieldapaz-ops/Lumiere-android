@@ -49,6 +49,7 @@ sealed class Screen(val route: String, val label: String, val icon: androidx.com
     object NotificationSettings : Screen("notification_settings", "Notificações", Icons.Filled.Notifications)
     object Notifications : Screen("notifications", "Notificações", Icons.Filled.Notifications)
     object GlobalSearch : Screen("global_search", "Pesquisa", Icons.Filled.Search)
+    object Approvals : Screen("approvals_center", "Aprovações", Icons.Filled.CheckCircle)
     object Profile : Screen("profile", "Perfil", Icons.Filled.Person)
 }
 
@@ -165,7 +166,8 @@ class MainActivity : ComponentActivity() {
                                 MoreScreen(
                                     onNavigateToSearch = { navController.navigate(Screen.GlobalSearch.route) },
                                     onNavigateToReview = { navController.navigate(Screen.WeeklyReview.route) },
-                                    onNavigateToNotifications = { navController.navigate(Screen.Notifications.route) }
+                                    onNavigateToNotifications = { navController.navigate(Screen.Notifications.route) },
+                                    onNavigateToApprovals = { navController.navigate(Screen.Approvals.route) }
                                 )
                             }
                             composable(Screen.WeeklyReview.route) {
@@ -205,6 +207,9 @@ class MainActivity : ComponentActivity() {
                                 onBack = { navController.popBackStack() },
                                 onNavigateToNotificationSettings = { navController.navigate(Screen.NotificationSettings.route) }
                             )
+                        }
+                        composable(Screen.Approvals.route) {
+                            ApprovalCenterScreen(onBack = { navController.popBackStack() })
                         }
                         composable(Screen.GlobalSearch.route) {
                             GlobalSearchScreen(

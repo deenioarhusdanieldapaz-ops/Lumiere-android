@@ -27,12 +27,14 @@ data class MoreItem(val title: String, val subtitle: String, val icon: ImageVect
 fun MoreScreen(
     onNavigateToSearch: () -> Unit,
     onNavigateToReview: () -> Unit,
-    onNavigateToNotifications: () -> Unit
+    onNavigateToNotifications: () -> Unit,
+    onNavigateToApprovals: () -> Unit
 ) {
     val items = listOf(
         MoreItem("Pesquisa Global", "Encontre tudo", Icons.Outlined.Search, "search"),
         MoreItem("Revisão Semanal", "O seu progresso", Icons.Outlined.BarChart, "review"),
         MoreItem("Notificações", "Alertas e resumos", Icons.Outlined.Notifications, "notifications"),
+        MoreItem("Aprovações", "Decisões pendentes", Icons.Outlined.CheckCircle, "approvals"),
         MoreItem("Metas (Brevemente)", "Módulo M03", Icons.Outlined.EmojiEvents, "goals")
     )
 
@@ -55,6 +57,7 @@ fun MoreScreen(
                             "search" -> onNavigateToSearch()
                             "review" -> onNavigateToReview()
                             "notifications" -> onNavigateToNotifications()
+                            "approvals" -> onNavigateToApprovals()
                         }
                     },
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
