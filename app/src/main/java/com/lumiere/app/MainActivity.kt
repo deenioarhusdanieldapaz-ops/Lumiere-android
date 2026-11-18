@@ -1,5 +1,7 @@
 package com.lumiere.app
 
+import com.lumiere.app.ui.viewmodel.IntelligenceViewModel
+
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
