@@ -25,26 +25,13 @@ data class MoreItem(val title: String, val subtitle: String, val icon: ImageVect
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MoreScreen(
-    onNavigateToSearch: (,
+    onNavigateToSearch: () -> Unit,
+    onNavigateToReview: () -> Unit,
+    onNavigateToNotifications: () -> Unit,
+    onNavigateToApprovals: () -> Unit,
     onNavigateToHelp: () -> Unit,
     onNavigateToHistory: () -> Unit
-) { -> Unit,
-    onNavigateToReview: (,
-    onNavigateToHelp: () -> Unit,
-    onNavigateToHistory: () -> Unit
-) { -> Unit,
-    onNavigateToNotifications: (,
-    onNavigateToHelp: () -> Unit,
-    onNavigateToHistory: () -> Unit
-) { -> Unit,
-    onNavigateToApprovals: (,
-    onNavigateToHelp: () -> Unit,
-    onNavigateToHistory: () -> Unit
-) { -> Unit
-,
-    onNavigateToHelp: () -> Unit,
-    onNavigateToHistory: () -> Unit
-) { {
+) {
     val items = listOf(
         MoreItem("Pesquisa Global", "Encontre tudo", Icons.Outlined.Search, "search"),
         MoreItem("Revisão Semanal", "O seu progresso", Icons.Outlined.BarChart, "review"),

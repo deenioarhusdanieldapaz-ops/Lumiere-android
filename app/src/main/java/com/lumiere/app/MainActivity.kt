@@ -172,6 +172,12 @@ class MainActivity : ComponentActivity() {
                                     onNavigateToApprovals = { navController.navigate(Screen.Approvals.route) },
                                     onNavigateToHelp = { navController.navigate("help_and_learning") },
                                     onNavigateToHistory = { navController.navigate("global_history") }
+                                ) },
+                                    onNavigateToReview = { navController.navigate(Screen.WeeklyReview.route) },
+                                    onNavigateToNotifications = { navController.navigate(Screen.Notifications.route) },
+                                    onNavigateToApprovals = { navController.navigate(Screen.Approvals.route) },
+                                    onNavigateToHelp = { navController.navigate("help_and_learning") },
+                                    onNavigateToHistory = { navController.navigate("global_history") }
                                 )
                             }
                             composable(Screen.WeeklyReview.route) {
