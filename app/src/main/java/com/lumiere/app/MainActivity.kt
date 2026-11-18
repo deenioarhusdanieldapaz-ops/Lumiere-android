@@ -145,7 +145,7 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     ) { innerPadding ->
-                        NavHost(navController = navController, startDestination = Screen.Dashboard.route, modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding)) {
+                        NavHost(navController = navController, startDestination = Screen.Dashboard.route, modifier = Modifier.padding(innerPadding)) {
                             composable(Screen.Dashboard.route) {
                                 DashboardScreen(
                                     taskViewModel = taskViewModel,
