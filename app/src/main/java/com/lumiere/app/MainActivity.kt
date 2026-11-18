@@ -162,12 +162,16 @@ class MainActivity : ComponentActivity() {
                             }
                             composable(Screen.Tasks.route) { TaskScreen(viewModel = taskViewModel, onOpenDrawer = { scope.launch { drawerState.open() } }) }
                             composable(Screen.Habits.route) { HabitScreen(viewModel = habitViewModel, onOpenDrawer = { scope.launch { drawerState.open() } }) }
+                            composable("help_and_learning") { HelpScreen(onBack = { navController.popBackStack() }) }
+                            composable("global_history") { GlobalHistoryScreen(onBack = { navController.popBackStack() }) }
                             composable(Screen.More.route) {
                                 MoreScreen(
                                     onNavigateToSearch = { navController.navigate(Screen.GlobalSearch.route) },
                                     onNavigateToReview = { navController.navigate(Screen.WeeklyReview.route) },
                                     onNavigateToNotifications = { navController.navigate(Screen.Notifications.route) },
-                                    onNavigateToApprovals = { navController.navigate(Screen.Approvals.route) }
+                                    onNavigateToApprovals = { navController.navigate(Screen.Approvals.route) },
+                                    onNavigateToHelp = { navController.navigate("help_and_learning") },
+                                    onNavigateToHistory = { navController.navigate("global_history") }
                                 )
                             }
                             composable(Screen.WeeklyReview.route) {

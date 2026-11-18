@@ -25,16 +25,33 @@ data class MoreItem(val title: String, val subtitle: String, val icon: ImageVect
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MoreScreen(
-    onNavigateToSearch: () -> Unit,
-    onNavigateToReview: () -> Unit,
-    onNavigateToNotifications: () -> Unit,
-    onNavigateToApprovals: () -> Unit
-) {
+    onNavigateToSearch: (,
+    onNavigateToHelp: () -> Unit,
+    onNavigateToHistory: () -> Unit
+) { -> Unit,
+    onNavigateToReview: (,
+    onNavigateToHelp: () -> Unit,
+    onNavigateToHistory: () -> Unit
+) { -> Unit,
+    onNavigateToNotifications: (,
+    onNavigateToHelp: () -> Unit,
+    onNavigateToHistory: () -> Unit
+) { -> Unit,
+    onNavigateToApprovals: (,
+    onNavigateToHelp: () -> Unit,
+    onNavigateToHistory: () -> Unit
+) { -> Unit
+,
+    onNavigateToHelp: () -> Unit,
+    onNavigateToHistory: () -> Unit
+) { {
     val items = listOf(
         MoreItem("Pesquisa Global", "Encontre tudo", Icons.Outlined.Search, "search"),
         MoreItem("Revisão Semanal", "O seu progresso", Icons.Outlined.BarChart, "review"),
         MoreItem("Notificações", "Alertas e resumos", Icons.Outlined.Notifications, "notifications"),
         MoreItem("Aprovações", "Decisões pendentes", Icons.Outlined.CheckCircle, "approvals"),
+        MoreItem("Ajuda", "Tutoriais e suporte", Icons.Outlined.Help, "help_and_learning"),
+        MoreItem("Histórico Global", "Atividade do sistema", Icons.Outlined.History, "global_history"),
         MoreItem("Metas (Brevemente)", "Módulo M03", Icons.Outlined.EmojiEvents, "goals")
     )
 
@@ -58,6 +75,8 @@ fun MoreScreen(
                             "review" -> onNavigateToReview()
                             "notifications" -> onNavigateToNotifications()
                             "approvals" -> onNavigateToApprovals()
+                            "help_and_learning" -> onNavigateToHelp()
+                            "global_history" -> onNavigateToHistory()
                         }
                     },
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
