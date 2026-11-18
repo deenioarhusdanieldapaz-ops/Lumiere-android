@@ -2,6 +2,7 @@ package com.lumiere.app.ui.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -15,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -49,7 +51,9 @@ fun ApprovalsScreen(onBack: () -> Unit) {
         Spacer(modifier = Modifier.height(LumiereSpacing.M))
 
         if (selectedTab == 0) { PendingTab() } else { HistoryTab() }
-        Spacer(modifier = Modifier.height(48.dp))
+        
+        // O SEGREDO PARA NÃO CORTAR NO FUNDO:
+        Spacer(modifier = Modifier.height(120.dp))
     }
 }
 
@@ -57,8 +61,17 @@ fun ApprovalsScreen(onBack: () -> Unit) {
 fun TabPill(title: String, icon: androidx.compose.ui.graphics.vector.ImageVector, selected: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
     val bgColor = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent
     val contentColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary
-    Surface(shape = RoundedCornerShape(50), color = bgColor, border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary), modifier = modifier.clickable { onClick() }) {
-        Row(modifier = Modifier.padding(vertical = 10.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+    
+    Box(
+        modifier = modifier
+            .height(48.dp)
+            .clip(RoundedCornerShape(50))
+            .background(bgColor)
+            .border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(50))
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(icon, contentDescription = null, tint = contentColor, modifier = Modifier.size(18.dp))
             Spacer(modifier = Modifier.width(8.dp))
             Text(title, color = contentColor, fontWeight = FontWeight.SemiBold)
