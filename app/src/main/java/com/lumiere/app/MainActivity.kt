@@ -209,7 +209,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable(Screen.Approvals.route) {
-                            ApprovalCenterScreen(onBack = { navController.popBackStack() })
+                            ApprovalsScreen(onBack = { navController.popBackStack() })
                         }
                         composable(Screen.GlobalSearch.route) {
                             GlobalSearchScreen(
