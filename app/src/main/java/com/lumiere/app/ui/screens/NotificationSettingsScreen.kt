@@ -67,7 +67,7 @@ fun NotificationSettingsScreen(
         
         Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth().alpha(alphaDisabled)) {
             Column {
-                SettingsItem(icon = Icons.Outlined.Shield, title = "Aprovações", subtitle = "", onClick = { if(enabled) onNavigate("approvals") })
+                SettingsItem(icon = Icons.Outlined.Shield, title = "Aprovações", subtitle = "", onClick = { if(enabled) onNavigate("approvals_center") })
                 SettingsItem(icon = Icons.Outlined.History, title = "Atividade e histórico", subtitle = "", onClick = { if(enabled) onNavigate("history") })
                 SettingsItem(icon = LumiereIcons.Event, title = "Lembretes", subtitle = "", onClick = { if(enabled) onNavigate("reminders") }, showDivider = false)
             }

@@ -180,7 +180,7 @@ class MainActivity : ComponentActivity() {
                                     onNavigate = { route -> navController.navigate(route) }
                                 )
                             }
-                            composable("approvals") { ApprovalsScreen(onBack = { navController.popBackStack() }) }
+                            
                             composable("history") { HistoryScreen(onBack = { navController.popBackStack() }) }
                             composable("reminders") { RemindersScreen(onBack = { navController.popBackStack() }) }
                             composable("types") { AlertTypesScreen(viewModel = notificationsViewModel, onBack = { navController.popBackStack() }) }
