@@ -63,6 +63,7 @@ class MainActivity : ComponentActivity() {
     private val habitViewModel: HabitViewModel by viewModels { HabitViewModelFactory(habitRepository) }
     private val taskViewModel: TaskViewModel by viewModels { TaskViewModelFactory(repository) }
     private val notificationsViewModel: NotificationsViewModel by viewModels { viewModelFactory { initializer { NotificationsViewModel(notificationsRepository) } } }
+    private val intelligenceViewModel: IntelligenceViewModel by viewModels { viewModelFactory { initializer { IntelligenceViewModel(repository, habitRepository) } } }
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -164,6 +165,8 @@ class MainActivity : ComponentActivity() {
                             composable(Screen.Habits.route) { HabitScreen(viewModel = habitViewModel, onOpenDrawer = { scope.launch { drawerState.open() } }) }
                             composable("help_and_learning") { HelpScreen(onBack = { navController.popBackStack() }) }
                             composable("global_history") { GlobalHistoryScreen(onBack = { navController.popBackStack() }) }
+                            composable("intelligence") { IntelligenceScreen(viewModel = intelligenceViewModel, onBack = { navController.popBackStack() }) }
+                            composable("planning") { LifePlanningScreen(viewModel = intelligenceViewModel, onBack = { navController.popBackStack() }) }
                             composable(Screen.More.route) {
                                 MoreScreen(
                                     onNavigateToSearch = { navController.navigate(Screen.GlobalSearch.route) },
@@ -171,7 +174,9 @@ class MainActivity : ComponentActivity() {
                                     onNavigateToNotifications = { navController.navigate(Screen.Notifications.route) },
                                     onNavigateToApprovals = { navController.navigate(Screen.Approvals.route) },
                                     onNavigateToHelp = { navController.navigate("help_and_learning") },
-                                    onNavigateToHistory = { navController.navigate("global_history") }
+                                    onNavigateToHistory = { navController.navigate("global_history") },
+                                    onNavigateToIntelligence = { navController.navigate("intelligence") },
+                                    onNavigateToPlanning = { navController.navigate("planning") }
                                 )
                             }
                             composable(Screen.WeeklyReview.route) {

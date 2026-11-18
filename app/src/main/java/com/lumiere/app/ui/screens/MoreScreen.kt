@@ -30,7 +30,9 @@ fun MoreScreen(
     onNavigateToNotifications: () -> Unit,
     onNavigateToApprovals: () -> Unit,
     onNavigateToHelp: () -> Unit,
-    onNavigateToHistory: () -> Unit
+    onNavigateToHistory: () -> Unit,
+    onNavigateToIntelligence: () -> Unit,
+    onNavigateToPlanning: () -> Unit
 ) {
     val items = listOf(
         MoreItem("Pesquisa Global", "Encontre tudo", Icons.Outlined.Search, "search"),
@@ -39,6 +41,8 @@ fun MoreScreen(
         MoreItem("Aprovações", "Decisões pendentes", Icons.Outlined.CheckCircle, "approvals"),
         MoreItem("Ajuda", "Tutoriais e suporte", Icons.Outlined.Help, "help_and_learning"),
         MoreItem("Histórico Global", "Atividade do sistema", Icons.Outlined.History, "global_history"),
+        MoreItem("Inteligência", "Insights e Tendências", Icons.Outlined.Lightbulb, "intelligence"),
+        MoreItem("Planeamento", "Visão Geral de Vida", Icons.Outlined.PieChart, "planning"),
         MoreItem("Metas (Brevemente)", "Módulo M03", Icons.Outlined.EmojiEvents, "goals")
     )
 
@@ -64,6 +68,8 @@ fun MoreScreen(
                             "approvals" -> onNavigateToApprovals()
                             "help_and_learning" -> onNavigateToHelp()
                             "global_history" -> onNavigateToHistory()
+                            "intelligence" -> onNavigateToIntelligence()
+                            "planning" -> onNavigateToPlanning()
                         }
                     },
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
