@@ -139,19 +139,69 @@ fun ApprovalCard(icon: androidx.compose.ui.graphics.vector.ImageVector, title: S
 fun HistoryTab() {
     Column(modifier = Modifier.padding(horizontal = LumiereSpacing.M)) {
         HistoryRow("Reagendar Tarefa", "Aprovada • Hoje, 09:32", true)
+        Spacer(modifier = Modifier.height(8.dp))
         HistoryRow("Autorizar Orçamento", "Rejeitada • Ontem, 16:20", false)
+        Spacer(modifier = Modifier.height(8.dp))
         HistoryRow("Adicionar Hábitos", "Aprovada • Ontem, 14:15", true)
+        Spacer(modifier = Modifier.height(8.dp))
         HistoryRow("Criar Lembrete", "Aprovada • 12/11/2025, 10:30", true)
+        Spacer(modifier = Modifier.height(8.dp))
         HistoryRow("Eliminar Tarefa", "Rejeitada • 11/11/2025, 18:45", false)
-        Spacer(modifier = Modifier.height(LumiereSpacing.M))
         
-        Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
-            Row(modifier = Modifier.padding(LumiereSpacing.M), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) { Text("Total", style = MaterialTheme.typography.labelSmall); Text("5", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) }
+        Spacer(modifier = Modifier.height(LumiereSpacing.L))
+        
+        // BARRA DE ESTATÍSTICAS (Formatada)
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), 
+            shape = RoundedCornerShape(12.dp), 
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), 
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Ícone de Gráfico
+                Icon(
+                    imageVector = Icons.Default.BarChart, 
+                    contentDescription = null, 
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(28.dp)
+                )
+                
+                Spacer(modifier = Modifier.width(16.dp))
+                
+                // Total
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Total de decisões", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("5", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                }
+                
+                // Divisor
                 Divider(modifier = Modifier.height(30.dp).width(1.dp), color = MaterialTheme.colorScheme.outlineVariant)
-                Column(horizontalAlignment = Alignment.CenterHorizontally) { Text("Aprovadas", style = MaterialTheme.typography.labelSmall, color = Color(0xFF4CAF50)); Text("3", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color(0xFF4CAF50)) }
+                
+                // Aprovadas
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFF4CAF50), modifier = Modifier.size(12.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Aprovadas", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Text("3", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color(0xFF4CAF50))
+                }
+                
+                // Divisor
                 Divider(modifier = Modifier.height(30.dp).width(1.dp), color = MaterialTheme.colorScheme.outlineVariant)
-                Column(horizontalAlignment = Alignment.CenterHorizontally) { Text("Rejeitadas", style = MaterialTheme.typography.labelSmall, color = Color.Red); Text("2", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.Red) }
+                
+                // Rejeitadas
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Cancel, contentDescription = null, tint = Color.Red, modifier = Modifier.size(12.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Rejeitadas", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Text("2", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.Red)
+                }
             }
         }
     }
@@ -159,16 +209,30 @@ fun HistoryTab() {
 
 @Composable
 fun HistoryRow(title: String, subtitle: String, isApproved: Boolean) {
-    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(modifier = Modifier.size(32.dp).background(if (isApproved) Color(0xFF4CAF50).copy(alpha = 0.2f) else Color.Red.copy(alpha = 0.2f), CircleShape), contentAlignment = Alignment.Center) {
-            Icon(if (isApproved) Icons.Default.Check else Icons.Default.Close, contentDescription = null, tint = if (isApproved) Color(0xFF4CAF50) else Color.Red, modifier = Modifier.size(20.dp))
+    // Cartão individual para cada item do histórico
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier.size(36.dp).background(if (isApproved) Color(0xFF4CAF50) else Color.Red, CircleShape), 
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = if (isApproved) Icons.Default.Check else Icons.Default.Close, 
+                    contentDescription = null, 
+                    tint = Color.White, 
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = if (isApproved) Color(0xFF4CAF50) else Color.Red)
+            }
+            Icon(Icons.Default.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Spacer(modifier = Modifier.width(LumiereSpacing.M))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = if (isApproved) Color(0xFF4CAF50) else Color.Red)
-        }
-        Icon(Icons.Default.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
-    Divider(color = MaterialTheme.colorScheme.outlineVariant)
 }
