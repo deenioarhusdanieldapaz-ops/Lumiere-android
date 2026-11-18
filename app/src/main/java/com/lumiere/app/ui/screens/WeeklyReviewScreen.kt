@@ -84,7 +84,7 @@ fun WeeklyReviewScreen(
             .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
-            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = LumiereSpacing.M),
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = LumiereSpacing.M).padding(bottom = 100.dp),
             verticalArrangement = Arrangement.spacedBy(LumiereSpacing.M)
         ) {
             Spacer(modifier = Modifier.height(24.dp))

@@ -122,7 +122,7 @@ fun ApprovalCenterScreen(onBack: () -> Unit) {
                         description = "Não há decisões pendentes. Aproveita o teu dia."
                     )
                 } else {
-                    LazyColumn(verticalArrangement = Arrangement.spacedBy(LumiereSpacing.M), contentPadding = PaddingValues(bottom = LumiereSpacing.L)) {
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(LumiereSpacing.M), contentPadding = PaddingValues(bottom = 100.dp)) {
                         items(pendingItems) { item ->
                             ApprovalCard(
                                 item = item,
@@ -145,7 +145,7 @@ fun ApprovalCenterScreen(onBack: () -> Unit) {
                 if (historyItems.isEmpty()) {
                     LumiereEmptyState(icon = Icons.Outlined.History, title = "Sem histórico", description = "Ainda não tomaste nenhuma decisão.")
                 } else {
-                    LazyColumn(verticalArrangement = Arrangement.spacedBy(LumiereSpacing.M), contentPadding = PaddingValues(bottom = LumiereSpacing.L)) {
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(LumiereSpacing.M), contentPadding = PaddingValues(bottom = 100.dp)) {
                         items(historyItems) { item ->
                             HistoryCard(item = item)
                         }
