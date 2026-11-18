@@ -34,7 +34,7 @@ fun ApprovalsScreen(onBack: () -> Unit) {
         Row(modifier = Modifier.fillMaxWidth().padding(horizontal = LumiereSpacing.M), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = MaterialTheme.colorScheme.primary) }
             Spacer(modifier = Modifier.width(LumiereSpacing.S))
-            Text("Aprovações", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.headlineMedium, fontFamily = FontFamily.Serif)
+            Text("Aprovações", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.headlineMedium, fontFamily = FontFamily.Serif)
             Spacer(modifier = Modifier.width(8.dp))
             Box(modifier = Modifier.size(24.dp).background(Color.Red, CircleShape), contentAlignment = Alignment.Center) {
                 Text("2", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
