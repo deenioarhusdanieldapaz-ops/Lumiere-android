@@ -28,7 +28,7 @@ import com.lumiere.app.ui.theme.LumiereSpacing
 fun ApprovalsScreen(onBack: () -> Unit) {
     var selectedTab by remember { mutableIntStateOf(0) }
 
-    Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).verticalScroll(rememberScrollState()).padding(bottom = 120.dp)) {
+    Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).verticalScroll(rememberScrollState())) {
         Spacer(modifier = Modifier.height(24.dp))
         
         Row(modifier = Modifier.fillMaxWidth().padding(horizontal = LumiereSpacing.M), verticalAlignment = Alignment.CenterVertically) {
