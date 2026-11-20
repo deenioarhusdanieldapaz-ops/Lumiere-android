@@ -24,7 +24,7 @@ interface HabitCheckInDao {
     @Query("DELETE FROM habit_checkins WHERE habitId = :habitId")
     suspend fun deleteForHabit(habitId: Long)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertCheckIn(checkIn: HabitCheckIn): Long
 
     @Update

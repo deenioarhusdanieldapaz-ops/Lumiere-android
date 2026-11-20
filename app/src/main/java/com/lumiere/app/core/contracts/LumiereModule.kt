@@ -14,4 +14,5 @@ interface LumiereModule {
     val moduleName: String
     suspend fun getSummary(): ModuleSummary
     suspend fun canPerformAction(actionId: String): Boolean
+    suspend fun executeCommand(command: ModuleCommand): ModuleCommandResult
 }

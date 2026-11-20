@@ -9,7 +9,7 @@ interface ProjectDao {
     @Query("SELECT * FROM projects ORDER BY createdAt DESC")
     fun getAllProjects(): Flow<List<Project>>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertProject(project: Project): Long
 
     @Update

@@ -9,7 +9,7 @@ interface SubtaskDao {
     @Query("SELECT * FROM subtasks WHERE taskId = :taskId")
     fun getSubtasksForTask(taskId: Long): Flow<List<Subtask>>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertSubtask(subtask: Subtask): Long
 
     @Update

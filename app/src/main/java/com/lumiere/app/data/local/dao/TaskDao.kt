@@ -9,7 +9,7 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE status != 4 ORDER BY priority DESC, dueDate ASC")
     fun getAllActiveTasks(): Flow<List<Task>>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertTask(task: Task): Long
 
     @Update
