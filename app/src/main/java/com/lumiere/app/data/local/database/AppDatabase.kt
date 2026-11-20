@@ -22,11 +22,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun projectDao(): ProjectDao
     abstract fun taskHistoryDao(): TaskHistoryDao
 
-    override fun onConfigure(db: SupportSQLiteDatabase) {
-        super.onConfigure(db)
-        db.execSQL("PRAGMA foreign_keys = ON")
-    }
-
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
@@ -39,6 +34,12 @@ abstract class AppDatabase : RoomDatabase() {
                     "lumiere_database"
                 )
                     .addMigrations(MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17)
+                    .addCallback(object : RoomDatabase.Callback() {
+                        override fun onOpen(db: SupportSQLiteDatabase) {
+                            super.onOpen(db)
+                            db.execSQL("PRAGMA foreign_keys = ON")
+                        }
+                    })
                     .build()
                 INSTANCE = instance
                 instance
