@@ -1,34 +1,33 @@
 package com.lumiere.app.core.orchestrator
 
-import com.lumiere.app.core.contracts.LumiereModule
-import com.lumiere.app.core.contracts.ModuleCommand
-import com.lumiere.app.core.contracts.ModuleCommandResult
-import com.lumiere.app.core.contracts.ModuleSummary
+import com.lumiere.app.core.contracts.*
+import kotlinx.coroutines.flow.first
 
-/**
- * Core mínimo funcional — Fase 5.
- * Regras:
- *  - Não acede a tabelas de módulos. Só chama contratos (LumiereModule).
- *  - Não decide sozinho: pede resumos e despacha comandos ao módulo competente.
- *  - Não persiste dados de módulos (fundação; memória do Core fica para Fase 6).
- */
 class CoreOrchestrator {
     private val modules = mutableMapOf<String, LumiereModule>()
+    private val intelligence = IntelligenceEngine()
 
     fun register(module: LumiereModule) {
         require(module.moduleId.isNotBlank()) { "moduleId vazio" }
         modules[module.moduleId] = module
     }
 
-    fun listModules(): List<Pair<String, String>> =
-        modules.values.map { it.moduleId to it.moduleName }
+    suspend fun runIntelligenceCycle(): AnalysisResult {
+        // 1. Recolher Contexto (Context Builder)
+        // Na Fase 5, os adapters fornecem os dados. Num futuro, podemos usar repositórios diretamente aqui.
+        val taskAdapter = modules["M01_TASKS"]
+        val habitAdapter = modules["M02_HABITS"]
+        
+        // Simulação de extração de contexto - no código real passaríamos os objetos de domínio
+        val mockTasks = listOf<Task>() 
+        val mockHabits = listOf<Habit>()
+        
+        val context = CoreContext(mockTasks, mockHabits)
 
-    suspend fun getSummary(moduleId: String): ModuleSummary? =
-        modules[moduleId]?.getSummary()
-
-    suspend fun getAllSummaries(): List<ModuleSummary> =
-        modules.values.mapNotNull { runCatching { it.getSummary() }.getOrNull() }
-
+        // 2. Analisar
+        return intelligence.analyze(context)
+    }
+    
     suspend fun dispatch(moduleId: String, command: ModuleCommand): ModuleCommandResult {
         val module = modules[moduleId]
             ?: return ModuleCommandResult.Failure("Módulo não registado: $moduleId")
