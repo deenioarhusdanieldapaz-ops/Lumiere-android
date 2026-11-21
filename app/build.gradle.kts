@@ -63,6 +63,10 @@ android {
     }
 }
 
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
     // Base
     implementation("androidx.core:core-ktx:1.12.0")

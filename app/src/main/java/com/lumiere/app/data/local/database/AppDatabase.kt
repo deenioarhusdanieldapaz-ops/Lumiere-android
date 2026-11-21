@@ -7,11 +7,12 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.lumiere.app.data.local.dao.*
 import com.lumiere.app.data.local.entity.*
+import com.lumiere.app.core.memory.CoreMemory
 
 @Database(
-    entities = [Task::class, Project::class, Subtask::class, TaskHistory::class, Habit::class, HabitCheckIn::class, HabitException::class],
-    version = 17,
-    exportSchema = false
+    entities = [Task::class, Project::class, Subtask::class, TaskHistory::class, Habit::class, HabitCheckIn::class, HabitException::class, CoreMemory::class],
+    version = 18,
+    exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun taskDao(): TaskDao
@@ -21,6 +22,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun subtaskDao(): SubtaskDao
     abstract fun projectDao(): ProjectDao
     abstract fun taskHistoryDao(): TaskHistoryDao
+    abstract fun coreMemoryDao(): com.lumiere.app.core.memory.CoreMemoryDao
 
     companion object {
         @Volatile
@@ -33,7 +35,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "lumiere_database"
                 )
-                    .addMigrations(MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17)
+                    .addMigrations(MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18)
                     .addCallback(object : RoomDatabase.Callback() {
                         override fun onOpen(db: SupportSQLiteDatabase) {
                             super.onOpen(db)
