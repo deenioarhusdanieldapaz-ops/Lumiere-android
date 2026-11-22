@@ -36,8 +36,9 @@ data class Inference(
 )
 
 sealed interface SuggestionAction {
-    data class RescheduleTask(val taskId: String, val newDeadlineMillis: Long) : SuggestionAction
-    data class ChangeHabitFrequency(val habitId: String, val newFrequencyType: String) : SuggestionAction
+    data class DeferTask(val taskId: String, val days: Int) : SuggestionAction
+    data class RescheduleHabit(val habitId: String, val newTime: String) : SuggestionAction
+    data class AdjustEstimate(val taskId: String, val newEstimateMinutes: Int) : SuggestionAction
 }
 
 data class Suggestion(

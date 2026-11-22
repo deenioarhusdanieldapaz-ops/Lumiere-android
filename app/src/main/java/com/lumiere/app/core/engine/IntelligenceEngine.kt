@@ -6,8 +6,8 @@ import com.lumiere.app.core.memory.CoreMemoryRepository
 import com.lumiere.app.core.memory.MemoryType
 import com.lumiere.app.core.model.*
 import com.lumiere.app.core.time.TimeProvider
-import com.lumiere.app.data.local.dao.TaskDao
 import com.lumiere.app.data.local.dao.HabitDao
+import com.lumiere.app.data.local.dao.TaskDao
 
 class IntelligenceEngine(
     private val taskContract: TaskContract,
@@ -20,7 +20,6 @@ class IntelligenceEngine(
     private val taskDao: TaskDao,
     private val habitDao: HabitDao
 ) {
-
     suspend fun analyzeWeek(): Result<Recommendation> = runCatching {
         val now = timeProvider.currentTimeMillis()
         val tasks = taskContract.getActiveTasks(windowDays = 14).getOrThrow()
@@ -28,13 +27,9 @@ class IntelligenceEngine(
         val facts = rules.buildFacts(tasks, habits)
         val inferences = rules.buildInferences(tasks, habits, facts)
         val suggestions = rules.buildSuggestions(tasks, habits, inferences)
-        memory.put(
-            key = "last_analysis_at",
-            value = now.toString(),
-            type = MemoryType.SESSION,
-            sensitivity = Sensitivity.NORMAL,
-            ttlMillis = 2 * 3_600_000L
-        )
+        
+        memory.put("last_analysis_at", now.toString(), MemoryType.SESSION, Sensitivity.NORMAL, 2 * 3_600_000L)
+        
         Recommendation(
             kind = RecommendationKind.OPTIMIZATION,
             goal = "Organizar a semana",
@@ -53,35 +48,18 @@ class IntelligenceEngine(
         strictChecker.detect(tasks, habits, facts)
     }
 
-    suspend fun executeApproved(
-        suggestion: Suggestion,
-        decision: ApprovalDecision
-    ): Result<Unit> = runCatching {
-        require(decision.decision == ApprovalDecisionKind.APPROVED) { "Not approved" }
-        approvalGateway.recordDecision(decision).getOrThrow()
-    }
-
-    suspend fun requestApproval(suggestion: Suggestion): Result<ApprovalRequest> =
-        approvalGateway.request(suggestion)
-
     suspend fun approveSuggestion(suggestion: Suggestion): Result<Unit> = runCatching {
         val req = approvalGateway.request(suggestion).getOrThrow()
-        val decision = ApprovalDecision(
-            approvalId = req.id,
-            decision = ApprovalDecisionKind.APPROVED,
-            decidedBy = "user",
-            decidedAtMillis = timeProvider.currentTimeMillis()
-        )
-        executeApproved(suggestion, decision).getOrThrow()
-        
-        // NOVO: Executa a alteração real na base de dados (Lógica de Cascata)
+        val decision = ApprovalDecision(req.id, ApprovalDecisionKind.APPROVED, "user", timeProvider.currentTimeMillis())
+        approvalGateway.recordDecision(decision).getOrThrow()
+
         when (val act = suggestion.action) {
             is SuggestionAction.DeferTask -> {
                 val id = act.taskId.toLongOrNull()
                 if (id != null) {
                     val t = taskDao.getTaskById(id)
                     if (t != null) {
-                        val newDate = t.dueDate?.plus(act.days * 86_400_000L) ?: (timeProvider.currentTimeMillis() + act.days * 86_400_000L)
+                        val newDate = (t.dueDate ?: timeProvider.currentTimeMillis()) + (act.days * 86_400_000L)
                         taskDao.updateTask(t.copy(dueDate = newDate, updatedAt = timeProvider.currentTimeMillis()))
                     }
                 }
@@ -106,12 +84,7 @@ class IntelligenceEngine(
 
     suspend fun rejectSuggestion(suggestion: Suggestion): Result<Unit> = runCatching {
         val req = approvalGateway.request(suggestion).getOrThrow()
-        val decision = ApprovalDecision(
-            approvalId = req.id,
-            decision = ApprovalDecisionKind.REJECTED,
-            decidedBy = "user",
-            decidedAtMillis = timeProvider.currentTimeMillis()
-        )
+        val decision = ApprovalDecision(req.id, ApprovalDecisionKind.REJECTED, "user", timeProvider.currentTimeMillis())
         approvalGateway.recordDecision(decision).getOrThrow()
     }
 }
