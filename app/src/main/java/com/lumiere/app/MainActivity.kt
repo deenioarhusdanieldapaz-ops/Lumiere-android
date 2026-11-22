@@ -2,6 +2,10 @@ package com.lumiere.app
 
 
 import com.lumiere.app.core.engine.IntelligenceEngine
+import com.lumiere.app.core.engine.RecommendationRules
+import com.lumiere.app.core.engine.StrictConflictChecker
+import com.lumiere.app.core.engine.ApprovalGateway
+import com.lumiere.app.core.memory.CoreMemoryRepository
 import com.lumiere.app.core.engine.CoreMemoryApprovalStore
 import com.lumiere.app.core.contract.RoomTaskContract
 import com.lumiere.app.core.contract.RoomHabitContract
@@ -75,7 +79,10 @@ class MainActivity : ComponentActivity() {
         IntelligenceEngine(
             taskContract = RoomTaskContract(database.taskDao()),
             habitContract = RoomHabitContract(database.habitDao()),
-            approvalStore = CoreMemoryApprovalStore(database.coreMemoryDao()),
+            rules = RecommendationRules(SystemTimeProvider()),
+            strictChecker = StrictConflictChecker(SystemTimeProvider()),
+            approvalGateway = ApprovalGateway(CoreMemoryApprovalStore(database.coreMemoryDao()), SystemTimeProvider()),
+            memory = CoreMemoryRepository(database.coreMemoryDao(), SystemTimeProvider()),
             timeProvider = SystemTimeProvider()
         )
     ) } } }

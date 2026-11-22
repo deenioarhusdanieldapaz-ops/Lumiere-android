@@ -31,3 +31,4 @@ release-keystore-jks.zip
 *.bak-pre-secrets
 *.p12
 keystore.properties
+*.7z

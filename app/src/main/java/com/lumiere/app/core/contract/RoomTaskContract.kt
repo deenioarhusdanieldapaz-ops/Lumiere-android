@@ -2,19 +2,18 @@ package com.lumiere.app.core.contract
 
 import com.lumiere.app.core.model.Sensitivity
 import com.lumiere.app.data.local.dao.TaskDao
+import kotlinx.coroutines.flow.first
 
 class RoomTaskContract(private val taskDao: TaskDao) : TaskContract {
     override val contractVersion = "1.0.0"
 
     override suspend fun getActiveTasks(windowDays: Int): Result<List<TaskSnapshot>> = runCatching {
-        val tasks = taskDao.getActiveTasks() // Assumindo que este método existe no DAO
-        tasks.map { it.toSnapshot() }
+        taskDao.getAllActiveTasks().first().map { it.toSnapshot() }
     }
 
     override suspend fun getTask(id: String): Result<TaskSnapshot?> = runCatching {
         val taskId = id.toLongOrNull() ?: return@runCatching null
-        val task = taskDao.getTaskById(taskId)
-        task?.toSnapshot()
+        taskDao.getTaskById(taskId)?.toSnapshot()
     }
 
     private fun com.lumiere.app.data.local.entity.Task.toSnapshot() = TaskSnapshot(

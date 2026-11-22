@@ -61,8 +61,8 @@ class ApprovalGateway(
             reversibility = suggestion.reversibility,
             expiresAtMillis = suggestion.expiresAtMillis ?: (now + 3_600_000L),
             whatItDoesNotAuthorize = listOf(
-                "Outros módulos além de ${suggestion.targetModules}",
-                "Ações de classe superior a ${suggestion.approvalClass}"
+                "Outros modulos alem de ${suggestion.targetModules}",
+                "Acoes de classe superior a ${suggestion.approvalClass}"
             )
         )
         store.save(req).getOrThrow()
@@ -73,6 +73,8 @@ class ApprovalGateway(
         store.saveDecision(decision)
 
     suspend fun isApproved(approvalId: String): Result<Boolean> = runCatching {
+        val request = store.get(approvalId).getOrThrow() ?: return@runCatching false
+        if (request.expiresAtMillis < timeProvider.currentTimeMillis()) return@runCatching false
         store.getDecision(approvalId).getOrThrow()?.decision == ApprovalDecisionKind.APPROVED
     }
 }

@@ -9,6 +9,9 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE status != 4 ORDER BY priority DESC, dueDate ASC")
     fun getAllActiveTasks(): Flow<List<Task>>
 
+    @Query("SELECT * FROM tasks WHERE id = :id")
+    suspend fun getTaskById(id: Long): Task?
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertTask(task: Task): Long
 

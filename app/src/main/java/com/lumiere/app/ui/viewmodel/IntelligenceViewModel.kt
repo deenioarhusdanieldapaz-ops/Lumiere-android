@@ -9,12 +9,34 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+data class LifeAreaProgress(
+    val title: String,
+    val subtitle: String,
+    val progress: Float
+)
+
 class IntelligenceViewModel(
     private val engine: IntelligenceEngine
 ) : ViewModel() {
 
-    private val _recommendations = MutableStateFlow<List<Recommendation>>(emptyList())
-    val recommendations: StateFlow<List<Recommendation>> = _recommendations.asStateFlow()
+    // Dados restaurados para a UI não falhar
+    private val _focusTrend = MutableStateFlow(listOf(20f, 35f, 30f, 50f, 45f, 70f, 85f))
+    val focusTrend: StateFlow<List<Float>> = _focusTrend.asStateFlow()
+
+    private val _lifeAreas = MutableStateFlow(
+        listOf(
+            LifeAreaProgress("Vida Pessoal", "Hábitos M02, Rotinas M10", 0.65f),
+            LifeAreaProgress("Desenvolvimento", "Metas M03, Estudos M04", 0.40f),
+            LifeAreaProgress("Produtividade", "Tarefas M01, Calendário M05", 0.80f),
+            LifeAreaProgress("Finanças", "Finanças M06, Negócio M09", 0.35f),
+            LifeAreaProgress("Informação", "Notas M07, Docs M13", 0.55f)
+        )
+    )
+    val lifeAreas: StateFlow<List<LifeAreaProgress>> = _lifeAreas.asStateFlow()
+
+    // Recomendação Real
+    private val _recommendation = MutableStateFlow<Recommendation?>(null)
+    val recommendation: StateFlow<Recommendation?> = _recommendation.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -22,10 +44,9 @@ class IntelligenceViewModel(
     fun refreshInsights() {
         viewModelScope.launch {
             _isLoading.value = true
-            val result = engine.analyzeWeek()
-            if (result.isSuccess) {
-                _recommendations.value = result.getOrDefault(emptyList())
-            }
+            engine.analyzeWeek()
+                .onSuccess { _recommendation.value = it }
+                .onFailure { _recommendation.value = null }
             _isLoading.value = false
         }
     }
