@@ -75,15 +75,17 @@ class MainActivity : ComponentActivity() {
     private val habitViewModel: HabitViewModel by viewModels { HabitViewModelFactory(habitRepository) }
     private val taskViewModel: TaskViewModel by viewModels { TaskViewModelFactory(repository) }
     private val notificationsViewModel: NotificationsViewModel by viewModels { viewModelFactory { initializer { NotificationsViewModel(notificationsRepository) } } }
-    private val intelligenceViewModel: IntelligenceViewModel by viewModels { viewModelFactory { initializer { IntelligenceViewModel(
+    private val intelligenceViewModel: IntelligenceViewModel by viewModels { viewModelFactory { initializer {
+        val timeProvider = SystemTimeProvider()
+        IntelligenceViewModel(
         IntelligenceEngine(
             taskContract = RoomTaskContract(database.taskDao()),
             habitContract = RoomHabitContract(database.habitDao(), database.habitCheckInDao(), timeProvider),
-            rules = RecommendationRules(SystemTimeProvider()),
-            strictChecker = StrictConflictChecker(SystemTimeProvider()),
-            approvalGateway = ApprovalGateway(CoreMemoryApprovalStore(database.coreMemoryDao()), SystemTimeProvider()),
-            memory = CoreMemoryRepository(database.coreMemoryDao(), SystemTimeProvider()),
-            timeProvider = SystemTimeProvider()
+            rules = RecommendationRules(timeProvider),
+            strictChecker = StrictConflictChecker(timeProvider),
+            approvalGateway = ApprovalGateway(CoreMemoryApprovalStore(database.coreMemoryDao()), timeProvider),
+            memory = CoreMemoryRepository(database.coreMemoryDao(), timeProvider),
+            timeProvider = timeProvider
         ),
         taskDao = database.taskDao()
     ) } } }
