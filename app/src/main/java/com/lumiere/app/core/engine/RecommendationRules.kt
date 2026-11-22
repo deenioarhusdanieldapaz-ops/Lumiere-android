@@ -36,7 +36,10 @@ class RecommendationRules(private val timeProvider: TimeProvider) {
         val suggestions = mutableListOf<Suggestion>()
 
         // 1. Resolver Prazos Ultrapassados (STRICT_VIOLATION)
-        val overdueTasks = items.filter { it.moduleId == "M01_TASKS" && it.startTimeMillis != null && it.startTimeMillis < now }
+        val overdueTasks = items.filter { item ->
+            val time = item.startTimeMillis
+            item.moduleId == "M01_TASKS" && time != null && time < now
+        }
         overdueTasks.forEach { task ->
             suggestions.add(Suggestion(
                 statement = "Reagendar a tarefa atrasada '${task.title}' para amanhã",
@@ -55,16 +58,19 @@ class RecommendationRules(private val timeProvider: TimeProvider) {
         // 2. Resolver Cruzamento de Módulos (TEMPORAL_OVERLAP)
         val scheduledItems = items.filter { it.startTimeMillis != null }
         scheduledItems.forEachIndexed { i, itemA ->
+            val timeA = itemA.startTimeMillis ?: return@forEachIndexed
             for (j in i + 1 until scheduledItems.size) {
                 val itemB = scheduledItems[j]
-                val diffMins = Math.abs(itemA.startTimeMillis!! - itemB.startTimeMillis!!) / 60_000
+                val timeB = itemB.startTimeMillis ?: continue
+                val diffMins = Math.abs(timeA - timeB) / 60_000
                 
                 if (diffMins < 30 && itemA.moduleId != itemB.moduleId) {
                     val habit = if (itemA.moduleId == "M02_HABITS") itemA else if (itemB.moduleId == "M02_HABITS") itemB else null
                     if (habit != null) {
+                        val habitTime = habit.startTimeMillis ?: continue
                         val cal = Calendar.getInstance()
-                        cal.timeInMillis = habit.startTimeMillis!!
-                        cal.add(Calendar.HOUR_OF_DAY, 2) // Move o hábito 2 horas para a frente
+                        cal.timeInMillis = habitTime
+                        cal.add(Calendar.HOUR_OF_DAY, 2)
                         suggestions.add(Suggestion(
                             statement = "Mudar o horário do hábito '${habit.title}'",
                             why = "Este hábito está a colidir com uma tarefa de outro módulo.",
@@ -83,7 +89,7 @@ class RecommendationRules(private val timeProvider: TimeProvider) {
         }
 
         // 3. Resolver Sobrecarga Diária
-        val overloadedDays = items.filter { it.startTimeMillis != null }.groupBy { it.startTimeMillis!! / dayMs }
+        val overloadedDays = items.filter { it.startTimeMillis != null }.groupBy { (it.startTimeMillis ?: 0L) / dayMs }
         overloadedDays.forEach { (_, dayItems) ->
             if (dayItems.sumOf { it.durationMinutes ?: 0 } > 480) {
                 val itemToMove = dayItems.filter { it.moduleId == "M01_TASKS" }.minByOrNull { it.priority }
@@ -105,7 +111,6 @@ class RecommendationRules(private val timeProvider: TimeProvider) {
             }
         }
 
-        // Remover duplicados mantendo apenas 5
         return suggestions.distinctBy { it.statement }.shuffled().take(5)
     }
 }

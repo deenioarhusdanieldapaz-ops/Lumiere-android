@@ -14,4 +14,6 @@ class InMemoryApprovalStore : ApprovalStore {
     }
     override suspend fun getDecision(approvalId: String): Result<ApprovalDecision?> =
         Result.success(decisions[approvalId])
+    override suspend fun getAllDecisions(): Result<List<ApprovalDecision>> =
+        Result.success(decisions.values.toList())
 }
