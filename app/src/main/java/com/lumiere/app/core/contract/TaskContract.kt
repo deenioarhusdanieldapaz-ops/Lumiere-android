@@ -10,7 +10,7 @@ interface TaskContract {
 }
 
 data class TaskSnapshot(
-    val id: String, 
+    override val id: String, 
     val titleShort: String, 
     val state: TaskState,
     val deadlineMillis: Long?, 

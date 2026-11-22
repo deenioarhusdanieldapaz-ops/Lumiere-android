@@ -11,7 +11,7 @@ interface HabitContract {
 }
 
 data class HabitSnapshot(
-    val id: String, 
+    override val id: String, 
     val nameShort: String, 
     val frequency: HabitFrequency,
     val targetPerPeriod: Int, 
@@ -21,7 +21,7 @@ data class HabitSnapshot(
     val lastUpdatedMillis: Long,
     val sensitivity: Sensitivity = Sensitivity.NORMAL,
     val preferredTime: String? = null, 
-    val durationMinutes: Int? = null,
+    override val durationMinutes: Int? = null, // <-- Resolvido: override adicionado
     val isAdaptationPeriod: Boolean = false, 
     val unit: String? = null
 ) : Schedulable {
@@ -36,8 +36,7 @@ data class HabitSnapshot(
         cal.set(Calendar.MINUTE, parts[1].toIntOrNull() ?: return null)
         return cal.timeInMillis
     }
-    override val durationMinutes: Int? get() = this.durationMinutes ?: 30
-    override val energyCost: Int get() = 2 // Hábitos gastam energia média por defeito
+    override val energyCost: Int get() = 2
     override val priority: Int get() = if (isAdaptationPeriod) 3 else 2
 }
 enum class HabitFrequency { DAILY, WEEKLY, MONTHLY }

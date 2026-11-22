@@ -8,6 +8,7 @@ import com.lumiere.app.core.model.*
 import com.lumiere.app.core.time.TimeProvider
 import com.lumiere.app.data.local.dao.HabitDao
 import com.lumiere.app.data.local.dao.TaskDao
+import java.util.Calendar
 
 class IntelligenceEngine(
     private val taskContract: TaskContract,
@@ -20,7 +21,6 @@ class IntelligenceEngine(
     private val taskDao: TaskDao,
     private val habitDao: HabitDao
 ) {
-    // Agrega os dados de TODOS os módulos num só sítio
     private suspend fun getContext(): List<Schedulable> {
         val tasks = taskContract.getActiveTasks(14).getOrElse { emptyList() }
         val habits = habitContract.getActiveHabits().getOrElse { emptyList() }
@@ -30,7 +30,6 @@ class IntelligenceEngine(
     suspend fun analyzeWeek(): Result<Recommendation> = runCatching {
         val now = timeProvider.currentTimeMillis()
         val context = getContext()
-        
         val facts = rules.buildFacts(context)
         val inferences = rules.buildInferences(context, facts)
         val suggestions = rules.buildSuggestions(context, inferences)
@@ -59,7 +58,6 @@ class IntelligenceEngine(
         val decision = ApprovalDecision(req.id, ApprovalDecisionKind.APPROVED, "user", timeProvider.currentTimeMillis())
         approvalGateway.recordDecision(decision).getOrThrow()
 
-        // Executa a Ação Genérica
         when (val act = suggestion.action) {
             is SuggestionAction.DeferItem -> {
                 if (act.moduleId == "M01_TASKS") {
@@ -72,7 +70,6 @@ class IntelligenceEngine(
                         }
                     }
                 }
-                // No futuro: else if (act.moduleId == "M06_FINANCES") ...
             }
             is SuggestionAction.RescheduleItem -> {
                 if (act.moduleId == "M02_HABITS") {
@@ -80,9 +77,9 @@ class IntelligenceEngine(
                     if (id != null) {
                         val h = habitDao.getHabitById(id)
                         if (h != null) {
-                            val cal = java.util.Calendar.getInstance()
+                            val cal = Calendar.getInstance()
                             cal.timeInMillis = act.newTimeMillis
-                            val newTime = String.format("%02d:%02d", cal.get(java.util.Calendar.HOUR_OF_DAY), cal.get(java.util.Calendar.MINUTE))
+                            val newTime = String.format("%02d:%02d", cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE))
                             habitDao.updateHabit(h.copy(preferredTime = newTime))
                         }
                     }
@@ -106,7 +103,7 @@ class IntelligenceEngine(
                     }
                 }
             }
-            null -> {}
+            else -> {}
         }
     }
 

@@ -35,11 +35,6 @@ data class Inference(
     val supportingFactIds: List<String>
 )
 
-sealed interface SuggestionAction {
-    data class DeferTask(val taskId: String, val days: Int) : SuggestionAction
-    data class RescheduleHabit(val habitId: String, val newTime: String) : SuggestionAction
-    data class AdjustEstimate(val taskId: String, val newEstimateMinutes: Int) : SuggestionAction
-}
 
 data class Suggestion(
     val id: String = UUID.randomUUID().toString(),

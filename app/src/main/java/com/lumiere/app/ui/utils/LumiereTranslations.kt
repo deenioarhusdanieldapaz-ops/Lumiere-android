@@ -26,10 +26,8 @@ fun Reversibility.toPT(): String = when (this) {
 }
 
 fun ConflictKind.toPT(): String = when (this) {
-    ConflictKind.TEMPORAL_OVERLAP -> "Sobreposição de Horários"
-    ConflictKind.DEPENDENCY_BLOCK -> "Tarefa Bloqueada"
+    ConflictKind.TEMPORAL_OVERLAP -> "Cruzamento de Módulos"
     ConflictKind.CAPACITY_EXCEEDED_DAILY -> "Dia Sobrecarregado"
     ConflictKind.CAPACITY_EXCEEDED_WEEKLY -> "Semana Sobrecarregada"
     ConflictKind.STRICT_VIOLATION -> "Prazo Ultrapassado"
-    ConflictKind.HABIT_CLASH -> "Colisão de Horário"
 }
