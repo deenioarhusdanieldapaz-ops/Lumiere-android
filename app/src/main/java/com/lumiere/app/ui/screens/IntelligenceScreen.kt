@@ -1,6 +1,5 @@
 package com.lumiere.app.ui.screens
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -10,7 +9,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -18,172 +18,152 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.lumiere.app.core.engine.ConflictKind
+import com.lumiere.app.core.model.Suggestion
 import com.lumiere.app.ui.theme.LumiereSpacing
 import com.lumiere.app.ui.viewmodel.IntelligenceViewModel
 
 @Composable
 fun IntelligenceScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit) {
     val focusTrend by viewModel.focusTrend.collectAsStateWithLifecycle()
+    val recommendation by viewModel.recommendation.collectAsStateWithLifecycle()
+    val conflicts by viewModel.conflicts.collectAsStateWithLifecycle()
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
 
-    Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).verticalScroll(rememberScrollState())) {
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        // Top Bar
-        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = LumiereSpacing.M), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Voltar", tint = MaterialTheme.colorScheme.primary) }
-            Spacer(modifier = Modifier.width(LumiereSpacing.S))
-            Text("Inteligência", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.headlineMedium, fontFamily = FontFamily.Serif)
-            Spacer(modifier = Modifier.weight(1f))
-            Icon(Icons.Outlined.BarChart, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).verticalScroll(rememberScrollState())) {
+        Spacer(Modifier.height(24.dp))
+        Row(Modifier.fillMaxWidth().padding(horizontal = LumiereSpacing.M), verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Voltar", tint = MaterialTheme.colorScheme.primary) }
+            Spacer(Modifier.width(LumiereSpacing.S))
+            Text("Inteligência", style = MaterialTheme.typography.headlineMedium, fontFamily = FontFamily.Serif, color = MaterialTheme.colorScheme.onSurface)
+            Spacer(Modifier.weight(1f))
+            if (isLoading) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+        }
+        Spacer(Modifier.height(LumiereSpacing.L))
+
+        Card(Modifier.fillMaxWidth().padding(horizontal = LumiereSpacing.M), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), shape = RoundedCornerShape(16.dp)) {
+            Column(Modifier.padding(16.dp)) {
+                Text("Tendência de Foco (7 dias)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(if (focusTrend.isEmpty()) "Sem conclusões registadas" else "Conclusões por dia, normalizadas", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(16.dp))
+                SparklineChart(focusTrend, Modifier.fillMaxWidth().height(80.dp))
+            }
         }
 
-        Spacer(modifier = Modifier.height(LumiereSpacing.L))
+        Spacer(Modifier.height(LumiereSpacing.M))
 
-        // Card 1: Gráfico de Tendência
-        Card(
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            shape = RoundedCornerShape(16.dp),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
-            modifier = Modifier.fillMaxWidth().padding(horizontal = LumiereSpacing.M)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Column {
-                        Text("Tendência de Foco", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                        Text("Aumento de 15% esta semana", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        val goal = recommendation?.goal ?: "Sem recomendações no momento"
+        val suggestions = recommendation?.suggestions ?: emptyList()
+        Card(Modifier.fillMaxWidth().padding(horizontal = LumiereSpacing.M), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), shape = RoundedCornerShape(16.dp)) {
+            Column(Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.size(40.dp).background(MaterialTheme.colorScheme.surfaceVariant, CircleShape), contentAlignment = Alignment.Center) {
+                        Icon(Icons.Outlined.Lightbulb, null, tint = MaterialTheme.colorScheme.primary)
                     }
-                    // Badge Confiança
-                    Box(modifier = Modifier.background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f), RoundedCornerShape(50)).padding(horizontal = 8.dp, vertical = 4.dp)) {
-                        Text("Confiança: Alta", color = MaterialTheme.colorScheme.primary, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.width(16.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text("Recomendação", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text(goal, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                // Sparkline Chart (Canvas)
-                SparklineChart(dataPoints = focusTrend, modifier = Modifier.fillMaxWidth().height(80.dp))
             }
         }
 
-        Spacer(modifier = Modifier.height(LumiereSpacing.M))
+        Spacer(Modifier.height(LumiereSpacing.L))
 
-        // Card 2: Recomendação
-        Card(
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            shape = RoundedCornerShape(16.dp),
-            modifier = Modifier.fillMaxWidth().padding(horizontal = LumiereSpacing.M)
-        ) {
-            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                Box(modifier = Modifier.size(40.dp).background(MaterialTheme.colorScheme.surfaceVariant, CircleShape), contentAlignment = Alignment.Center) {
-                    Icon(Icons.Outlined.Lightbulb, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+        Row(Modifier.fillMaxWidth().padding(horizontal = LumiereSpacing.M), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("Sugestões", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text("${suggestions.size} proposta(s)", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+        }
+        Spacer(Modifier.height(LumiereSpacing.S))
+
+        if (suggestions.isEmpty()) {
+            Box(Modifier.fillMaxWidth().padding(LumiereSpacing.M), contentAlignment = Alignment.Center) {
+                Text("Sem sugestões pendentes.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        } else {
+            suggestions.forEach { s ->
+                SuggestionCard(s, onApprove = { viewModel.approveSuggestion(s) }, onReject = { viewModel.rejectSuggestion(s) })
+                Spacer(Modifier.height(8.dp))
+            }
+        }
+
+        Spacer(Modifier.height(LumiereSpacing.L))
+
+        Row(Modifier.fillMaxWidth().padding(horizontal = LumiereSpacing.M), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("Conflitos", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text("${conflicts.size} detetado(s)", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+        }
+        Spacer(Modifier.height(LumiereSpacing.S))
+
+        if (conflicts.isEmpty()) {
+            Box(Modifier.fillMaxWidth().padding(LumiereSpacing.M), contentAlignment = Alignment.Center) {
+                Text("Sem conflitos temporais.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        } else {
+            conflicts.take(5).forEach { c ->
+                Card(Modifier.fillMaxWidth().padding(horizontal = LumiereSpacing.M, vertical = 4.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), shape = RoundedCornerShape(12.dp)) {
+                    Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Outlined.Warning, null, tint = MaterialTheme.colorScheme.primary)
+                        Spacer(Modifier.width(8.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(c.kind.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                            Text("${c.involvedRecordIds.size} registo(s) envolvido(s)", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
                 }
-                Spacer(modifier = Modifier.width(16.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Recomendação", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("Rever metas de Carreira (M12)", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+
+        Spacer(Modifier.height(100.dp))
+    }
+}
+
+@Composable
+fun SuggestionCard(s: Suggestion, onApprove: () -> Unit, onReject: () -> Unit) {
+    Card(Modifier.fillMaxWidth().padding(horizontal = LumiereSpacing.M), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), shape = RoundedCornerShape(12.dp)) {
+        Column(Modifier.padding(12.dp)) {
+            Text(s.statement, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(4.dp))
+            Text("${s.approvalClass.name} · ${s.impact.name} · ${s.reversibility.name}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = onApprove, modifier = Modifier.weight(1f)) {
+                    Icon(Icons.Default.Check, null, Modifier.size(16.dp)); Spacer(Modifier.width(4.dp)); Text("Aprovar")
+                }
+                OutlinedButton(onClick = onReject, modifier = Modifier.weight(1f)) {
+                    Icon(Icons.Default.Close, null, Modifier.size(16.dp)); Spacer(Modifier.width(4.dp)); Text("Rejeitar")
                 }
             }
-            Button(
-                onClick = { },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-            ) {
-                Text("Ver Detalhes")
-                Spacer(modifier = Modifier.width(8.dp))
-                Icon(Icons.Outlined.KeyboardArrowRight, contentDescription = null, modifier = Modifier.size(16.dp))
-            }
-            Spacer(modifier = Modifier.height(8.dp))
         }
-
-        Spacer(modifier = Modifier.height(LumiereSpacing.L))
-
-        // Secção Insights Rápidos
-        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = LumiereSpacing.M), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("Insights Rápidos", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text("Ver Todos >", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
-        }
-        
-        Spacer(modifier = Modifier.height(LumiereSpacing.S))
-
-        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = LumiereSpacing.M), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            InsightCard("Foco", "+15%", Icons.Outlined.GpsFixed, Modifier.weight(1f))
-            InsightCard("Produtividade", "+12%", Icons.Default.CheckCircle, Modifier.weight(1f))
-            InsightCard("Bem-estar", "+18%", Icons.Outlined.Star, Modifier.weight(1f))
-        }
-        
-        Spacer(modifier = Modifier.height(100.dp))
     }
 }
 
 @Composable
 fun SparklineChart(dataPoints: List<Float>, modifier: Modifier = Modifier) {
-    val primaryColor = MaterialTheme.colorScheme.primary
-    val bgColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-
-    Canvas(modifier = modifier) {
-        if (dataPoints.isEmpty()) return@Canvas
-        val maxVal = dataPoints.maxOrNull() ?: 1f
-        val minVal = dataPoints.minOrNull() ?: 0f
-        val range = if (maxVal == minVal) 1f else maxVal - minVal
-
+    val primary = MaterialTheme.colorScheme.primary
+    val bg = primary.copy(alpha = 0.1f)
+    Canvas(modifier) {
+        if (dataPoints.size < 2) return@Canvas
+        val maxV = dataPoints.maxOrNull() ?: 1f
+        val minV = dataPoints.minOrNull() ?: 0f
+        val range = if (maxV == minV) 1f else maxV - minV
         val spacing = size.width / (dataPoints.size - 1)
-        
-        val path = Path()
-        val fillPath = Path()
-
-        dataPoints.forEachIndexed { index, value ->
-            val x = index * spacing
-            // Normalizar y para caber no Canvas (0 = topo, height = fundo)
-            val normalizedY = (value - minVal) / range
-            val y = size.height - (normalizedY * size.height * 0.8f) - (size.height * 0.1f)
-
-            if (index == 0) {
-                path.moveTo(x, y)
-                fillPath.moveTo(x, size.height)
-                fillPath.lineTo(x, y)
-            } else {
-                path.lineTo(x, y)
-                fillPath.lineTo(x, y)
-            }
-            
-            if (index == dataPoints.size - 1) {
-                fillPath.lineTo(x, size.height)
-                fillPath.close()
-            }
+        val path = Path(); val fill = Path()
+        dataPoints.forEachIndexed { i, v ->
+            val x = i * spacing
+            val y = size.height - ((v - minV) / range) * size.height * 0.8f - size.height * 0.1f
+            if (i == 0) { path.moveTo(x, y); fill.moveTo(x, size.height); fill.lineTo(x, y) }
+            else { path.lineTo(x, y); fill.lineTo(x, y) }
+            if (i == dataPoints.size - 1) { fill.lineTo(x, size.height); fill.close() }
         }
-
-        // Desenhar preenchimento
-        drawPath(path = fillPath, color = bgColor)
-        // Desenhar linha
-        drawPath(path = path, color = primaryColor, style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round))
-        
-        // Desenhar pontos
-        dataPoints.forEachIndexed { index, value ->
-            val x = index * spacing
-            val normalizedY = (value - minVal) / range
-            val y = size.height - (normalizedY * size.height * 0.8f) - (size.height * 0.1f)
-            drawCircle(color = primaryColor, radius = 4.dp.toPx(), center = Offset(x, y))
-        }
-    }
-}
-
-@Composable
-fun InsightCard(title: String, value: String, icon: androidx.compose.ui.graphics.vector.ImageVector, modifier: Modifier = Modifier) {
-    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), shape = RoundedCornerShape(12.dp), modifier = modifier) {
-        Column(modifier = Modifier.fillMaxWidth().padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(title, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-        }
+        drawPath(fill, bg); drawPath(path, primary, style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round))
     }
 }

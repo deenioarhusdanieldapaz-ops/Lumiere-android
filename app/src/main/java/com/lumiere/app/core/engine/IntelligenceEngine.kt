@@ -19,14 +19,11 @@ class IntelligenceEngine(
 
     suspend fun analyzeWeek(): Result<Recommendation> = runCatching {
         val now = timeProvider.currentTimeMillis()
-
         val tasks = taskContract.getActiveTasks(windowDays = 14).getOrThrow()
         val habits = habitContract.getActiveHabits().getOrThrow()
-
         val facts = rules.buildFacts(tasks, habits)
         val inferences = rules.buildInferences(tasks, habits, facts)
         val suggestions = rules.buildSuggestions(tasks, habits, inferences)
-
         memory.put(
             key = "last_analysis_at",
             value = now.toString(),
@@ -34,7 +31,6 @@ class IntelligenceEngine(
             sensitivity = Sensitivity.NORMAL,
             ttlMillis = 2 * 3_600_000L
         )
-
         Recommendation(
             kind = RecommendationKind.OPTIMIZATION,
             goal = "Organizar a semana",
@@ -58,6 +54,31 @@ class IntelligenceEngine(
         decision: ApprovalDecision
     ): Result<Unit> = runCatching {
         require(decision.decision == ApprovalDecisionKind.APPROVED) { "Not approved" }
+        approvalGateway.recordDecision(decision).getOrThrow()
+    }
+
+    suspend fun requestApproval(suggestion: Suggestion): Result<ApprovalRequest> =
+        approvalGateway.request(suggestion)
+
+    suspend fun approveSuggestion(suggestion: Suggestion): Result<Unit> = runCatching {
+        val req = approvalGateway.request(suggestion).getOrThrow()
+        val decision = ApprovalDecision(
+            approvalId = req.id,
+            decision = ApprovalDecisionKind.APPROVED,
+            decidedBy = "user",
+            decidedAtMillis = timeProvider.currentTimeMillis()
+        )
+        executeApproved(suggestion, decision).getOrThrow()
+    }
+
+    suspend fun rejectSuggestion(suggestion: Suggestion): Result<Unit> = runCatching {
+        val req = approvalGateway.request(suggestion).getOrThrow()
+        val decision = ApprovalDecision(
+            approvalId = req.id,
+            decision = ApprovalDecisionKind.REJECTED,
+            decidedBy = "user",
+            decidedAtMillis = timeProvider.currentTimeMillis()
+        )
         approvalGateway.recordDecision(decision).getOrThrow()
     }
 }

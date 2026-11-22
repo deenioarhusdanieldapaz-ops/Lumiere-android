@@ -78,13 +78,14 @@ class MainActivity : ComponentActivity() {
     private val intelligenceViewModel: IntelligenceViewModel by viewModels { viewModelFactory { initializer { IntelligenceViewModel(
         IntelligenceEngine(
             taskContract = RoomTaskContract(database.taskDao()),
-            habitContract = RoomHabitContract(database.habitDao()),
+            habitContract = RoomHabitContract(database.habitDao(), database.habitCheckInDao(), timeProvider),
             rules = RecommendationRules(SystemTimeProvider()),
             strictChecker = StrictConflictChecker(SystemTimeProvider()),
             approvalGateway = ApprovalGateway(CoreMemoryApprovalStore(database.coreMemoryDao()), SystemTimeProvider()),
             memory = CoreMemoryRepository(database.coreMemoryDao(), SystemTimeProvider()),
             timeProvider = SystemTimeProvider()
-        )
+        ),
+        taskDao = database.taskDao()
     ) } } }
 
     @OptIn(ExperimentalMaterial3Api::class)
@@ -240,7 +241,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable(Screen.Approvals.route) {
-                            ApprovalsScreen(onBack = { navController.popBackStack() })
+                            ApprovalsScreen(viewModel = intelligenceViewModel, onBack = { navController.popBackStack() })
                         }
                         composable(Screen.GlobalSearch.route) {
                             GlobalSearchScreen(

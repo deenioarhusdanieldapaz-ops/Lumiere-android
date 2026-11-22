@@ -12,6 +12,9 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE id = :id")
     suspend fun getTaskById(id: Long): Task?
 
+    @Query("SELECT completedAt FROM tasks WHERE status = 2 AND completedAt IS NOT NULL AND completedAt >= :since ORDER BY completedAt ASC")
+    suspend fun completionTimestampsSince(since: Long): List<Long>
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertTask(task: Task): Long
 

@@ -19,7 +19,11 @@ class RoomTaskContract(private val taskDao: TaskDao) : TaskContract {
     private fun com.lumiere.app.data.local.entity.Task.toSnapshot() = TaskSnapshot(
         id = id.toString(),
         titleShort = title.take(60),
-        state = if (isCompleted) TaskState.DONE else TaskState.ACTIVE,
+        state = when (status) {
+            2 -> TaskState.DONE
+            4 -> TaskState.ARCHIVED
+            else -> TaskState.ACTIVE
+        },
         deadlineMillis = dueDate,
         priorityDeclared = priority,
         estimatedEffortMinutes = estimatedDurationMinutes,
