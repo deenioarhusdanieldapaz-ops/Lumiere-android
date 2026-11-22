@@ -29,6 +29,9 @@ class RoomTaskContract(private val taskDao: TaskDao) : TaskContract {
         estimatedEffortMinutes = estimatedDurationMinutes,
         dependencyIds = blockedByTaskId?.let { listOf(it.toString()) } ?: emptyList(),
         lastUpdatedMillis = updatedAt,
-        sensitivity = Sensitivity.NORMAL
+        sensitivity = Sensitivity.NORMAL,
+        category = category, tags = tags, urgency = urgency,
+        importance = importance, energy = energy,
+        timeReservedMinutes = timeReservedMinutes, actualDurationMinutes = actualDurationMinutes
     )
 }

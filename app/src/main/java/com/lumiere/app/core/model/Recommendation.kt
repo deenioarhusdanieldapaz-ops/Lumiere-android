@@ -3,7 +3,7 @@ package com.lumiere.app.core.model
 import java.util.UUID
 
 enum class Sensitivity { NORMAL, SENSITIVE, CRITICAL }
-enum class InferenceMethod { RULE, PATTERN_7D, PATTERN_30D, PATTERN_90D }
+enum class InferenceMethod { RULE, PATTERN_7D, PATTERN_30D, PATTERN_90D, CORRELATION }
 enum class Confidence { CALIBRATED, HEURISTIC, UNKNOWN }
 enum class ApprovalClass { A0_CONSULT, A1_PREPARE, A2_LOW_IMPACT, A3_RELEVANT, A4_HIGH_IMPACT }
 enum class Impact { LOW, MEDIUM, HIGH }
@@ -38,6 +38,8 @@ data class Inference(
 data class Suggestion(
     val id: String = UUID.randomUUID().toString(),
     val statement: String,
+    val why: String,
+    val impactDescription: String,
     val approvalClass: ApprovalClass,
     val targetModules: Set<String>,
     val impact: Impact,

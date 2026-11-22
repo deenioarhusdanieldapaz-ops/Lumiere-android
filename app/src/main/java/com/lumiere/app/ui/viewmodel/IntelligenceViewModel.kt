@@ -64,15 +64,21 @@ class IntelligenceViewModel(
     fun approveSuggestion(suggestion: Suggestion) {
         viewModelScope.launch {
             engine.approveSuggestion(suggestion)
-            refreshInsights()
+            removeSuggestionFromUi(suggestion)
         }
     }
 
     fun rejectSuggestion(suggestion: Suggestion) {
         viewModelScope.launch {
             engine.rejectSuggestion(suggestion)
-            refreshInsights()
+            removeSuggestionFromUi(suggestion)
         }
+    }
+
+    private fun removeSuggestionFromUi(suggestion: Suggestion) {
+        val current = _recommendation.value ?: return
+        val updatedList = current.suggestions.filter { it.id != suggestion.id }
+        _recommendation.value = current.copy(suggestions = updatedList)
     }
 
     private suspend fun computeFocusTrend(): List<Float> {

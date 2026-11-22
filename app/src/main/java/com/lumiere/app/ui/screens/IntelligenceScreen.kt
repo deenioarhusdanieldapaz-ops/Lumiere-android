@@ -28,6 +28,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lumiere.app.core.engine.ConflictKind
 import com.lumiere.app.core.model.Suggestion
 import com.lumiere.app.ui.theme.LumiereSpacing
+import com.lumiere.app.ui.utils.toPT
 import com.lumiere.app.ui.viewmodel.IntelligenceViewModel
 
 @Composable
@@ -114,8 +115,8 @@ fun IntelligenceScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit) {
                         Icon(Icons.Outlined.Warning, null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(Modifier.width(8.dp))
                         Column(Modifier.weight(1f)) {
-                            Text(c.kind.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                            Text("${c.involvedRecordIds.size} registo(s) envolvido(s)", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(c.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                            Text(c.details, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
@@ -132,7 +133,7 @@ fun SuggestionCard(s: Suggestion, onApprove: () -> Unit, onReject: () -> Unit) {
         Column(Modifier.padding(12.dp)) {
             Text(s.statement, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(4.dp))
-            Text("${s.approvalClass.name} · ${s.impact.name} · ${s.reversibility.name}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("${s.approvalClass.toPT()} · ${s.impact.toPT()} · ${s.reversibility.toPT()}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = onApprove, modifier = Modifier.weight(1f)) {

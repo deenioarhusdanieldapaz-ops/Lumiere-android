@@ -1,0 +1,284 @@
+===== PWD =====
+/data/data/com.termux/files/home/lumiere-android
+===== BRANCH =====
+fase5/data-002
+===== STATUS =====
+On branch fase5/data-002
+Your branch is up to date with 'origin/fase5/data-002'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   app/src/main/java/com/lumiere/app/core/contract/RoomHabitContract.kt
+	modified:   app/src/main/java/com/lumiere/app/core/contract/RoomTaskContract.kt
+	modified:   app/src/main/java/com/lumiere/app/ui/viewmodel/IntelligenceViewModel.kt
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	lum_audit_dump.txt
+
+no changes added to commit (use "git add" and/or "git commit -a")
+===== LOG =====
+6043d6c (HEAD -> fase5/data-002, origin/fase5/data-002) feat(ui): ligar IntelligenceEngine real ao ViewModel e MainActivity
+71eaca9 feat(core): IntelligenceEngine determinístico (P5-05) + remover motor improvisado antigo
+0ce2919 feat(db): v18 com CoreMemory, exportSchema=true, TimeProvider e migracao 17->18
+2de1496 chore: reverter improvisos de IA e preparar para desenho da equipa P5-05
+29570dd fix(core): adicionar imports de Task e Habit ao CoreOrchestrator
+7e39a9e feat(core): implement deterministic IntelligenceEngine with STRICT and APPROVAL rules
+d66403a fix(db): substituir onConfigure por RoomDatabase.Callback para ativar FK
+9376384 fase5(data-002): exception handling, REPLACE->ABORT, FK ON + migration 16->17, Core minimum
+7946248 (origin/main, origin/HEAD, main) style(ui): reverter cor dos titulos para preto (onSurface) para alinhar com o Draft C
+b2ebda0 fix(ui): corrigir imports do IntelligenceViewModel e assinatura do LinearProgressIndicator
+09fd1d7 feat(fase2): implementar Centro de Inteligencia e Planeamento de Vida (Draft C)
+da10fee fix(ui): adicionar import KeyboardArrowRight no HelpScreen e finalizar Fase 1
+f9c7ea4 fix(ui): corrigir bloco duplicado do MoreScreen no MainActivity
+26392ff fix(ui): corrigir assinatura corrompida do MoreScreen e chamadas
+8a8cfce feat(ui): implementar Help e Global History (Fase 1 do Draft C)
+9586475 feat(ui): refinar layout do historico e barra de estatisticas de aprovacoes
+a096820 fix(approvals): eliminar ficheiro duplicado e forcar o uso do ApprovalsScreen correto
+84c6d94 fix(ui): remover padding duplicado no ApprovalsScreen (corrige corte do fundo)
+cacb3a0 fix(ui): remover API experimental consumeWindowInsets do MainActivity
+ef842b0 fix(ui): corrigir padding do NavHost e garantir margem no ApprovalsScreen
+===== BRANCHES =====
+  devops/baixar-apk-v1.1
+* fase5/data-002
+  feat/dashboard-bloco3
+  feat/design-system-bloco1
+  feat/notif-toggle
+  feat/notif-ui-refactor
+  main
+  remotes/origin/HEAD -> origin/main
+  remotes/origin/devops/baixar-apk-v1.1
+  remotes/origin/fase5/data-002
+  remotes/origin/feat/dashboard-bloco3
+  remotes/origin/feat/design-system-bloco1
+  remotes/origin/feat/notif-toggle
+  remotes/origin/feat/notif-ui-refactor
+  remotes/origin/main
+===== REMOTE =====
+origin	https://github.com/deenioarhusdanieldapaz-ops/Lumiere-android.git (fetch)
+origin	https://github.com/deenioarhusdanieldapaz-ops/Lumiere-android.git (push)
+===== DIFF STAT =====
+ .../lumiere/app/core/contract/RoomHabitContract.kt | 12 ++++----
+ .../lumiere/app/core/contract/RoomTaskContract.kt  |  8 ++----
+ .../app/ui/viewmodel/IntelligenceViewModel.kt      | 33 ++++++++++++++++++----
+ 3 files changed, 35 insertions(+), 18 deletions(-)
+===== ÁRVORE =====
+./.github/workflows/build-apk.yml
+./.github/workflows/codeql.yml
+./.github/workflows/release.yml
+./.gitignore
+./.gradle/9.8.2/checksums/checksums.lock
+./.gradle/9.8.2/checksums/md5-checksums.bin
+./.gradle/9.8.2/checksums/sha1-checksums.bin
+./.gradle/9.8.2/fileHashes/fileHashes.lock
+./.gradle/9.8.2/kotlin-dsl-plugin-entries/kotlin-dsl-plugin-entries.lock
+./.gradle/buildOutputCleanup/buildOutputCleanup.lock
+./.gradle/buildOutputCleanup/cache.properties
+./A
+./Compilation
+./Get
+./Lumière Life Manager.aab
+./Lumière Life Manager.apk
+./Readme.html
+./Run
+./Task
+./TaskCard_Refactor.txt
+./apk/app-debug.apk
+./app/build.gradle.kts
+./app/build.gradle.kts.bak-pre-fase1
+./app/build.gradle.kts.bak-pre-fase2
+./app/build.gradle.kts.bak-pre-localprops
+./app/build.gradle.kts.bak-pre-signing-fix
+./app/build.gradle.kts.bak_m01
+./app/src/main/AndroidManifest.xml
+./app/src/main/java/com/lumiere/app/MainActivity.kt
+./app/src/main/java/com/lumiere/app/core/adapters/HabitModuleAdapter.kt
+./app/src/main/java/com/lumiere/app/core/adapters/TaskModuleAdapter.kt
+./app/src/main/java/com/lumiere/app/core/contract/EmptyHabitContract.kt
+./app/src/main/java/com/lumiere/app/core/contract/EmptyTaskContract.kt
+./app/src/main/java/com/lumiere/app/core/contract/HabitContract.kt
+./app/src/main/java/com/lumiere/app/core/contract/RoomHabitContract.kt
+./app/src/main/java/com/lumiere/app/core/contract/RoomTaskContract.kt
+./app/src/main/java/com/lumiere/app/core/contract/TaskContract.kt
+./app/src/main/java/com/lumiere/app/core/contracts/CoreIntelligence.kt
+./app/src/main/java/com/lumiere/app/core/contracts/LumiereModule.kt
+./app/src/main/java/com/lumiere/app/core/contracts/ModuleCommand.kt
+./app/src/main/java/com/lumiere/app/core/engine/ApprovalGateway.kt
+./app/src/main/java/com/lumiere/app/core/engine/CoreMemoryApprovalStore.kt
+./app/src/main/java/com/lumiere/app/core/engine/InMemoryApprovalStore.kt
+./app/src/main/java/com/lumiere/app/core/engine/IntelligenceEngine.kt
+./app/src/main/java/com/lumiere/app/core/engine/RecommendationRules.kt
+./app/src/main/java/com/lumiere/app/core/engine/StrictConflictChecker.kt
+./app/src/main/java/com/lumiere/app/core/memory/CoreMemory.kt
+./app/src/main/java/com/lumiere/app/core/memory/CoreMemoryDao.kt
+./app/src/main/java/com/lumiere/app/core/memory/CoreMemoryRepository.kt
+./app/src/main/java/com/lumiere/app/core/model/Recommendation.kt
+./app/src/main/java/com/lumiere/app/core/registry/ModuleRegistry.kt
+./app/src/main/java/com/lumiere/app/core/time/TimeProvider.kt
+./app/src/main/java/com/lumiere/app/data/local/dao/HabitCheckInDao.kt
+./app/src/main/java/com/lumiere/app/data/local/dao/HabitDao.kt
+./app/src/main/java/com/lumiere/app/data/local/dao/HabitExceptionDao.kt
+./app/src/main/java/com/lumiere/app/data/local/dao/ProjectDao.kt
+./app/src/main/java/com/lumiere/app/data/local/dao/SubtaskDao.kt
+./app/src/main/java/com/lumiere/app/data/local/dao/TaskDao.kt
+./app/src/main/java/com/lumiere/app/data/local/dao/TaskHistoryDao.kt
+./app/src/main/java/com/lumiere/app/data/local/database/AppDatabase.kt
+./app/src/main/java/com/lumiere/app/data/local/database/Migration_13_14.kt
+./app/src/main/java/com/lumiere/app/data/local/database/Migration_14_15.kt
+./app/src/main/java/com/lumiere/app/data/local/database/Migration_15_16.kt
+./app/src/main/java/com/lumiere/app/data/local/database/Migration_16_17.kt
+./app/src/main/java/com/lumiere/app/data/local/database/Migration_17_18.kt
+./app/src/main/java/com/lumiere/app/data/local/entity/Habit.kt
+./app/src/main/java/com/lumiere/app/data/local/entity/HabitCheckIn.kt
+./app/src/main/java/com/lumiere/app/data/local/entity/HabitException.kt
+./app/src/main/java/com/lumiere/app/data/local/entity/Project.kt
+./app/src/main/java/com/lumiere/app/data/local/entity/Subtask.kt
+./app/src/main/java/com/lumiere/app/data/local/entity/Task.kt
+./app/src/main/java/com/lumiere/app/data/local/entity/TaskHistory.kt
+./app/src/main/java/com/lumiere/app/data/repository/HabitRepository.kt
+./app/src/main/java/com/lumiere/app/data/repository/NotificationsRepository.kt
+./app/src/main/java/com/lumiere/app/data/repository/TaskRepository.kt
+./app/src/main/java/com/lumiere/app/domain/usecase/HabitUseCases.kt
+./app/src/main/java/com/lumiere/app/domain/usecase/TaskUseCases.kt
+./app/src/main/java/com/lumiere/app/ui/components/LumiereComponents.kt
+./app/src/main/java/com/lumiere/app/ui/components/LumiereEmptyState.kt
+./app/src/main/java/com/lumiere/app/ui/components/fields/Advanced.kt
+./app/src/main/java/com/lumiere/app/ui/components/fields/DateTimeExtras.kt
+./app/src/main/java/com/lumiere/app/ui/components/fields/Dates.kt
+./app/src/main/java/com/lumiere/app/ui/components/fields/Media.kt
+./app/src/main/java/com/lumiere/app/ui/components/fields/Numbers.kt
+./app/src/main/java/com/lumiere/app/ui/components/fields/Selectors.kt
+./app/src/main/java/com/lumiere/app/ui/components/fields/Structures.kt
+./app/src/main/java/com/lumiere/app/ui/components/fields/TextFields.kt
+./app/src/main/java/com/lumiere/app/ui/screens/AlertTypesScreen.kt
+./app/src/main/java/com/lumiere/app/ui/screens/ApprovalsScreen.kt
+./app/src/main/java/com/lumiere/app/ui/screens/ComponentGalleryScreen.kt
+./app/src/main/java/com/lumiere/app/ui/screens/DashboardScreen.kt
+./app/src/main/java/com/lumiere/app/ui/screens/GlobalHistoryScreen.kt
+./app/src/main/java/com/lumiere/app/ui/screens/GlobalSearchScreen.kt
+./app/src/main/java/com/lumiere/app/ui/screens/HabitScreen.kt
+./app/src/main/java/com/lumiere/app/ui/screens/HelpScreen.kt
+./app/src/main/java/com/lumiere/app/ui/screens/HistoryScreen.kt
+./app/src/main/java/com/lumiere/app/ui/screens/IntelligenceScreen.kt
+./app/src/main/java/com/lumiere/app/ui/screens/LifePlanningScreen.kt
+./app/src/main/java/com/lumiere/app/ui/screens/MoreScreen.kt
+./app/src/main/java/com/lumiere/app/ui/screens/NotificationScreen.kt
+./app/src/main/java/com/lumiere/app/ui/screens/NotificationSettingsScreen.kt
+./app/src/main/java/com/lumiere/app/ui/screens/ProfileScreen.kt
+./app/src/main/java/com/lumiere/app/ui/screens/RemindersScreen.kt
+./app/src/main/java/com/lumiere/app/ui/screens/SilentHoursScreen.kt
+./app/src/main/java/com/lumiere/app/ui/screens/SoundVibrationScreen.kt
+./app/src/main/java/com/lumiere/app/ui/screens/TaskScreen.kt
+./app/src/main/java/com/lumiere/app/ui/screens/WeeklyReviewScreen.kt
+./app/src/main/java/com/lumiere/app/ui/theme/Color.kt
+./app/src/main/java/com/lumiere/app/ui/theme/Dimens.kt
+./app/src/main/java/com/lumiere/app/ui/theme/LumiereColors.kt
+./app/src/main/java/com/lumiere/app/ui/theme/LumiereIcons.kt
+./app/src/main/java/com/lumiere/app/ui/theme/Shape.kt
+./app/src/main/java/com/lumiere/app/ui/theme/Theme.kt
+./app/src/main/java/com/lumiere/app/ui/theme/Type.kt
+./app/src/main/java/com/lumiere/app/ui/utils/CategoryEngine.kt
+./app/src/main/java/com/lumiere/app/ui/utils/LumiereCategories.kt
+./app/src/main/java/com/lumiere/app/ui/viewmodel/HabitViewModel.kt
+./app/src/main/java/com/lumiere/app/ui/viewmodel/IntelligenceViewModel.kt
+./app/src/main/java/com/lumiere/app/ui/viewmodel/NotificationsViewModel.kt
+./app/src/main/java/com/lumiere/app/ui/viewmodel/TaskViewModel.kt
+./app/src/main/java/com/lumiere/app/utils/LumiereLogger.kt
+./app/src/main/res/font/inter_bold.ttf
+./app/src/main/res/font/inter_medium.ttf
+./app/src/main/res/font/inter_regular.ttf
+./app/src/main/res/font/inter_semibold.ttf
+./app/src/main/res/font/playfair_regular.ttf
+./app/src/main/res/values/colors.xml
+./app/src/main/res/values/themes.xml
+./app/src/test/java/com/lumiere/app/CategoryEngineTest.kt
+./app/src/test/java/com/lumiere/app/ModuleAdapterTest.kt
+./app/src/test/java/com/lumiere/app/SmokeTest.kt
+./app/src/test/java/com/lumiere/app/integration/TaskRepositoryIntegrationTest.kt
+./app/src/test/java/com/lumiere/app/shared/MainDispatcherRule.kt
+./app/src/test/java/com/lumiere/app/shared/TestDataFactory.kt
+./app/src/test/java/com/lumiere/app/ui/viewmodel/HabitViewModelTest.kt
+./app/src/test/java/com/lumiere/app/ui/viewmodel/TaskRecurrenceTest.kt
+./app/src/test/java/com/lumiere/app/ui/viewmodel/TaskTimerTest.kt
+./app/src/test/java/com/lumiere/app/ui/viewmodel/TaskViewModelTest.kt
+./assetlinks.json
+./atualizar.sh
+./baixar_apk.sh
+./baixar_apk.sh.v1.1
+./baixar_rapido.sh
+./build.gradle.kts
+./build.gradle.kts.bak_m01
+./composable(Screen.GlobalSearch.route) {,
+./file_path
+./gradle.properties
+./if
+./import com.lumiere.app.ui.screens.GlobalSearchScreen,
+./import com.lumiere.app.ui.screens.GlobalSearchScreen\nimport com.lumiere.app.ui.screens.ProfileScreen
+./local.properties
+./lum_audit_dump.txt
+./object GlobalSearch : Screen("global_search", "Pesquisa", Icons.Filled.Search),
+./object GlobalSearch : Screen("global_search", "Pesquisa", Icons.Filled.Search)\n    object Profile : Screen("profile", "Perfil", Icons.Filled.Person)
+./release-backup.7z
+./release-keystore-jks.zip
+./settings.gradle.kts
+./signing-key-info.txt
+===== FICHEIROS INTELIGÊNCIA =====
+./app/src/main/java/com/lumiere/app/ui/viewmodel/IntelligenceViewModel.kt
+./app/src/main/java/com/lumiere/app/ui/screens/ApprovalsScreen.kt
+./app/src/main/java/com/lumiere/app/ui/screens/IntelligenceScreen.kt
+./app/src/main/java/com/lumiere/app/core/contracts/CoreIntelligence.kt
+./app/src/main/java/com/lumiere/app/core/memory/CoreMemory.kt
+./app/src/main/java/com/lumiere/app/core/memory/CoreMemoryDao.kt
+./app/src/main/java/com/lumiere/app/core/memory/CoreMemoryRepository.kt
+./app/src/main/java/com/lumiere/app/core/model/Recommendation.kt
+./app/src/main/java/com/lumiere/app/core/contract/TaskContract.kt
+./app/src/main/java/com/lumiere/app/core/contract/EmptyTaskContract.kt
+./app/src/main/java/com/lumiere/app/core/contract/EmptyHabitContract.kt
+./app/src/main/java/com/lumiere/app/core/contract/HabitContract.kt
+./app/src/main/java/com/lumiere/app/core/contract/RoomTaskContract.kt
+./app/src/main/java/com/lumiere/app/core/contract/RoomHabitContract.kt
+./app/src/main/java/com/lumiere/app/core/engine/RecommendationRules.kt
+./app/src/main/java/com/lumiere/app/core/engine/StrictConflictChecker.kt
+./app/src/main/java/com/lumiere/app/core/engine/ApprovalGateway.kt
+./app/src/main/java/com/lumiere/app/core/engine/IntelligenceEngine.kt
+./app/src/main/java/com/lumiere/app/core/engine/InMemoryApprovalStore.kt
+./app/src/main/java/com/lumiere/app/core/engine/CoreMemoryApprovalStore.kt
+===== GRADLE =====
+--- settings.gradle.kts ---
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+rootProject.name = "LumiereAndroid"
+include(":app")
+--- build.gradle.kts ---
+plugins {
+    id("com.android.application") version "8.2.0" apply false
+    id("org.jetbrains.kotlin.android") version "1.9.20" apply false
+    id("com.google.devtools.ksp") version "1.9.20-1.0.14" apply false
+}
+--- build.gradle.kts.bak_m01 ---
+plugins {
+    id("com.android.application") version "8.2.0" apply false
+    id("org.jetbrains.kotlin.android") version "1.9.20" apply false
+}
+--- gradle.properties ---
+# Configuração para Termux/Mobile
+org.gradle.jvmargs=-Xmx1024m -Dfile.encoding=UTF-8
+org.gradle.daemon=false
+android.useAndroidX=true
+kotlin.code.style=official
+===== TESTES =====
+./app/src/test
+./app/src/testIntegration

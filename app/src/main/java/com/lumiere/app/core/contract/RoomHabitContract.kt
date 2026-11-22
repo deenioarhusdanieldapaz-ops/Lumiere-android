@@ -50,7 +50,9 @@ class RoomHabitContract(
             streakCurrent = computeStreak(timestamps, now),
             successRate30d = rate,
             lastUpdatedMillis = lastActivity,
-            sensitivity = Sensitivity.NORMAL
+            sensitivity = Sensitivity.NORMAL,
+            preferredTime = preferredTime, durationMinutes = durationMinutes,
+            isAdaptationPeriod = isAdaptationPeriod, unit = unit
         )
     }
 

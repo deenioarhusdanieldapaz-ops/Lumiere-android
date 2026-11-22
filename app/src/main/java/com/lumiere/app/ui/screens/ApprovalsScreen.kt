@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lumiere.app.core.model.Suggestion
 import com.lumiere.app.ui.theme.LumiereSpacing
+import com.lumiere.app.ui.utils.toPT
 import com.lumiere.app.ui.viewmodel.IntelligenceViewModel
 
 @Composable
@@ -81,7 +82,7 @@ fun RealApprovalCard(s: Suggestion, viewModel: IntelligenceViewModel) {
                 Icon(Icons.Outlined.Lightbulb, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
                 Spacer(Modifier.width(LumiereSpacing.S))
                 Column(Modifier.weight(1f)) {
-                    Text(s.approvalClass.name, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                    Text(s.approvalClass.toPT(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                     Text(s.statement, style = MaterialTheme.typography.titleMedium, fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold)
                 }
             }
@@ -90,8 +91,11 @@ fun RealApprovalCard(s: Suggestion, viewModel: IntelligenceViewModel) {
                 Icon(Icons.Default.Warning, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                 Spacer(Modifier.width(8.dp))
                 Column {
-                    Text("Consequência:", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                    Text("${s.impact.name} · ${s.reversibility.name}", style = MaterialTheme.typography.bodySmall)
+                    Text("Porquê?", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                    Text(s.why, style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(4.dp))
+                    Text("Impacto:", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                    Text(s.impactDescription, style = MaterialTheme.typography.bodySmall)
                 }
             }
             Spacer(Modifier.height(LumiereSpacing.M))
