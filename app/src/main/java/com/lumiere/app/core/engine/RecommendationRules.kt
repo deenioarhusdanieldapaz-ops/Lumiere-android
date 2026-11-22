@@ -9,30 +9,56 @@ class RecommendationRules(private val timeProvider: TimeProvider) {
 
     fun buildFacts(tasks: List<TaskSnapshot>, habits: List<HabitSnapshot>): List<Fact> {
         val facts = mutableListOf<Fact>()
-        tasks.forEach { t -> facts.add(Fact("Tarefa '${t.titleShort}' [${t.state}]", FactSource.FromModule("tasks", t.id, "1.1.0", t.lastUpdatedMillis), t.sensitivity)) }
-        habits.forEach { h -> facts.add(Fact("Hábito '${h.nameShort}' (${h.frequency})", FactSource.FromModule("habits", h.id, "1.1.0", h.lastUpdatedMillis), h.sensitivity)) }
+        tasks.forEach { t -> 
+            facts.add(Fact(
+                statement = "Tarefa '${t.titleShort}' [${t.state}]",
+                source = FactSource.FromModule("tasks", t.id, "1.1.0", t.lastUpdatedMillis),
+                sensitivity = t.sensitivity
+            )) 
+        }
+        habits.forEach { h -> 
+            facts.add(Fact(
+                statement = "Hábito '${h.nameShort}' (${h.frequency})",
+                source = FactSource.FromModule("habits", h.id, "1.1.0", h.lastUpdatedMillis),
+                sensitivity = h.sensitivity
+            )) 
+        }
         return facts
     }
 
     fun buildInferences(tasks: List<TaskSnapshot>, habits: List<HabitSnapshot>, facts: List<Fact>): List<Inference> {
-        val now = timeProvider.currentTimeMillis()
         val inferences = mutableListOf<Inference>()
 
         val overloadedDays = tasks.filter { it.state == TaskState.ACTIVE && it.deadlineMillis != null }
             .groupBy { it.deadlineMillis!! / dayMs }
             .filter { (_, dayTasks) -> dayTasks.sumOf { it.estimatedEffortMinutes ?: 0 } > 480 }
         if (overloadedDays.isNotEmpty()) {
-            inferences.add(Inference("Dias sobrecarregados detetados: ${overloadedDays.size} dias com >8h de esforço.", InferenceMethod.CORRELATION, Confidence.CALIBRATED, emptyList()))
+            inferences.add(Inference(
+                statement = "Dias sobrecarregados detetados: ${overloadedDays.size} dias com >8h de esforço.",
+                method = InferenceMethod.CORRELATION,
+                confidence = Confidence.CALIBRATED,
+                supportingFactIds = emptyList()
+            ))
         }
 
         val strugglingHabits = habits.filter { it.frequency == HabitFrequency.DAILY && it.checkInsLast7d <= 2 && !it.isAdaptationPeriod }
         if (strugglingHabits.isNotEmpty()) {
-            inferences.add(Inference("Hábitos em risco de abandono: ${strugglingHabits.size} (excluindo período de adaptação).", InferenceMethod.PATTERN_7D, Confidence.HEURISTIC, emptyList()))
+            inferences.add(Inference(
+                statement = "Hábitos em risco de abandono: ${strugglingHabits.size} (excluindo período de adaptação).",
+                method = InferenceMethod.PATTERN_7D,
+                confidence = Confidence.HEURISTIC,
+                supportingFactIds = emptyList()
+            ))
         }
 
         val recurringTasks = tasks.filter { it.state == TaskState.DONE && it.actualDurationMinutes > (it.estimatedEffortMinutes ?: 0) * 1.5 }
         if (recurringTasks.isNotEmpty()) {
-            inferences.add(Inference("As estimativas de tempo estão a falhar em ${recurringTasks.size} tarefas (demoram >50% do previsto).", InferenceMethod.CALIBRATED, Confidence.CALIBRATED, emptyList()))
+            inferences.add(Inference(
+                statement = "As estimativas de tempo estão a falhar em ${recurringTasks.size} tarefas (demoram >50% do previsto).",
+                method = InferenceMethod.CALIBRATED,
+                confidence = Confidence.CALIBRATED,
+                supportingFactIds = emptyList()
+            ))
         }
 
         return inferences
@@ -97,7 +123,7 @@ class RecommendationRules(private val timeProvider: TimeProvider) {
         val completedTasks = tasks.filter { it.state == TaskState.DONE }
         val timeSpent = completedTasks.sumOf { it.actualDurationMinutes }
         val timeEstimated = completedTasks.sumOf { it.estimatedEffortMinutes ?: 0 }
-        if (timeEstimated > 0 && timeSpent > timeEstimated * 1.3) {
+        if (timeEstimated > 0 && timeSpent > timeEstimated * 1.3 && completedTasks.isNotEmpty()) {
             suggestions.add(Suggestion(
                 statement = "Recalibrar as tuas estimativas",
                 why = "Tens demorado em média ${timeSpent / completedTasks.size} min em vez de ${timeEstimated / completedTasks.size} min.",

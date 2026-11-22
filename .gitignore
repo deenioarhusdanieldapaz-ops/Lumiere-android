@@ -32,3 +32,5 @@ release-keystore-jks.zip
 *.p12
 keystore.properties
 *.7z
+termux-mcp/
+lum_audit_dump.txt
