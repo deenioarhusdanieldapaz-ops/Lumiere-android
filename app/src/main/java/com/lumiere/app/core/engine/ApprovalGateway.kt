@@ -38,6 +38,7 @@ interface ApprovalStore {
     suspend fun get(requestId: String): Result<ApprovalRequest?>
     suspend fun saveDecision(decision: ApprovalDecision): Result<Unit>
     suspend fun getDecision(approvalId: String): Result<ApprovalDecision?>
+    suspend fun getAllDecisions(): Result<List<ApprovalDecision>>
 }
 
 class ApprovalGateway(
@@ -71,6 +72,8 @@ class ApprovalGateway(
 
     suspend fun recordDecision(decision: ApprovalDecision): Result<Unit> =
         store.saveDecision(decision)
+
+    suspend fun getAllDecisions(): Result<List<ApprovalDecision>> = store.getAllDecisions()
 
     suspend fun isApproved(approvalId: String): Result<Boolean> = runCatching {
         val request = store.get(approvalId).getOrThrow() ?: return@runCatching false

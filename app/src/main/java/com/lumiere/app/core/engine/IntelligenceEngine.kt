@@ -107,6 +107,8 @@ class IntelligenceEngine(
         }
     }
 
+    suspend fun getAllDecisions(): Result<List<ApprovalDecision>> = approvalGateway.getAllDecisions()
+
     suspend fun rejectSuggestion(suggestion: Suggestion): Result<Unit> = runCatching {
         val req = approvalGateway.request(suggestion).getOrThrow()
         val decision = ApprovalDecision(req.id, ApprovalDecisionKind.REJECTED, "user", timeProvider.currentTimeMillis())

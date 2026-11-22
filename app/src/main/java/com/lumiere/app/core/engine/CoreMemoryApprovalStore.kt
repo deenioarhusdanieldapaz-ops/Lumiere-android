@@ -47,6 +47,12 @@ class CoreMemoryApprovalStore(
         jsonToDecision(JSONObject(mem.value))
     }
 
+    override suspend fun getAllDecisions(): Result<List<ApprovalDecision>> = runCatching {
+        memoryDao.getAllDecisions().mapNotNull { mem ->
+            try { jsonToDecision(JSONObject(mem.value)) } catch (e: Exception) { null }
+        }
+    }
+
     private fun isExpired(mem: CoreMemory): Boolean {
         val exp = mem.expiresAt ?: return false
         return exp < System.currentTimeMillis()

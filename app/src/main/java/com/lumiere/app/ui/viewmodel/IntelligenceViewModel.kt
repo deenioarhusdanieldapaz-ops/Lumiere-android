@@ -37,6 +37,9 @@ class IntelligenceViewModel(
     private val _lifeAreas = MutableStateFlow<List<LifeAreaProgress>>(emptyList())
     val lifeAreas: StateFlow<List<LifeAreaProgress>> = _lifeAreas.asStateFlow()
 
+    private val _history = MutableStateFlow<List<com.lumiere.app.core.engine.ApprovalDecision>>(emptyList())
+    val history: StateFlow<List<com.lumiere.app.core.engine.ApprovalDecision>> = _history.asStateFlow()
+
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
@@ -50,6 +53,7 @@ class IntelligenceViewModel(
                 _conflicts.value = engine.detectConflicts().getOrElse { emptyList() }
                 _focusTrend.value = computeFocusTrend()
                 _lifeAreas.value = computeLifeAreas()
+                _history.value = engine.getAllDecisions().getOrElse { emptyList() }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

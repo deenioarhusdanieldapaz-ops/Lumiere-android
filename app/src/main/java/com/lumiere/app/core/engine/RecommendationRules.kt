@@ -2,6 +2,7 @@ package com.lumiere.app.core.engine
 
 import com.lumiere.app.core.model.*
 import com.lumiere.app.core.time.TimeProvider
+import java.util.Calendar
 
 class RecommendationRules(private val timeProvider: TimeProvider) {
     private val dayMs = 86_400_000L
@@ -18,7 +19,6 @@ class RecommendationRules(private val timeProvider: TimeProvider) {
 
     fun buildInferences(items: List<Schedulable>, facts: List<Fact>): List<Inference> {
         val inferences = mutableListOf<Inference>()
-        
         val highEnergyItems = items.count { it.energyCost >= 3 }
         if (highEnergyItems > 2) {
             inferences.add(Inference(
@@ -28,7 +28,6 @@ class RecommendationRules(private val timeProvider: TimeProvider) {
                 supportingFactIds = emptyList()
             ))
         }
-
         return inferences
     }
 
@@ -36,14 +35,59 @@ class RecommendationRules(private val timeProvider: TimeProvider) {
         val now = timeProvider.currentTimeMillis()
         val suggestions = mutableListOf<Suggestion>()
 
-        // Regra 1: Aliviar Sobrecarga (Se um dia tiver mais de 8h)
+        // 1. Resolver Prazos Ultrapassados (STRICT_VIOLATION)
+        val overdueTasks = items.filter { it.moduleId == "M01_TASKS" && it.startTimeMillis != null && it.startTimeMillis < now }
+        overdueTasks.forEach { task ->
+            suggestions.add(Suggestion(
+                statement = "Reagendar a tarefa atrasada '${task.title}' para amanhã",
+                why = "Esta tarefa já ultrapassou o prazo definido.",
+                impactDescription = "Remove o aviso de atraso e dá-te um novo foco.",
+                approvalClass = ApprovalClass.A2_LOW_IMPACT,
+                targetModules = setOf(task.moduleId),
+                impact = Impact.LOW,
+                alternatives = listOf("Concluir hoje", "Ignorar"),
+                reversibility = Reversibility.REVERSIBLE,
+                expiresAtMillis = now + dayMs,
+                action = SuggestionAction.DeferItem(task.id, task.moduleId, 1)
+            ))
+        }
+
+        // 2. Resolver Cruzamento de Módulos (TEMPORAL_OVERLAP)
+        val scheduledItems = items.filter { it.startTimeMillis != null }
+        scheduledItems.forEachIndexed { i, itemA ->
+            for (j in i + 1 until scheduledItems.size) {
+                val itemB = scheduledItems[j]
+                val diffMins = Math.abs(itemA.startTimeMillis!! - itemB.startTimeMillis!!) / 60_000
+                
+                if (diffMins < 30 && itemA.moduleId != itemB.moduleId) {
+                    val habit = if (itemA.moduleId == "M02_HABITS") itemA else if (itemB.moduleId == "M02_HABITS") itemB else null
+                    if (habit != null) {
+                        val cal = Calendar.getInstance()
+                        cal.timeInMillis = habit.startTimeMillis!!
+                        cal.add(Calendar.HOUR_OF_DAY, 2) // Move o hábito 2 horas para a frente
+                        suggestions.add(Suggestion(
+                            statement = "Mudar o horário do hábito '${habit.title}'",
+                            why = "Este hábito está a colidir com uma tarefa de outro módulo.",
+                            impactDescription = "Evita interrupções e conflitos de agenda.",
+                            approvalClass = ApprovalClass.A3_RELEVANT,
+                            targetModules = setOf(habit.moduleId),
+                            impact = Impact.MEDIUM,
+                            alternatives = listOf("Manter", "Mover tarefa"),
+                            reversibility = Reversibility.REVERSIBLE,
+                            expiresAtMillis = now + dayMs,
+                            action = SuggestionAction.RescheduleItem(habit.id, habit.moduleId, cal.timeInMillis)
+                        ))
+                    }
+                }
+            }
+        }
+
+        // 3. Resolver Sobrecarga Diária
         val overloadedDays = items.filter { it.startTimeMillis != null }.groupBy { it.startTimeMillis!! / dayMs }
         overloadedDays.forEach { (_, dayItems) ->
             if (dayItems.sumOf { it.durationMinutes ?: 0 } > 480) {
-                // Encontra a tarefa (M01) menos prioritária ou o hábito (M02) mais curto
                 val itemToMove = dayItems.filter { it.moduleId == "M01_TASKS" }.minByOrNull { it.priority }
                     ?: dayItems.minByOrNull { it.durationMinutes ?: 0 }
-                    
                 if (itemToMove != null) {
                     suggestions.add(Suggestion(
                         statement = "Aliviar a carga do dia movendo '${itemToMove.title}'",
@@ -61,26 +105,7 @@ class RecommendationRules(private val timeProvider: TimeProvider) {
             }
         }
 
-        // Regra 2: Conflito de Alta Energia
-        val highEnergyConflicts = items.filter { it.energyCost >= 3 && it.startTimeMillis != null }
-        if (highEnergyConflicts.size >= 2) {
-            val habitToShorten = highEnergyConflicts.firstOrNull { it.moduleId == "M02_HABITS" }
-            if (habitToShorten != null) {
-                suggestions.add(Suggestion(
-                    statement = "Encurtar o hábito '${habitToShorten.title}' hoje",
-                    why = "Tens várias tarefas de alta energia hoje e este hábito também desgasta.",
-                    impactDescription = "Poupa energia mental para as tarefas críticas.",
-                    approvalClass = ApprovalClass.A2_LOW_IMPACT,
-                    targetModules = setOf(habitToShorten.moduleId),
-                    impact = Impact.MEDIUM,
-                    alternatives = listOf("Manter", "Mudar para amanhã"),
-                    reversibility = Reversibility.REVERSIBLE,
-                    expiresAtMillis = now + dayMs,
-                    action = SuggestionAction.ShortenDuration(habitToShorten.id, habitToShorten.moduleId, 15)
-                ))
-            }
-        }
-
-        return suggestions.shuffled().take(5)
+        // Remover duplicados mantendo apenas 5
+        return suggestions.distinctBy { it.statement }.shuffled().take(5)
     }
 }

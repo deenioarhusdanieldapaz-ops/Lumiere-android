@@ -31,6 +31,7 @@ import com.lumiere.app.ui.viewmodel.IntelligenceViewModel
 fun ApprovalsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit) {
     var selectedTab by remember { mutableIntStateOf(0) }
     val recommendation by viewModel.recommendation.collectAsStateWithLifecycle()
+    val history by viewModel.history.collectAsStateWithLifecycle()
     val suggestions = recommendation?.suggestions ?: emptyList()
 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).verticalScroll(rememberScrollState())) {
@@ -66,8 +67,29 @@ fun ApprovalsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit) {
                 }
             }
         } else {
-            Box(Modifier.fillMaxWidth().padding(LumiereSpacing.L), contentAlignment = Alignment.Center) {
-                Text("As decisões históricas aparecerão aqui.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (history.isEmpty()) {
+                Box(Modifier.fillMaxWidth().padding(LumiereSpacing.L), contentAlignment = Alignment.Center) {
+                    Text("Ainda não tomaste decisões.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            } else {
+                Column(Modifier.padding(horizontal = LumiereSpacing.M), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    history.forEach { dec ->
+                        Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+                            Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    if (dec.decision.name == "APPROVED") Icons.Default.CheckCircle else Icons.Default.Cancel,
+                                    null,
+                                    tint = if (dec.decision.name == "APPROVED") Color(0xFF4CAF50) else Color.Red
+                                )
+                                Spacer(Modifier.width(12.dp))
+                                Column {
+                                    Text(dec.decision.name, fontWeight = FontWeight.Bold)
+                                    Text("Decidido em: ${java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(java.util.Date(dec.decidedAtMillis))}", style = MaterialTheme.typography.bodySmall)
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
         Spacer(Modifier.height(100.dp))
