@@ -20,13 +20,20 @@ class IntelligenceEngine(
     private val taskDao: TaskDao,
     private val habitDao: HabitDao
 ) {
+    // Agrega os dados de TODOS os módulos num só sítio
+    private suspend fun getContext(): List<Schedulable> {
+        val tasks = taskContract.getActiveTasks(14).getOrElse { emptyList() }
+        val habits = habitContract.getActiveHabits().getOrElse { emptyList() }
+        return tasks + habits
+    }
+
     suspend fun analyzeWeek(): Result<Recommendation> = runCatching {
         val now = timeProvider.currentTimeMillis()
-        val tasks = taskContract.getActiveTasks(windowDays = 14).getOrThrow()
-        val habits = habitContract.getActiveHabits().getOrThrow()
-        val facts = rules.buildFacts(tasks, habits)
-        val inferences = rules.buildInferences(tasks, habits, facts)
-        val suggestions = rules.buildSuggestions(tasks, habits, inferences)
+        val context = getContext()
+        
+        val facts = rules.buildFacts(context)
+        val inferences = rules.buildInferences(context, facts)
+        val suggestions = rules.buildSuggestions(context, inferences)
         
         memory.put("last_analysis_at", now.toString(), MemoryType.SESSION, Sensitivity.NORMAL, 2 * 3_600_000L)
         
@@ -36,16 +43,15 @@ class IntelligenceEngine(
             facts = facts,
             inferences = inferences,
             suggestions = suggestions,
-            affectedModules = setOf("tasks", "habits"),
+            affectedModules = context.map { it.moduleId }.toSet(),
             createdAtMillis = now
         )
     }
 
     suspend fun detectConflicts(): Result<List<TemporalConflict>> = runCatching {
-        val tasks = taskContract.getActiveTasks(windowDays = 14).getOrThrow()
-        val habits = habitContract.getActiveHabits().getOrThrow()
-        val facts = rules.buildFacts(tasks, habits)
-        strictChecker.detect(tasks, habits, facts)
+        val context = getContext()
+        val facts = rules.buildFacts(context)
+        strictChecker.detect(context, facts)
     }
 
     suspend fun approveSuggestion(suggestion: Suggestion): Result<Unit> = runCatching {
@@ -53,29 +59,51 @@ class IntelligenceEngine(
         val decision = ApprovalDecision(req.id, ApprovalDecisionKind.APPROVED, "user", timeProvider.currentTimeMillis())
         approvalGateway.recordDecision(decision).getOrThrow()
 
+        // Executa a Ação Genérica
         when (val act = suggestion.action) {
-            is SuggestionAction.DeferTask -> {
-                val id = act.taskId.toLongOrNull()
-                if (id != null) {
-                    val t = taskDao.getTaskById(id)
-                    if (t != null) {
-                        val newDate = (t.dueDate ?: timeProvider.currentTimeMillis()) + (act.days * 86_400_000L)
-                        taskDao.updateTask(t.copy(dueDate = newDate, updatedAt = timeProvider.currentTimeMillis()))
+            is SuggestionAction.DeferItem -> {
+                if (act.moduleId == "M01_TASKS") {
+                    val id = act.itemId.toLongOrNull()
+                    if (id != null) {
+                        val t = taskDao.getTaskById(id)
+                        if (t != null) {
+                            val newDate = (t.dueDate ?: timeProvider.currentTimeMillis()) + (act.days * 86_400_000L)
+                            taskDao.updateTask(t.copy(dueDate = newDate, updatedAt = timeProvider.currentTimeMillis()))
+                        }
+                    }
+                }
+                // No futuro: else if (act.moduleId == "M06_FINANCES") ...
+            }
+            is SuggestionAction.RescheduleItem -> {
+                if (act.moduleId == "M02_HABITS") {
+                    val id = act.itemId.toLongOrNull()
+                    if (id != null) {
+                        val h = habitDao.getHabitById(id)
+                        if (h != null) {
+                            val cal = java.util.Calendar.getInstance()
+                            cal.timeInMillis = act.newTimeMillis
+                            val newTime = String.format("%02d:%02d", cal.get(java.util.Calendar.HOUR_OF_DAY), cal.get(java.util.Calendar.MINUTE))
+                            habitDao.updateHabit(h.copy(preferredTime = newTime))
+                        }
                     }
                 }
             }
-            is SuggestionAction.RescheduleHabit -> {
-                val id = act.habitId.toLongOrNull()
-                if (id != null) {
-                    val h = habitDao.getHabitById(id)
-                    if (h != null) habitDao.updateHabit(h.copy(preferredTime = act.newTime))
+            is SuggestionAction.ShortenDuration -> {
+                if (act.moduleId == "M02_HABITS") {
+                    val id = act.itemId.toLongOrNull()
+                    if (id != null) {
+                        val h = habitDao.getHabitById(id)
+                        if (h != null) habitDao.updateHabit(h.copy(durationMinutes = act.newDurationMinutes))
+                    }
                 }
             }
-            is SuggestionAction.AdjustEstimate -> {
-                val id = act.taskId.toLongOrNull()
-                if (id != null) {
-                    val t = taskDao.getTaskById(id)
-                    if (t != null) taskDao.updateTask(t.copy(estimatedDurationMinutes = act.newEstimateMinutes, updatedAt = timeProvider.currentTimeMillis()))
+            is SuggestionAction.ChangeFrequency -> {
+                if (act.moduleId == "M02_HABITS") {
+                    val id = act.itemId.toLongOrNull()
+                    if (id != null) {
+                        val h = habitDao.getHabitById(id)
+                        if (h != null) habitDao.updateHabit(h.copy(frequencyType = act.newFrequency))
+                    }
                 }
             }
             null -> {}

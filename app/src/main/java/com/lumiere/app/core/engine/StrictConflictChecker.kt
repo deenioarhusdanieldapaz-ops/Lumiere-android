@@ -1,15 +1,12 @@
 package com.lumiere.app.core.engine
 
-import com.lumiere.app.core.contract.HabitSnapshot
-import com.lumiere.app.core.contract.TaskSnapshot
-import com.lumiere.app.core.contract.TaskState
 import com.lumiere.app.core.model.Fact
+import com.lumiere.app.core.model.Schedulable
 import com.lumiere.app.core.time.TimeProvider
-import java.util.Calendar
 import java.util.UUID
 
-enum class ConflictKind { TEMPORAL_OVERLAP, DEPENDENCY_BLOCK, CAPACITY_EXCEEDED_DAILY, CAPACITY_EXCEEDED_WEEKLY, STRICT_VIOLATION, HABIT_CLASH }
-enum class ResolutionStatus { UNRESOLVED, RESOLVED_BY_USER, RESOLVED_BY_EXCEPTION, NOT_CONFIRMED }
+enum class ConflictKind { TEMPORAL_OVERLAP, CAPACITY_EXCEEDED_DAILY, CAPACITY_EXCEEDED_WEEKLY, STRICT_VIOLATION }
+enum class ResolutionStatus { UNRESOLVED, RESOLVED_BY_USER, NOT_CONFIRMED }
 
 data class TemporalConflict(
     val id: String = UUID.randomUUID().toString(),
@@ -28,55 +25,69 @@ class StrictConflictChecker(private val timeProvider: TimeProvider) {
         const val DAILY_CAPACITY_MINUTES = 8 * 60
     }
 
-    fun detect(tasks: List<TaskSnapshot>, habits: List<HabitSnapshot>, facts: List<Fact>): List<TemporalConflict> {
+    // Recebe APENAS List<Schedulable>, não sabe se é Tarefa ou Hábito!
+    fun detect(items: List<Schedulable>, facts: List<Fact>): List<TemporalConflict> {
         val out = mutableListOf<TemporalConflict>()
         val now = timeProvider.currentTimeMillis()
         val dayMs = 86_400_000L
-        val activeTasks = tasks.filter { it.state == TaskState.ACTIVE }
 
-        // 1. Capacidade Semanal e Diária
-        val totalMin = activeTasks.sumOf { (it.estimatedEffortMinutes ?: 0).toLong() }
+        // 1. Capacidade Total Semanal (Tarefas + Hábitos)
+        val totalMin = items.sumOf { (it.durationMinutes ?: 0).toLong() }
         if (totalMin > WEEKLY_CAPACITY_MINUTES) {
-            out.add(TemporalConflict(kind = ConflictKind.CAPACITY_EXCEEDED_WEEKLY, severity = 3, title = "Semana Sobrecarregada", details = "Excede a capacidade semanal em ${totalMin - WEEKLY_CAPACITY_MINUTES} min.", involvedRecordIds = activeTasks.map { it.id }))
+            out.add(TemporalConflict(
+                kind = ConflictKind.CAPACITY_EXCEEDED_WEEKLY, 
+                severity = 3, 
+                title = "Semana Sobrecarregada", 
+                details = "Tens ${totalMin / 60}h de compromissos esta semana. Excede o limite de 40h.", 
+                involvedRecordIds = items.map { it.id }
+            ))
         }
 
-        activeTasks.filter { it.deadlineMillis != null }.groupBy { it.deadlineMillis!! / dayMs }.forEach { (_, dayTasks) ->
-            val dailyMin = dayTasks.sumOf { it.estimatedEffortMinutes ?: 0 }
+        // 2. Capacidade Total Diária
+        items.filter { it.startTimeMillis != null }.groupBy { it.startTimeMillis!! / dayMs }.forEach { (_, dayItems) ->
+            val dailyMin = dayItems.sumOf { it.durationMinutes ?: 0 }
             if (dailyMin > DAILY_CAPACITY_MINUTES) {
-                out.add(TemporalConflict(kind = ConflictKind.CAPACITY_EXCEEDED_DAILY, severity = 2, title = "Dia Sobrecarregado", details = "Tens mais de 8h de esforço num único dia.", involvedRecordIds = dayTasks.map { it.id }))
+                out.add(TemporalConflict(
+                    kind = ConflictKind.CAPACITY_EXCEEDED_DAILY, 
+                    severity = 2, 
+                    title = "Dia Sobrecarregado", 
+                    details = "Tens ${dailyMin / 60}h de esforço num único dia (Limite: 8h).", 
+                    involvedRecordIds = dayItems.map { it.id }
+                ))
             }
         }
 
-        // 2. Prazos Ultrapassados
-        activeTasks.filter { it.deadlineMillis != null && it.deadlineMillis < now }.forEach { t ->
-            val daysLate = (now - t.deadlineMillis!!) / dayMs
-            out.add(TemporalConflict(kind = ConflictKind.STRICT_VIOLATION, severity = if (daysLate > 3) 3 else 2, title = "Prazo Ultrapassado", details = "'${t.titleShort}' está atrasada há $daysLate dia(s).", involvedRecordIds = listOf(t.id)))
-        }
-
-        // 3. Colisão Intra-Hábitos
-        habits.filter { it.preferredTime != null }.groupBy { it.preferredTime }.forEach { (time, habitList) ->
-            if (habitList.size > 1) {
-                val names = habitList.joinToString(" e ") { "'${it.nameShort}'" }
-                out.add(TemporalConflict(kind = ConflictKind.HABIT_CLASH, severity = 1, title = "Colisão de Hábitos", details = "$names estão agendados para as $time.", involvedRecordIds = habitList.map { it.id }))
-            }
-        }
-
-        // 4. O CROSS-MODULE (Tarefas vs Hábitos)
-        val calendar = Calendar.getInstance()
-        activeTasks.filter { it.deadlineMillis != null }.forEach { task ->
-            calendar.timeInMillis = task.deadlineMillis!!
-            val taskHour = calendar.get(Calendar.HOUR_OF_DAY)
-            
-            habits.filter { it.preferredTime != null }.forEach { habit ->
-                val habitHour = habit.preferredTime!!.take(2).toIntOrNull() ?: -1
-                if (taskHour == habitHour) {
-                    out.add(TemporalConflict(
-                        kind = ConflictKind.TEMPORAL_OVERLAP,
-                        severity = 3,
-                        title = "Cruzamento de Módulos",
-                        details = "A tarefa '${task.titleShort}' coincide com o hábito '${habit.nameShort}' por volta das ${habitHour}h.",
-                        involvedRecordIds = listOf(task.id, habit.id)
-                    ))
+        // 3. Colisão de Horários e Energia (O Verdadeiro Cross-Module)
+        val scheduledItems = items.filter { it.startTimeMillis != null }
+        scheduledItems.forEachIndexed { i, itemA ->
+            for (j in i + 1 until scheduledItems.size) {
+                val itemB = scheduledItems[j]
+                
+                // Diferença de horário em minutos
+                val diffMins = Math.abs(itemA.startTimeMillis!! - itemB.startTimeMillis!!) / 60_000
+                
+                // Se começam com menos de 30min de diferença, há sobreposição
+                if (diffMins < 30) {
+                    val combinedEnergy = itemA.energyCost + itemB.energyCost
+                    val isCrossModule = itemA.moduleId != itemB.moduleId
+                    
+                    if (combinedEnergy >= 5) { // Alta fadiga
+                        out.add(TemporalConflict(
+                            kind = ConflictKind.TEMPORAL_OVERLAP, 
+                            severity = 3, 
+                            title = if (isCrossModule) "Fadiga Cross-Module" else "Sobreposição de Alta Energia", 
+                            details = "'${itemA.title}' e '${itemB.title}' exigem demasiada energia ao mesmo tempo.", 
+                            involvedRecordIds = listOf(itemA.id, itemB.id)
+                        ))
+                    } else if (isCrossModule) {
+                         out.add(TemporalConflict(
+                            kind = ConflictKind.TEMPORAL_OVERLAP, 
+                            severity = 2, 
+                            title = "Cruzamento de Módulos", 
+                            details = "'${itemA.title}' (${itemA.moduleId}) coincide com '${itemB.title}' (${itemB.moduleId}).", 
+                            involvedRecordIds = listOf(itemA.id, itemB.id)
+                        ))
+                    }
                 }
             }
         }
