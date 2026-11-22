@@ -1,5 +1,11 @@
 package com.lumiere.app
 
+
+import com.lumiere.app.core.engine.IntelligenceEngine
+import com.lumiere.app.core.engine.CoreMemoryApprovalStore
+import com.lumiere.app.core.contract.RoomTaskContract
+import com.lumiere.app.core.contract.RoomHabitContract
+import com.lumiere.app.core.time.SystemTimeProvider
 import com.lumiere.app.ui.viewmodel.IntelligenceViewModel
 
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -65,7 +71,14 @@ class MainActivity : ComponentActivity() {
     private val habitViewModel: HabitViewModel by viewModels { HabitViewModelFactory(habitRepository) }
     private val taskViewModel: TaskViewModel by viewModels { TaskViewModelFactory(repository) }
     private val notificationsViewModel: NotificationsViewModel by viewModels { viewModelFactory { initializer { NotificationsViewModel(notificationsRepository) } } }
-    private val intelligenceViewModel: IntelligenceViewModel by viewModels { viewModelFactory { initializer { IntelligenceViewModel(repository, habitRepository) } } }
+    private val intelligenceViewModel: IntelligenceViewModel by viewModels { viewModelFactory { initializer { IntelligenceViewModel(
+        IntelligenceEngine(
+            taskContract = RoomTaskContract(database.taskDao()),
+            habitContract = RoomHabitContract(database.habitDao()),
+            approvalStore = CoreMemoryApprovalStore(database.coreMemoryDao()),
+            timeProvider = SystemTimeProvider()
+        )
+    ) } } }
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
