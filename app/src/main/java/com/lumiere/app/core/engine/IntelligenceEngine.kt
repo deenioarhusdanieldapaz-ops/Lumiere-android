@@ -74,20 +74,30 @@ class IntelligenceEngine(
         )
         executeApproved(suggestion, decision).getOrThrow()
         
-        // NOVO: Executa a alteração real na base de dados
+        // NOVO: Executa a alteração real na base de dados (Lógica de Cascata)
         when (val act = suggestion.action) {
-            is SuggestionAction.RescheduleTask -> {
+            is SuggestionAction.DeferTask -> {
                 val id = act.taskId.toLongOrNull()
                 if (id != null) {
                     val t = taskDao.getTaskById(id)
-                    if (t != null) taskDao.updateTask(t.copy(dueDate = act.newDeadlineMillis, updatedAt = timeProvider.currentTimeMillis()))
+                    if (t != null) {
+                        val newDate = t.dueDate?.plus(act.days * 86_400_000L) ?: (timeProvider.currentTimeMillis() + act.days * 86_400_000L)
+                        taskDao.updateTask(t.copy(dueDate = newDate, updatedAt = timeProvider.currentTimeMillis()))
+                    }
                 }
             }
-            is SuggestionAction.ChangeHabitFrequency -> {
+            is SuggestionAction.RescheduleHabit -> {
                 val id = act.habitId.toLongOrNull()
                 if (id != null) {
                     val h = habitDao.getHabitById(id)
-                    if (h != null) habitDao.updateHabit(h.copy(frequencyType = act.newFrequencyType))
+                    if (h != null) habitDao.updateHabit(h.copy(preferredTime = act.newTime))
+                }
+            }
+            is SuggestionAction.AdjustEstimate -> {
+                val id = act.taskId.toLongOrNull()
+                if (id != null) {
+                    val t = taskDao.getTaskById(id)
+                    if (t != null) taskDao.updateTask(t.copy(estimatedDurationMinutes = act.newEstimateMinutes, updatedAt = timeProvider.currentTimeMillis()))
                 }
             }
             null -> {}

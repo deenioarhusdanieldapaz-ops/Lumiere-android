@@ -85,7 +85,9 @@ class MainActivity : ComponentActivity() {
             strictChecker = StrictConflictChecker(timeProvider),
             approvalGateway = ApprovalGateway(CoreMemoryApprovalStore(database.coreMemoryDao()), timeProvider),
             memory = CoreMemoryRepository(database.coreMemoryDao(), timeProvider),
-            timeProvider = timeProvider
+            timeProvider = timeProvider,
+            taskDao = database.taskDao(),
+            habitDao = database.habitDao()
         ),
         taskDao = database.taskDao()
     ) } } }

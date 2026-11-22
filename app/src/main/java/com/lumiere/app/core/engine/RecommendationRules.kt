@@ -71,20 +71,24 @@ class RecommendationRules(private val timeProvider: TimeProvider) {
         val urgentTasks = tasks.filter { it.state == TaskState.ACTIVE && it.deadlineMillis != null && it.deadlineMillis!! - now in 0..(3 * dayMs) && it.timeReservedMinutes == null }
         if (urgentTasks.size >= 2) {
             val names = urgentTasks.take(2).joinToString(", ") { "'${it.titleShort}'" }
+            // Ação: Adiar a tarefa com menor importância + urgência, ou a de maior estimativa
+            val taskToDefer = urgentTasks.minByOrNull { it.importance + it.urgency } ?: urgentTasks.maxByOrNull { it.estimatedEffortMinutes ?: 30 }
             suggestions.add(Suggestion(
                 statement = "Proteger tempo para ${urgentTasks.size} tarefas críticas",
                 why = "Faltam menos de 3 dias para o prazo de $names e nenhuma tem tempo reservado.",
                 impactDescription = "Reduz o risco de atraso em cerca de 70%.",
                 approvalClass = ApprovalClass.A3_RELEVANT, targetModules = setOf("tasks"),
                 impact = Impact.HIGH, alternatives = listOf("Reduzir âmbito", "Delegar"),
-                reversibility = Reversibility.REVERSIBLE, expiresAtMillis = now + dayMs
+                reversibility = Reversibility.REVERSIBLE, expiresAtMillis = now + dayMs,
+                action = taskToDefer?.let { SuggestionAction.DeferTask(it.id, 1) }
             ))
         }
 
         val overloadedCategory = tasks.filter { it.state == TaskState.ACTIVE && it.category != null }
             .groupBy { it.category }.filter { it.value.size > 3 }.keys.firstOrNull()
         if (overloadedCategory != null) {
-            val taskToMove = tasks.firstOrNull { it.category == overloadedCategory && it.state == TaskState.ACTIVE }
+            val taskToMove = tasks.filter { it.category == overloadedCategory && it.state == TaskState.ACTIVE }
+                .minByOrNull { it.importance + it.urgency } 
             suggestions.add(Suggestion(
                 statement = "Equilibrar a categoria '$overloadedCategory'",
                 why = "Tens demasiadas tarefas acumuladas nesta área e outras categorias estão paradas.",
@@ -92,7 +96,7 @@ class RecommendationRules(private val timeProvider: TimeProvider) {
                 approvalClass = ApprovalClass.A2_LOW_IMPACT, targetModules = setOf("tasks"),
                 impact = Impact.MEDIUM, alternatives = listOf("Pausar novas tarefas", "Focar numa por dia"),
                 reversibility = Reversibility.REVERSIBLE, expiresAtMillis = now + 3 * dayMs,
-                action = taskToMove?.let { SuggestionAction.RescheduleTask(it.id, now + 2 * dayMs) }
+                action = taskToMove?.let { SuggestionAction.DeferTask(it.id, 2) }
             ))
         }
 
@@ -101,6 +105,7 @@ class RecommendationRules(private val timeProvider: TimeProvider) {
             val names = habitRisk.take(2).joinToString(", ") { "'${it.nameShort}'" }
             val alt = if (habitRisk.first().preferredTime != null) "Mudar horário preferido" else "Definir dias fixos"
             val habitToChange = habitRisk.first()
+            val newTime = if (habitToChange.preferredTime != null) "13:00" else "08:00"
             suggestions.add(Suggestion(
                 statement = "Rever consistência de ${habitRisk.size} hábito(s)",
                 why = "Hábitos como $names tiveram poucos check-ins esta semana.",
@@ -108,7 +113,7 @@ class RecommendationRules(private val timeProvider: TimeProvider) {
                 approvalClass = ApprovalClass.A3_RELEVANT, targetModules = setOf("habits"),
                 impact = Impact.MEDIUM, alternatives = listOf(alt, "Pausar temporariamente"),
                 reversibility = Reversibility.REVERSIBLE, expiresAtMillis = now + 7 * dayMs,
-                action = SuggestionAction.ChangeHabitFrequency(habitToChange.id, "WEEKLY")
+                action = SuggestionAction.RescheduleHabit(habitToChange.id, newTime)
             ))
         }
 
