@@ -55,7 +55,7 @@ class RecommendationRules(private val timeProvider: TimeProvider) {
         if (recurringTasks.isNotEmpty()) {
             inferences.add(Inference(
                 statement = "As estimativas de tempo estão a falhar em ${recurringTasks.size} tarefas (demoram >50% do previsto).",
-                method = InferenceMethod.CALIBRATED,
+                method = InferenceMethod.RULE,
                 confidence = Confidence.CALIBRATED,
                 supportingFactIds = emptyList()
             ))
@@ -84,13 +84,15 @@ class RecommendationRules(private val timeProvider: TimeProvider) {
         val overloadedCategory = tasks.filter { it.state == TaskState.ACTIVE && it.category != null }
             .groupBy { it.category }.filter { it.value.size > 3 }.keys.firstOrNull()
         if (overloadedCategory != null) {
+            val taskToMove = tasks.firstOrNull { it.category == overloadedCategory && it.state == TaskState.ACTIVE }
             suggestions.add(Suggestion(
                 statement = "Equilibrar a categoria '$overloadedCategory'",
                 why = "Tens demasiadas tarefas acumuladas nesta área e outras categorias estão paradas.",
                 impactDescription = "Evita o esgotamento numa única área da tua vida.",
                 approvalClass = ApprovalClass.A2_LOW_IMPACT, targetModules = setOf("tasks"),
                 impact = Impact.MEDIUM, alternatives = listOf("Pausar novas tarefas", "Focar numa por dia"),
-                reversibility = Reversibility.REVERSIBLE, expiresAtMillis = now + 3 * dayMs
+                reversibility = Reversibility.REVERSIBLE, expiresAtMillis = now + 3 * dayMs,
+                action = taskToMove?.let { SuggestionAction.RescheduleTask(it.id, now + 2 * dayMs) }
             ))
         }
 
@@ -98,13 +100,15 @@ class RecommendationRules(private val timeProvider: TimeProvider) {
         if (habitRisk.isNotEmpty()) {
             val names = habitRisk.take(2).joinToString(", ") { "'${it.nameShort}'" }
             val alt = if (habitRisk.first().preferredTime != null) "Mudar horário preferido" else "Definir dias fixos"
+            val habitToChange = habitRisk.first()
             suggestions.add(Suggestion(
                 statement = "Rever consistência de ${habitRisk.size} hábito(s)",
                 why = "Hábitos como $names tiveram poucos check-ins esta semana.",
                 impactDescription = "Aumenta a consistência sem gerar culpa.",
                 approvalClass = ApprovalClass.A3_RELEVANT, targetModules = setOf("habits"),
                 impact = Impact.MEDIUM, alternatives = listOf(alt, "Pausar temporariamente"),
-                reversibility = Reversibility.REVERSIBLE, expiresAtMillis = now + 7 * dayMs
+                reversibility = Reversibility.REVERSIBLE, expiresAtMillis = now + 7 * dayMs,
+                action = SuggestionAction.ChangeHabitFrequency(habitToChange.id, "WEEKLY")
             ))
         }
 

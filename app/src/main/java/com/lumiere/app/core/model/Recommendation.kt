@@ -35,6 +35,11 @@ data class Inference(
     val supportingFactIds: List<String>
 )
 
+sealed interface SuggestionAction {
+    data class RescheduleTask(val taskId: String, val newDeadlineMillis: Long) : SuggestionAction
+    data class ChangeHabitFrequency(val habitId: String, val newFrequencyType: String) : SuggestionAction
+}
+
 data class Suggestion(
     val id: String = UUID.randomUUID().toString(),
     val statement: String,
@@ -45,7 +50,8 @@ data class Suggestion(
     val impact: Impact,
     val alternatives: List<String>,
     val reversibility: Reversibility,
-    val expiresAtMillis: Long?
+    val expiresAtMillis: Long?,
+    val action: SuggestionAction? = null
 )
 
 data class Recommendation(

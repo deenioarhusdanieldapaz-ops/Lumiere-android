@@ -6,6 +6,8 @@ import com.lumiere.app.core.memory.CoreMemoryRepository
 import com.lumiere.app.core.memory.MemoryType
 import com.lumiere.app.core.model.*
 import com.lumiere.app.core.time.TimeProvider
+import com.lumiere.app.data.local.dao.TaskDao
+import com.lumiere.app.data.local.dao.HabitDao
 
 class IntelligenceEngine(
     private val taskContract: TaskContract,
@@ -14,7 +16,9 @@ class IntelligenceEngine(
     private val strictChecker: StrictConflictChecker,
     private val approvalGateway: ApprovalGateway,
     private val memory: CoreMemoryRepository,
-    private val timeProvider: TimeProvider
+    private val timeProvider: TimeProvider,
+    private val taskDao: TaskDao,
+    private val habitDao: HabitDao
 ) {
 
     suspend fun analyzeWeek(): Result<Recommendation> = runCatching {
@@ -69,6 +73,25 @@ class IntelligenceEngine(
             decidedAtMillis = timeProvider.currentTimeMillis()
         )
         executeApproved(suggestion, decision).getOrThrow()
+        
+        // NOVO: Executa a alteração real na base de dados
+        when (val act = suggestion.action) {
+            is SuggestionAction.RescheduleTask -> {
+                val id = act.taskId.toLongOrNull()
+                if (id != null) {
+                    val t = taskDao.getTaskById(id)
+                    if (t != null) taskDao.updateTask(t.copy(dueDate = act.newDeadlineMillis, updatedAt = timeProvider.currentTimeMillis()))
+                }
+            }
+            is SuggestionAction.ChangeHabitFrequency -> {
+                val id = act.habitId.toLongOrNull()
+                if (id != null) {
+                    val h = habitDao.getHabitById(id)
+                    if (h != null) habitDao.updateHabit(h.copy(frequencyType = act.newFrequencyType))
+                }
+            }
+            null -> {}
+        }
     }
 
     suspend fun rejectSuggestion(suggestion: Suggestion): Result<Unit> = runCatching {
