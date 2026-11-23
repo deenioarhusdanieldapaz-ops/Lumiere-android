@@ -136,7 +136,7 @@ fun ApprovalsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit) {
                                 Spacer(Modifier.width(8.dp))
                                 Text(dateLabel, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                                 Spacer(Modifier.width(8.dp))
-                                HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+                                Divider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
                             }
                             items.forEach { dec -> DecisionRow(dec) }
                         }
