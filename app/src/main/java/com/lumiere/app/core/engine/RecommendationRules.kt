@@ -75,6 +75,9 @@ class RecommendationRules(private val timeProvider: TimeProvider) {
         habits.filter { it.successRate30d < 0.4f }.forEach { habit ->
             val currentDur = habit.durationMinutes ?: 30
             val newDur = maxOf(5, currentDur - 15)
+            if (currentDur <= 5 || newDur >= currentDur) {
+                return@forEach
+            }
             suggestions.add(Suggestion(
                 statement = "Encurtar '${habit.nameShort}' de ${currentDur}min para ${newDur}min",
                 why = "Este hábito tem uma taxa de sucesso de ${(habit.successRate30d * 100).toInt()}% nos últimos 30 dias.",
