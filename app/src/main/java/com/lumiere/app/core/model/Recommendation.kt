@@ -21,23 +21,25 @@ sealed interface FactSource {
 }
 
 data class Fact(
-    val id: String = UUID.randomUUID().toString(),
     val statement: String,
     val source: FactSource,
-    val sensitivity: Sensitivity = Sensitivity.NORMAL
+    val sensitivity: Sensitivity = Sensitivity.NORMAL,
+    val id: String = DeterministicIds.forFact(
+        statement = statement,
+        moduleId = (source as? FactSource.FromModule)?.moduleId ?: "unknown",
+        recordId = (source as? FactSource.FromModule)?.recordId ?: "unknown"
+    )
 )
 
 data class Inference(
-    val id: String = UUID.randomUUID().toString(),
     val statement: String,
     val method: InferenceMethod,
     val confidence: Confidence,
-    val supportingFactIds: List<String>
+    val supportingFactIds: List<String>,
+    val id: String = DeterministicIds.forInference(statement, method.name)
 )
 
-
 data class Suggestion(
-    val id: String = UUID.randomUUID().toString(),
     val statement: String,
     val why: String,
     val impactDescription: String,
@@ -47,7 +49,12 @@ data class Suggestion(
     val alternatives: List<String>,
     val reversibility: Reversibility,
     val expiresAtMillis: Long?,
-    val action: SuggestionAction? = null
+    val action: SuggestionAction? = null,
+    val id: String = DeterministicIds.forSuggestion(
+        statement = statement,
+        targetModules = targetModules,
+        actionKey = DeterministicIds.actionKey(action)
+    )
 )
 
 data class Recommendation(

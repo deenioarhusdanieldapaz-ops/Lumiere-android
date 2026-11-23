@@ -1,5 +1,7 @@
 package com.lumiere.app.core.engine
 
+import com.lumiere.app.core.contract.HabitFrequency
+import com.lumiere.app.core.contract.HabitSnapshot
 import com.lumiere.app.core.model.*
 import com.lumiere.app.core.time.TimeProvider
 import com.lumiere.app.core.time.TimeUtils
@@ -47,6 +49,7 @@ class RecommendationRules(private val timeProvider: TimeProvider) {
         val tz = timeProvider.timeZone()
         val suggestions = mutableListOf<Suggestion>()
 
+        // 1. Prazos Ultrapassados
         val overdueTasks = items.filter { item ->
             val deadline = item.deadlineMillis
             item.moduleId == "M01_TASKS" && deadline != null && deadline < now
@@ -67,6 +70,65 @@ class RecommendationRules(private val timeProvider: TimeProvider) {
             ))
         }
 
+        // 2. M2 — Hábitos com baixa adesão (ShortenDuration)
+        val habits = items.filterIsInstance<HabitSnapshot>()
+        habits.filter { it.successRate30d < 0.4f }.forEach { habit ->
+            val currentDur = habit.durationMinutes ?: 30
+            val newDur = maxOf(5, currentDur - 15)
+            suggestions.add(Suggestion(
+                statement = "Encurtar '${habit.nameShort}' de ${currentDur}min para ${newDur}min",
+                why = "Este hábito tem uma taxa de sucesso de ${(habit.successRate30d * 100).toInt()}% nos últimos 30 dias.",
+                impactDescription = "Reduz a fricção para aumentar a consistência.",
+                approvalClass = ApprovalClass.A3_RELEVANT,
+                targetModules = setOf("M02_HABITS"),
+                impact = Impact.MEDIUM,
+                alternatives = listOf("Manter", "Mudar frequência"),
+                reversibility = Reversibility.REVERSIBLE,
+                expiresAtMillis = now + dayMs,
+                action = SuggestionAction.ShortenDuration(habit.id, "M02_HABITS", newDur)
+            ))
+        }
+
+        // 3. M2 — Mudança de frequência para hábitos em falha crítica
+        habits.filter { it.successRate30d < 0.2f && it.frequency == HabitFrequency.DAILY }
+            .forEach { habit ->
+                suggestions.add(Suggestion(
+                    statement = "Mudar '${habit.nameShort}' de diário para semanal",
+                    why = "Taxa de sucesso de ${(habit.successRate30d * 100).toInt()}% é demasiado baixa para manter diário.",
+                    impactDescription = "Frequência mais realista aumenta a chance de criar o hábito.",
+                    approvalClass = ApprovalClass.A3_RELEVANT,
+                    targetModules = setOf("M02_HABITS"),
+                    impact = Impact.HIGH,
+                    alternatives = listOf("Manter diário", "Reduzir duração"),
+                    reversibility = Reversibility.REVERSIBLE,
+                    expiresAtMillis = now + dayMs,
+                    action = SuggestionAction.ChangeFrequency(habit.id, "M02_HABITS", "WEEKLY")
+                ))
+            }
+
+        // 4. R7 — Inferência de burnout gera sugestão concreta
+        val hasBurnoutRisk = inferences.any { it.statement.contains("Burnout") }
+        if (hasBurnoutRisk) {
+            val lowPriorityTasks = items.filter { it.moduleId == "M01_TASKS" }
+                .sortedBy { it.priority }
+                .take(3)
+            if (lowPriorityTasks.isNotEmpty()) {
+                suggestions.add(Suggestion(
+                    statement = "Aliviar carga semanal reagendando ${lowPriorityTasks.size} tarefa(s) de menor prioridade",
+                    why = "Detetado risco de burnout por excesso de itens de alta energia.",
+                    impactDescription = "Reduz a pressão da semana sem comprometer o essencial.",
+                    approvalClass = ApprovalClass.A3_RELEVANT,
+                    targetModules = setOf("M01_TASKS"),
+                    impact = Impact.HIGH,
+                    alternatives = listOf("Manter", "Adiar uma"),
+                    reversibility = Reversibility.REVERSIBLE,
+                    expiresAtMillis = now + dayMs,
+                    action = SuggestionAction.BatchDeferItems(lowPriorityTasks.map { it.id }, "M01_TASKS", 3)
+                ))
+            }
+        }
+
+        // 5. Cruzamento de Módulos
         val scheduledItems = items.filter { it.startTimeMillis != null }
         val habitsAlreadyScheduled = mutableSetOf<String>()
         for (i in scheduledItems.indices) {
@@ -101,6 +163,7 @@ class RecommendationRules(private val timeProvider: TimeProvider) {
             }
         }
 
+        // 6. Sobrecarga Diária
         val overloadedDays = items.filter { it.startTimeMillis != null }
             .groupBy { TimeUtils.dayKey(it.startTimeMillis!!, tz) }
         overloadedDays.forEach { (_, dayItems) ->
@@ -125,6 +188,9 @@ class RecommendationRules(private val timeProvider: TimeProvider) {
             }
         }
 
-        return suggestions.distinctBy { it.statement }.take(5)
+        // R3 — dedup robusto: só colapsa se (statement, modules, action) forem iguais
+        return suggestions
+            .distinctBy { Triple(it.statement, it.targetModules, DeterministicIds.actionKey(it.action)) }
+            .take(5)
     }
 }
