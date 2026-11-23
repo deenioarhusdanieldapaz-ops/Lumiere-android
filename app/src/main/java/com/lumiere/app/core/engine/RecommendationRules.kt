@@ -2,12 +2,12 @@ package com.lumiere.app.core.engine
 
 import com.lumiere.app.core.model.*
 import com.lumiere.app.core.time.TimeProvider
+import com.lumiere.app.core.time.TimeUtils
 import java.util.Calendar
 
 class RecommendationRules(private val timeProvider: TimeProvider) {
     private val dayMs = 86_400_000L
 
-    // Helper: evita duplicar a fórmula de overlap
     private fun overlaps(a: Schedulable, b: Schedulable): Boolean {
         val startA = a.startTimeMillis ?: return false
         val endA = startA + ((a.durationMinutes ?: 30) * 60_000L)
@@ -34,7 +34,9 @@ class RecommendationRules(private val timeProvider: TimeProvider) {
                 statement = "Tens $highEnergyItems itens de alta energia esta semana. Risco de Burnout.",
                 method = InferenceMethod.CORRELATION,
                 confidence = Confidence.CALIBRATED,
-                supportingFactIds = emptyList()
+                supportingFactIds = facts.filter { f ->
+                    items.any { it.id == (f.source as FactSource.FromModule).recordId && it.energyCost >= 3 }
+                }.map { it.id }
             ))
         }
         return inferences
@@ -42,9 +44,9 @@ class RecommendationRules(private val timeProvider: TimeProvider) {
 
     fun buildSuggestions(items: List<Schedulable>, inferences: List<Inference>): List<Suggestion> {
         val now = timeProvider.currentTimeMillis()
+        val tz = timeProvider.timeZone()
         val suggestions = mutableListOf<Suggestion>()
 
-        // 1. Prazos Ultrapassados (agrupados com BatchDeferItems)
         val overdueTasks = items.filter { item ->
             val deadline = item.deadlineMillis
             item.moduleId == "M01_TASKS" && deadline != null && deadline < now
@@ -65,9 +67,8 @@ class RecommendationRules(private val timeProvider: TimeProvider) {
             ))
         }
 
-        // 2. Cruzamento de Módulos (usa helper overlaps + evita duplicados por hábito)
         val scheduledItems = items.filter { it.startTimeMillis != null }
-        val habitsAlreadyScheduled = mutableSetOf<String>() // evita sugestões duplicadas para o mesmo hábito
+        val habitsAlreadyScheduled = mutableSetOf<String>()
         for (i in scheduledItems.indices) {
             for (j in i + 1 until scheduledItems.size) {
                 val itemA = scheduledItems[i]
@@ -75,11 +76,13 @@ class RecommendationRules(private val timeProvider: TimeProvider) {
                 if (itemA.moduleId == itemB.moduleId) continue
                 if (!overlaps(itemA, itemB)) continue
 
-                val habit = if (itemA.moduleId == "M02_HABITS") itemA else if (itemB.moduleId == "M02_HABITS") itemB else null
+                val habit = if (itemA.moduleId == "M02_HABITS") itemA
+                            else if (itemB.moduleId == "M02_HABITS") itemB
+                            else null
                 if (habit != null && habit.id !in habitsAlreadyScheduled) {
                     habitsAlreadyScheduled.add(habit.id)
                     val habitTime = habit.startTimeMillis ?: continue
-                    val cal = Calendar.getInstance()
+                    val cal = Calendar.getInstance(tz)
                     cal.timeInMillis = habitTime
                     cal.add(Calendar.HOUR_OF_DAY, 2)
                     suggestions.add(Suggestion(
@@ -98,17 +101,18 @@ class RecommendationRules(private val timeProvider: TimeProvider) {
             }
         }
 
-        // 3. Sobrecarga Diária
-        val overloadedDays = items.filter { it.startTimeMillis != null }.groupBy { (it.startTimeMillis ?: 0L) / dayMs }
+        val overloadedDays = items.filter { it.startTimeMillis != null }
+            .groupBy { TimeUtils.dayKey(it.startTimeMillis!!, tz) }
         overloadedDays.forEach { (_, dayItems) ->
             if (dayItems.sumOf { it.durationMinutes ?: 30 } > 480) {
-                val itemToMove = dayItems.filter { it.moduleId == "M01_TASKS" }.minByOrNull { it.priority }
+                val itemToMove = dayItems.filter { it.moduleId == "M01_TASKS" }
+                        .minByOrNull { it.priority }
                     ?: dayItems.minByOrNull { it.durationMinutes ?: 0 }
                 if (itemToMove != null) {
                     suggestions.add(Suggestion(
                         statement = "Aliviar a carga do dia movendo '${itemToMove.title}'",
                         why = "Este dia tem mais de 8h de compromissos entre módulos.",
-                        impactDescription = "Liberta cerca de ${itemToMove.durationMinutes} min para descanso.",
+                        impactDescription = "Liberta cerca de ${itemToMove.durationMinutes ?: 30} min para descanso.",
                         approvalClass = ApprovalClass.A3_RELEVANT,
                         targetModules = setOf(itemToMove.moduleId),
                         impact = Impact.HIGH,

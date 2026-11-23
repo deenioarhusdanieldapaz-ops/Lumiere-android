@@ -148,7 +148,7 @@ class IntelligenceEngine(
             val h = habitDao.getHabitById(id)
             if (h == null) false
             else {
-                val cal = Calendar.getInstance()
+                val cal = Calendar.getInstance(timeProvider.timeZone())
                 cal.timeInMillis = newTimeMillis
                 val newTime = String.format(Locale.ROOT, "%02d:%02d",
                     cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE))

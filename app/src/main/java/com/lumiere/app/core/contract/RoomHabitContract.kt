@@ -2,6 +2,7 @@ package com.lumiere.app.core.contract
 
 import com.lumiere.app.core.model.Sensitivity
 import com.lumiere.app.core.time.TimeProvider
+import com.lumiere.app.core.time.TimeUtils
 import com.lumiere.app.data.local.dao.HabitCheckInDao
 import com.lumiere.app.data.local.dao.HabitDao
 import kotlinx.coroutines.flow.first
@@ -64,9 +65,9 @@ class RoomHabitContract(
 
     private fun computeStreak(timestampsDesc: List<Long>, now: Long): Int {
         if (timestampsDesc.isEmpty()) return 0
-        val dayMs = 24L * 60 * 60 * 1000
-        val today = now / dayMs
-        val days = timestampsDesc.map { it / dayMs }.distinct().sortedDescending()
+        val tz = timeProvider.timeZone()
+        val today = TimeUtils.dayKey(now, tz)
+        val days = timestampsDesc.map { TimeUtils.dayKey(it, tz) }.distinct().sortedDescending()
         if (days.isEmpty() || days.first() < today - 1) return 0
         var streak = 1
         var expected = days.first() - 1
