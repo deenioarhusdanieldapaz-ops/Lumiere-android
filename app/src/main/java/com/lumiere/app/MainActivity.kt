@@ -72,8 +72,8 @@ class MainActivity : ComponentActivity() {
     private val repository by lazy { TaskRepository(database.taskDao(), database.subtaskDao(), database.projectDao(), database.taskHistoryDao()) }
     private val notificationsRepository by lazy { NotificationsRepository.fromContext(this) }
 
-    private val habitViewModel: HabitViewModel by viewModels { HabitViewModelFactory(habitRepository) }
-    private val taskViewModel: TaskViewModel by viewModels { TaskViewModelFactory(repository) }
+    private val habitViewModel: HabitViewModel by viewModels { HabitViewModelFactory(habitRepository, SystemTimeProvider()) }
+    private val taskViewModel: TaskViewModel by viewModels { TaskViewModelFactory(repository, SystemTimeProvider()) }
     private val notificationsViewModel: NotificationsViewModel by viewModels { viewModelFactory { initializer { NotificationsViewModel(notificationsRepository) } } }
     private val intelligenceViewModel: IntelligenceViewModel by viewModels { viewModelFactory { initializer {
         val timeProvider = SystemTimeProvider()

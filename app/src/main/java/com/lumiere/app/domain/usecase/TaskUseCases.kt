@@ -20,9 +20,9 @@ class UpdateTaskUseCase(private val repository: TaskRepository) {
     }
 }
 
-class CreateNextRecurringTaskUseCase(private val repository: TaskRepository) {
+class CreateNextRecurringTaskUseCase(private val repository: TaskRepository, private val timeProvider: com.lumiere.app.core.time.TimeProvider) {
     suspend operator fun invoke(task: Task) {
-        val baseDate = task.dueDate ?: System.currentTimeMillis()
+        val baseDate = timeProvider.currentTimeMillis() // Corrigido: usa 'hoje', não o prazo antigo
         val nextDate = when (task.recurrenceRule) {
             "DAILY" -> addDays(baseDate, 1)
             "WEEKLY" -> addDays(baseDate, 7)
@@ -73,13 +73,13 @@ class CreateNextRecurringTaskUseCase(private val repository: TaskRepository) {
     }
 }
 
-class ToggleTaskCompletionUseCase(private val repository: TaskRepository) {
-    private val createNext = CreateNextRecurringTaskUseCase(repository)
+class ToggleTaskCompletionUseCase(private val repository: TaskRepository, private val timeProvider: com.lumiere.app.core.time.TimeProvider) {
+    private val createNext = CreateNextRecurringTaskUseCase(repository, timeProvider)
 
     suspend operator fun invoke(task: Task) {
         val newStatus = if (task.isCompleted) 0 else 2
-        val newCompletedAt = if (newStatus == 2) System.currentTimeMillis() else null
-        repository.updateTask(task.copy(status = newStatus, completedAt = newCompletedAt, updatedAt = System.currentTimeMillis()))
+        val newCompletedAt = if (newStatus == 2) timeProvider.currentTimeMillis() else null
+        repository.updateTask(task.copy(status = newStatus, completedAt = newCompletedAt, updatedAt = timeProvider.currentTimeMillis()))
         repository.insertHistory(TaskHistory(taskId = task.id, action = if (newStatus == 2) "Concluída" else "Reaberta"))
         if (newStatus == 2 && task.recurrenceRule != null && task.recurrenceRule != "NONE") {
             createNext(task)

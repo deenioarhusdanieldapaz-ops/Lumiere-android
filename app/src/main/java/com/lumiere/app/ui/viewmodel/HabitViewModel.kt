@@ -6,76 +6,51 @@ import androidx.lifecycle.viewModelScope
 import com.lumiere.app.data.local.entity.*
 import com.lumiere.app.data.repository.HabitRepository
 import com.lumiere.app.domain.usecase.*
+import com.lumiere.app.core.time.TimeProvider
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import java.util.Calendar
 
-class HabitViewModel(private val repository: HabitRepository) : ViewModel() {
+class HabitViewModel(private val repository: HabitRepository, private val timeProvider: TimeProvider) : ViewModel() {
 
     val habits: StateFlow<List<Habit>> = repository.allHabits
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val allCheckIns: StateFlow<List<HabitCheckIn>> = repository.allCheckIns
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    private val addCheckInValueUC = AddCheckInValueUseCase(repository)
-    private val addFailureCheckInUC = AddFailureCheckInUseCase(repository)
-    private val getTodayValueUC = GetTodayValueForHabitUseCase()
-    private val deleteHabitUC = DeleteHabitUseCase(repository)
-    private val startTimerUC = StartHabitTimerUseCase(repository)
-    private val pauseTimerUC = PauseHabitTimerUseCase(repository)
-    private val completeTimerUC = CompleteHabitTimerUseCase(repository)
-    private val getWeeklyProgressUC = GetWeeklyProgressUseCase()
-    private val getIntervalStatusUC = GetIntervalStatusUseCase()
+    private val addCheckInValueUC = AddCheckInValueUseCase(repository, timeProvider)
+    private val addFailureCheckInUC = AddFailureCheckInUseCase(repository, timeProvider)
+    private val getTodayValueUC = GetTodayValueForHabitUseCase(timeProvider)
+    private val archiveHabitUC = ArchiveHabitUseCase(repository)
+    private val startTimerUC = StartHabitTimerUseCase(repository, timeProvider)
+    private val pauseTimerUC = PauseHabitTimerUseCase(repository, timeProvider)
+    private val completeTimerUC = CompleteHabitTimerUseCase(repository, timeProvider)
+    private val getWeeklyProgressUC = GetWeeklyProgressUseCase(timeProvider)
+    private val getIntervalStatusUC = GetIntervalStatusUseCase(timeProvider)
+    private val pauseHabitUC = PauseHabitUseCase(repository, timeProvider)
+    private val resumeHabitUC = ResumeHabitUseCase(repository, timeProvider)
+    private val calculateStreakUC = CalculateHabitStreakUseCase(timeProvider)
 
     fun addHabit(habit: Habit) { viewModelScope.launch { repository.insertHabit(habit) } }
-    fun deleteHabit(habit: Habit) { viewModelScope.launch { deleteHabitUC(habit) } }
+    fun archiveHabit(habit: Habit) { viewModelScope.launch { archiveHabitUC(habit) } }
     fun updateHabit(habit: Habit) { viewModelScope.launch { repository.updateHabit(habit) } }
     fun addCheckIn(checkIn: HabitCheckIn) { viewModelScope.launch { repository.insertCheckIn(checkIn) } }
 
     fun addCheckInValue(habitId: Long, currentValue: Int, targetValue: Int?) {
         viewModelScope.launch { addCheckInValueUC(habitId, currentValue, targetValue) }
     }
-
-    fun addFailureCheckIn(habitId: Long) {
-        viewModelScope.launch { addFailureCheckInUC(habitId) }
-    }
-
-    fun getTodayValueForHabit(habitId: Long, allCheckIns: List<HabitCheckIn>): Int {
-        return getTodayValueUC(habitId, allCheckIns)
-    }
-
+    fun addFailureCheckIn(habitId: Long) { viewModelScope.launch { addFailureCheckInUC(habitId) } }
+    fun getTodayValueForHabit(habitId: Long, allCheckIns: List<HabitCheckIn>): Int = getTodayValueUC(habitId, allCheckIns)
+    
     fun startTimer(habit: Habit) { viewModelScope.launch { startTimerUC(habit) } }
     fun pauseTimer(habit: Habit) { viewModelScope.launch { pauseTimerUC(habit) } }
     fun completeTimer(habit: Habit) { viewModelScope.launch { completeTimerUC(habit) } }
 
-    fun getWeeklyProgress(habit: Habit, allCheckIns: List<HabitCheckIn>): Pair<Int, Int> =
-        getWeeklyProgressUC(habit, allCheckIns)
+    fun getWeeklyProgress(habit: Habit, allCheckIns: List<HabitCheckIn>): Pair<Int, Int> = getWeeklyProgressUC(habit, allCheckIns)
+    fun getIntervalStatus(habit: Habit, allCheckIns: List<HabitCheckIn>): Pair<Int, Int> = getIntervalStatusUC(habit, allCheckIns)
 
-    fun getIntervalStatus(habit: Habit, allCheckIns: List<HabitCheckIn>): Pair<Int, Int> =
-        getIntervalStatusUC(habit, allCheckIns)
-
-    fun pauseHabit(habit: Habit) {
-        viewModelScope.launch {
-            repository.updateHabit(habit.copy(status = 1))
-            repository.insertException(
-                HabitException(
-                    habitId = habit.id,
-                    startDate = System.currentTimeMillis(),
-                    endDate = Long.MAX_VALUE,
-                    type = "PAUSE",
-                    reason = "Pausa manual"
-                )
-            )
-        }
-    }
-
-    fun resumeHabit(habit: Habit) {
-        viewModelScope.launch { repository.updateHabit(habit.copy(status = 0)) }
-    }
-
-    fun deleteCheckIn(checkIn: HabitCheckIn) {
-        viewModelScope.launch { repository.deleteCheckIn(checkIn) }
-    }
+    fun pauseHabit(habit: Habit) { viewModelScope.launch { pauseHabitUC(habit) } }
+    fun resumeHabit(habit: Habit) { viewModelScope.launch { resumeHabitUC(habit) } }
+    fun deleteCheckIn(checkIn: HabitCheckIn) { viewModelScope.launch { repository.deleteCheckIn(checkIn) } }
 
     fun getCheckInsForHabit(habitId: Long): StateFlow<List<HabitCheckIn>> = repository.getCheckIns(habitId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -84,74 +59,32 @@ class HabitViewModel(private val repository: HabitRepository) : ViewModel() {
 
     fun calculateStreak(habitId: Long): Int {
         val habit = habits.value.find { it.id == habitId } ?: return 0
-        val checkIns = allCheckIns.value.filter { it.habitId == habitId && it.type == "SUCCESS" }.sortedByDescending { it.timestamp }
-        if (checkIns.isEmpty()) return 0
-
-        var streak = 0
-        val cal = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
-        }
-        var currentDay = cal.timeInMillis
-        var foundAny = false
-
-        for (i in 0..365) {
-            val dayOfWeek = cal.get(Calendar.DAY_OF_WEEK)
-            val dayBit = when (dayOfWeek) {
-                Calendar.MONDAY -> 1; Calendar.TUESDAY -> 2
-                Calendar.WEDNESDAY -> 4; Calendar.THURSDAY -> 8
-                Calendar.FRIDAY -> 16; Calendar.SATURDAY -> 32
-                Calendar.SUNDAY -> 64; else -> 0
-            }
-            val isRestDay = (habit.restDays and dayBit) != 0
-            val isExpectedDay = (habit.weeklyDays and dayBit) != 0
-
-            val hasCheckInOnThisDay = checkIns.any {
-                val ciCal = Calendar.getInstance().apply { timeInMillis = it.timestamp }
-                val checkCal = Calendar.getInstance().apply { timeInMillis = currentDay }
-                ciCal.get(Calendar.YEAR) == checkCal.get(Calendar.YEAR) &&
-                ciCal.get(Calendar.DAY_OF_YEAR) == checkCal.get(Calendar.DAY_OF_YEAR)
-            }
-
-            if (isExpectedDay && !isRestDay) {
-                if (hasCheckInOnThisDay) { streak++; foundAny = true }
-                else if (i == 0) { /* hoje ainda pode ser feito */ }
-                else break
-            }
-            cal.add(Calendar.DAY_OF_YEAR, -1)
-            currentDay = cal.timeInMillis
-        }
-        return if (foundAny) streak else 0
+        return calculateStreakUC(habit, allCheckIns.value)
     }
 
-    // Streak global: maior streak entre todos os hábitos ativos
-    fun calculateGlobalStreak(): Int {
-        return habits.value.maxOfOrNull { habit -> calculateStreak(habit.id) } ?: 0
-    }
+    fun calculateGlobalStreak(): Int = habits.value.maxOfOrNull { calculateStreak(it.id) } ?: 0
 
-    // Novo cálculo de consistência (Aceita progresso parcial)
     fun calculateConsistency(): Int {
         if (habits.value.isEmpty()) return 0
         var totalProgress = 0.0
         val todayCheckIns = allCheckIns.value
+        val todayKey = com.lumiere.app.core.time.TimeUtils.dayKey(timeProvider.currentTimeMillis(), timeProvider.timeZone())
 
         habits.value.forEach { habit ->
             val kind = habit.kind()
-            val habitCheckInsToday = todayCheckIns.filter { 
-                it.habitId == habit.id && isSameDay(it.timestamp, System.currentTimeMillis()) 
+            val habitCheckInsToday = todayCheckIns.filter {
+                it.habitId == habit.id && com.lumiere.app.core.time.TimeUtils.dayKey(it.timestamp, timeProvider.timeZone()) == todayKey
             }
-            
+
             val progress = when (kind) {
                 HabitKind.BOOLEAN -> if (habitCheckInsToday.any { it.type == "SUCCESS" }) 1.0 else 0.0
                 HabitKind.QUANTITATIVE -> {
                     val current = habitCheckInsToday.maxByOrNull { it.timestamp }?.value ?: 0
-                    val target = habit.targetValue ?: 1
-                    (current.toDouble() / target).coerceAtMost(1.0)
+                    (current.toDouble() / (habit.targetValue ?: 1)).coerceAtMost(1.0)
                 }
                 HabitKind.DURATION -> {
                     val currentMin = habitCheckInsToday.maxByOrNull { it.timestamp }?.durationMinutes ?: 0
-                    val target = habit.durationMinutes ?: 1
-                    (currentMin.toDouble() / target).coerceAtMost(1.0)
+                    (currentMin.toDouble() / (habit.durationMinutes ?: 1)).coerceAtMost(1.0)
                 }
                 else -> if (habitCheckInsToday.any { it.type == "SUCCESS" }) 1.0 else 0.0
             }
@@ -159,20 +92,13 @@ class HabitViewModel(private val repository: HabitRepository) : ViewModel() {
         }
         return ((totalProgress / habits.value.size) * 100).toInt()
     }
-
-    private fun isSameDay(ts1: Long, ts2: Long): Boolean {
-        val cal1 = Calendar.getInstance().apply { timeInMillis = ts1 }
-        val cal2 = Calendar.getInstance().apply { timeInMillis = ts2 }
-        return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
-               cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR)
-    }
 }
 
-class HabitViewModelFactory(private val repository: HabitRepository) : ViewModelProvider.Factory {
+class HabitViewModelFactory(private val repository: HabitRepository, private val timeProvider: TimeProvider) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(HabitViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return HabitViewModel(repository) as T
+            return HabitViewModel(repository, timeProvider) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

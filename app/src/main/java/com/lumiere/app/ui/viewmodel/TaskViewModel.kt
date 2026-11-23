@@ -9,7 +9,7 @@ import com.lumiere.app.domain.usecase.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-class TaskViewModel(private val repository: TaskRepository) : ViewModel() {
+class TaskViewModel(private val repository: TaskRepository, private val timeProvider: com.lumiere.app.core.time.TimeProvider) : ViewModel() {
 
     // ===== Observáveis (iguais à versão anterior) =====
     val tasks: StateFlow<List<Task>> = repository.allTasks
@@ -27,7 +27,7 @@ class TaskViewModel(private val repository: TaskRepository) : ViewModel() {
     // ===== Use cases =====
     private val addTaskUC = AddTaskUseCase(repository)
     private val updateTaskUC = UpdateTaskUseCase(repository)
-    private val toggleCompletionUC = ToggleTaskCompletionUseCase(repository)
+    private val toggleCompletionUC = ToggleTaskCompletionUseCase(repository, timeProvider)
     private val cancelTaskUC = CancelTaskUseCase(repository)
     private val resumeTaskUC = ResumeTaskUseCase(repository)
     private val duplicateTaskUC = DuplicateTaskUseCase(repository)
@@ -81,11 +81,11 @@ class TaskViewModel(private val repository: TaskRepository) : ViewModel() {
     }
 }
 
-class TaskViewModelFactory(private val repository: TaskRepository) : ViewModelProvider.Factory {
+class TaskViewModelFactory(private val repository: TaskRepository, private val timeProvider: com.lumiere.app.core.time.TimeProvider) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(TaskViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return TaskViewModel(repository) as T
+            return TaskViewModel(repository, timeProvider) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
