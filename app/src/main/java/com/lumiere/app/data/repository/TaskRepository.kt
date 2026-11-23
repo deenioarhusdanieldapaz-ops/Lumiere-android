@@ -14,9 +14,9 @@ class TaskRepository(
     val allTasks: Flow<List<Task>> = taskDao.getAllActiveTasks()
     val allProjects: Flow<List<Project>> = projectDao.getAllProjects()
 
-    suspend fun insertTask(task: Task): Long = try { taskDao.insertTask(task) } catch (e: Exception) { LumiereLogger.e("TaskRepo", "Falha ao inserir tarefa", e); -1L }
-    suspend fun updateTask(task: Task) = try { taskDao.updateTask(task) } catch (e: Exception) { LumiereLogger.e("TaskRepo", "Falha ao atualizar tarefa", e) }
-    suspend fun deleteTask(task: Task) = try { taskDao.deleteTask(task) } catch (e: Exception) { LumiereLogger.e("TaskRepo", "Falha ao apagar tarefa", e) }
+    suspend fun insertTask(task: Task): Long = try { taskDao.insertTask(task) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { LumiereLogger.e("TaskRepo", "Falha ao inserir tarefa", e); -1L }
+    suspend fun updateTask(task: Task) = try { taskDao.updateTask(task) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { LumiereLogger.e("TaskRepo", "Falha ao atualizar tarefa", e) }
+    suspend fun deleteTask(task: Task) = try { taskDao.deleteTask(task) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { LumiereLogger.e("TaskRepo", "Falha ao apagar tarefa", e) }
 
     fun getSubtasks(taskId: Long) = subtaskDao.getSubtasksForTask(taskId)
     suspend fun insertSubtask(subtask: Subtask) = subtaskDao.insertSubtask(subtask)

@@ -1,5 +1,15 @@
 package com.lumiere.app
 
+
+import com.lumiere.app.core.engine.IntelligenceEngine
+import com.lumiere.app.core.engine.RecommendationRules
+import com.lumiere.app.core.engine.StrictConflictChecker
+import com.lumiere.app.core.engine.ApprovalGateway
+import com.lumiere.app.core.memory.CoreMemoryRepository
+import com.lumiere.app.core.engine.CoreMemoryApprovalStore
+import com.lumiere.app.core.contract.RoomTaskContract
+import com.lumiere.app.core.contract.RoomHabitContract
+import com.lumiere.app.core.time.SystemTimeProvider
 import com.lumiere.app.ui.viewmodel.IntelligenceViewModel
 
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -65,7 +75,22 @@ class MainActivity : ComponentActivity() {
     private val habitViewModel: HabitViewModel by viewModels { HabitViewModelFactory(habitRepository) }
     private val taskViewModel: TaskViewModel by viewModels { TaskViewModelFactory(repository) }
     private val notificationsViewModel: NotificationsViewModel by viewModels { viewModelFactory { initializer { NotificationsViewModel(notificationsRepository) } } }
-    private val intelligenceViewModel: IntelligenceViewModel by viewModels { viewModelFactory { initializer { IntelligenceViewModel(repository, habitRepository) } } }
+    private val intelligenceViewModel: IntelligenceViewModel by viewModels { viewModelFactory { initializer {
+        val timeProvider = SystemTimeProvider()
+        IntelligenceViewModel(
+        IntelligenceEngine(
+            taskContract = RoomTaskContract(database.taskDao(), timeProvider),
+            habitContract = RoomHabitContract(database.habitDao(), database.habitCheckInDao(), timeProvider),
+            rules = RecommendationRules(timeProvider),
+            strictChecker = StrictConflictChecker(timeProvider),
+            approvalGateway = ApprovalGateway(CoreMemoryApprovalStore(database.coreMemoryDao(), timeProvider), timeProvider),
+            memory = CoreMemoryRepository(database.coreMemoryDao(), timeProvider),
+            timeProvider = timeProvider,
+            taskDao = database.taskDao(),
+            habitDao = database.habitDao()
+        ),
+        taskDao = database.taskDao()
+    ) } } }
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -220,7 +245,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable(Screen.Approvals.route) {
-                            ApprovalsScreen(onBack = { navController.popBackStack() })
+                            ApprovalsScreen(viewModel = intelligenceViewModel, onBack = { navController.popBackStack() })
                         }
                         composable(Screen.GlobalSearch.route) {
                             GlobalSearchScreen(

@@ -6,13 +6,13 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface HabitDao {
-    @Query("SELECT * FROM habits WHERE status != 2 ORDER BY createdAt DESC")
+    @Query("SELECT * FROM habits WHERE status = 0 ORDER BY createdAt DESC")
     fun getAllActiveHabits(): Flow<List<Habit>>
 
     @Query("SELECT * FROM habits WHERE id = :id")
     suspend fun getHabitById(id: Long): Habit?
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertHabit(habit: Habit): Long
 
     @Update

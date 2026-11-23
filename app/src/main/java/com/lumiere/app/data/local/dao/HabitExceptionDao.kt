@@ -9,6 +9,6 @@ interface HabitExceptionDao {
     @Query("SELECT * FROM habit_exceptions WHERE habitId = :habitId ORDER BY startDate DESC")
     fun getExceptionsForHabit(habitId: Long): Flow<List<HabitException>>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertException(exception: HabitException): Long
 }
