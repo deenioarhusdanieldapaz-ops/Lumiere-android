@@ -79,7 +79,7 @@ class MainActivity : ComponentActivity() {
         val timeProvider = SystemTimeProvider()
         IntelligenceViewModel(
         IntelligenceEngine(
-            taskContract = RoomTaskContract(database.taskDao()),
+            taskContract = RoomTaskContract(database.taskDao(), timeProvider),
             habitContract = RoomHabitContract(database.habitDao(), database.habitCheckInDao(), timeProvider),
             rules = RecommendationRules(timeProvider),
             strictChecker = StrictConflictChecker(timeProvider),

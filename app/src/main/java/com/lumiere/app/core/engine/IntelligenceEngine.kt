@@ -22,8 +22,8 @@ class IntelligenceEngine(
     private val habitDao: HabitDao
 ) {
     private suspend fun getContext(): List<Schedulable> {
-        val tasks = taskContract.getActiveTasks(14).getOrElse { emptyList() }
-        val habits = habitContract.getActiveHabits().getOrElse { emptyList() }
+        val tasks = taskContract.getActiveTasks(14).getOrThrow()
+        val habits = habitContract.getActiveHabits().getOrThrow()
         return tasks + habits
     }
 
@@ -34,7 +34,7 @@ class IntelligenceEngine(
         val inferences = rules.buildInferences(context, facts)
         val suggestions = rules.buildSuggestions(context, inferences)
         
-        memory.put("last_analysis_at", now.toString(), MemoryType.SESSION, Sensitivity.NORMAL, 2 * 3_600_000L)
+        runCatching { memory.put("last_analysis_at", now.toString(), MemoryType.SESSION, Sensitivity.NORMAL, 2 * 3_600_000L) }
         
         Recommendation(
             kind = RecommendationKind.OPTIMIZATION,

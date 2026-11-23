@@ -30,7 +30,7 @@ class StrictConflictChecker(private val timeProvider: TimeProvider) {
         val now = timeProvider.currentTimeMillis()
         val dayMs = 86_400_000L
 
-        val totalMin = items.sumOf { (it.durationMinutes ?: 0).toLong() }
+        val totalMin = items.sumOf { (it.durationMinutes ?: 30).toLong() }
         if (totalMin > WEEKLY_CAPACITY_MINUTES) {
             out.add(TemporalConflict(
                 kind = ConflictKind.CAPACITY_EXCEEDED_WEEKLY,
@@ -42,7 +42,7 @@ class StrictConflictChecker(private val timeProvider: TimeProvider) {
         }
 
         items.filter { it.startTimeMillis != null }.groupBy { it.startTimeMillis!! / dayMs }.forEach { (_, dayItems) ->
-            val dailyMin = dayItems.sumOf { it.durationMinutes ?: 0 }
+            val dailyMin = dayItems.sumOf { it.durationMinutes ?: 30 }
             if (dailyMin > DAILY_CAPACITY_MINUTES) {
                 out.add(TemporalConflict(
                     kind = ConflictKind.CAPACITY_EXCEEDED_DAILY,

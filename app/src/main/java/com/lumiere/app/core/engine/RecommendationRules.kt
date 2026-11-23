@@ -101,7 +101,7 @@ class RecommendationRules(private val timeProvider: TimeProvider) {
         // 3. Sobrecarga Diária
         val overloadedDays = items.filter { it.startTimeMillis != null }.groupBy { (it.startTimeMillis ?: 0L) / dayMs }
         overloadedDays.forEach { (_, dayItems) ->
-            if (dayItems.sumOf { it.durationMinutes ?: 0 } > 480) {
+            if (dayItems.sumOf { it.durationMinutes ?: 30 } > 480) {
                 val itemToMove = dayItems.filter { it.moduleId == "M01_TASKS" }.minByOrNull { it.priority }
                     ?: dayItems.minByOrNull { it.durationMinutes ?: 0 }
                 if (itemToMove != null) {
