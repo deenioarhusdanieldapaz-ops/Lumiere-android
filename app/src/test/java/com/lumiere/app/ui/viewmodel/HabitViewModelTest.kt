@@ -46,7 +46,7 @@ class HabitViewModelTest {
         val existing = HabitCheckIn(id = 10, habitId = habitId, value = 2, type = "PARTIAL")
         coEvery { repository.getCheckInForDay(any(), any(), any()) } returns existing
 
-        val useCase = AddCheckInValueUseCase(repository)
+        val useCase = AddCheckInValueUseCase(repository, SystemTimeProvider())
         useCase(habitId, currentValue = 2, targetValue = 4)
 
         coVerify(exactly = 1) { repository.updateCheckIn(any()) }
@@ -57,7 +57,7 @@ class HabitViewModelTest {
     fun `addCheckInValue inserts when no checkin for today`() = runTest {
         coEvery { repository.getCheckInForDay(any(), any(), any()) } returns null
 
-        val useCase = AddCheckInValueUseCase(repository)
+        val useCase = AddCheckInValueUseCase(repository, SystemTimeProvider())
         useCase(habitId = 1L, currentValue = 0, targetValue = 4)
 
         coVerify(exactly = 1) { repository.insertCheckIn(any()) }
@@ -70,7 +70,7 @@ class HabitViewModelTest {
         coEvery { repository.getCheckInForDay(any(), any(), any()) } returns null
         coEvery { repository.insertCheckIn(capture(slots)) } returns 1L
 
-        val useCase = AddCheckInValueUseCase(repository)
+        val useCase = AddCheckInValueUseCase(repository, SystemTimeProvider())
         useCase(habitId = 1L, currentValue = 0, targetValue = 4)
 
         assertEquals("PARTIAL", slots.first().type)
@@ -80,7 +80,7 @@ class HabitViewModelTest {
     @Test
     fun `startTimer sets timerStartedAt on habit`() = runTest {
         val habit = Habit(id = 1L, name = "Meditar", durationMinutes = 30)
-        val useCase = StartHabitTimerUseCase(repository)
+        val useCase = StartHabitTimerUseCase(repository, SystemTimeProvider())
         useCase(habit)
 
         coVerify(exactly = 1) {
@@ -95,7 +95,7 @@ class HabitViewModelTest {
             id = 1L, name = "Meditar", durationMinutes = 30,
             timerStartedAt = startedAt, timerAccumulatedMinutes = 0
         )
-        val useCase = PauseHabitTimerUseCase(repository)
+        val useCase = PauseHabitTimerUseCase(repository, SystemTimeProvider())
         useCase(habit)
 
         coVerify(exactly = 1) {
@@ -115,7 +115,7 @@ class HabitViewModelTest {
         coEvery { repository.getCheckInForDay(any(), any(), any()) } returns null
         coEvery { repository.insertCheckIn(any()) } returns 1L
 
-        val useCase = CompleteHabitTimerUseCase(repository)
+        val useCase = CompleteHabitTimerUseCase(repository, SystemTimeProvider())
         useCase(habit)
 
         coVerify {
