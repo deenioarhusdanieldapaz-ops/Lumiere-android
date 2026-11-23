@@ -11,6 +11,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import com.lumiere.app.core.time.SystemTimeProvider
 
 class HabitViewModelTest {
 
@@ -20,7 +21,7 @@ class HabitViewModelTest {
     @BeforeEach
     fun setup() {
         repository = mockk(relaxed = true)
-        viewModel = HabitViewModel(repository)
+        viewModel = HabitViewModel(repository, SystemTimeProvider())
     }
 
     // ===== BUG 400% — quantitativo NÃO deve somar todos os check-ins =====

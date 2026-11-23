@@ -15,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import com.lumiere.app.core.time.SystemTimeProvider
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TaskTimerTest {
@@ -29,7 +30,7 @@ class TaskTimerTest {
     @BeforeEach
     fun setup() {
         repository = mockk(relaxed = true)
-        viewModel = TaskViewModel(repository)
+        viewModel = TaskViewModel(repository, SystemTimeProvider())
     }
 
     @Test
