@@ -26,12 +26,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lumiere.app.core.engine.ApprovalDecision
 import com.lumiere.app.core.engine.ApprovalDecisionKind
 import com.lumiere.app.core.model.Suggestion
+import com.lumiere.app.core.time.TimeUtils
 import com.lumiere.app.ui.theme.LumiereSpacing
 import com.lumiere.app.ui.utils.toPT
 import com.lumiere.app.ui.viewmodel.IntelligenceViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 
 private data class DecisionVisual(
     val icon: ImageVector,
@@ -41,28 +43,43 @@ private data class DecisionVisual(
     val highlightPartial: Boolean = false
 )
 
-private fun visualFor(dec: ApprovalDecision, sdf: SimpleDateFormat): DecisionVisual = when (dec.decision) {
+private fun visualFor(dec: ApprovalDecision): DecisionVisual = when (dec.decision) {
     ApprovalDecisionKind.APPROVED -> DecisionVisual(
         Icons.Default.CheckCircle, Color(0xFF4CAF50), "Aprovado",
-        "Decidido em: ${sdf.format(Date(dec.decidedAtMillis))}"
+        "Decidido automaticamente"
     )
     ApprovalDecisionKind.PARTIAL -> DecisionVisual(
         Icons.Default.Warning, Color(0xFFFFC107), "Parcialmente aplicado",
-        "Alguns itens alterados · ${sdf.format(Date(dec.decidedAtMillis))}",
+        "Algumas alterações falharam",
         highlightPartial = true
     )
     ApprovalDecisionKind.REJECTED -> DecisionVisual(
         Icons.Default.Cancel, Color(0xFFF44336), "Rejeitado",
-        "Decidido em: ${sdf.format(Date(dec.decidedAtMillis))}"
+        "Por: Proprietário"
     )
     ApprovalDecisionKind.FAILED -> DecisionVisual(
         Icons.Default.Error, Color(0xFFB71C1C), "Falhou ao aplicar",
-        "Nenhuma alteração efetuada · ${sdf.format(Date(dec.decidedAtMillis))}"
+        "Nenhuma alteração efetuada"
     )
     ApprovalDecisionKind.EXPIRED -> DecisionVisual(
         Icons.Default.History, Color(0xFF757575), "Expirado",
-        "Expirou em: ${sdf.format(Date(dec.decidedAtMillis))}"
+        "Fora do prazo de validade"
     )
+}
+
+private fun groupHistoryByDate(history: List<ApprovalDecision>): Map<String, List<ApprovalDecision>> {
+    val todayKey = TimeUtils.dayKey(System.currentTimeMillis(), TimeZone.getDefault())
+    val yesterdayKey = todayKey - 1
+    val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+    
+    return history.groupBy { dec ->
+        val key = TimeUtils.dayKey(dec.decidedAtMillis, TimeZone.getDefault())
+        when (key) {
+            todayKey -> "Hoje"
+            yesterdayKey -> "Ontem"
+            else -> sdf.format(Date(dec.decidedAtMillis))
+        }
+    }
 }
 
 @Composable
@@ -110,9 +127,29 @@ fun ApprovalsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit) {
                     Text("Ainda não tomaste decisões.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             } else {
-                val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
-                Column(Modifier.padding(horizontal = LumiereSpacing.M), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    history.forEach { dec -> DecisionRow(dec, sdf) }
+                val grouped = groupHistoryByDate(history.take(20))
+                Column(Modifier.padding(horizontal = LumiereSpacing.M), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    grouped.forEach { (dateLabel, items) ->
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Outlined.DateRange, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text(dateLabel, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                                Spacer(Modifier.width(8.dp))
+                                HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+                            }
+                            items.forEach { dec -> DecisionRow(dec) }
+                        }
+                    }
+                    OutlinedButton(
+                        onClick = { /* TODO: implementar paginação futura */ },
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
+                    ) {
+                        Icon(Icons.Default.KeyboardArrowDown, null, tint = MaterialTheme.colorScheme.primary)
+                        Spacer(Modifier.width(4.dp))
+                        Text("Ver histórico mais antigo", color = MaterialTheme.colorScheme.primary)
+                    }
                 }
             }
         }
@@ -121,10 +158,14 @@ fun ApprovalsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit) {
 }
 
 @Composable
-private fun DecisionRow(dec: ApprovalDecision, sdf: SimpleDateFormat) {
-    val v = visualFor(dec, sdf)
+private fun DecisionRow(dec: ApprovalDecision) {
+    val v = visualFor(dec)
     val bg = if (v.highlightPartial) v.tint.copy(alpha = 0.06f) else MaterialTheme.colorScheme.surface
     val border = if (v.highlightPartial) BorderStroke(1.dp, v.tint.copy(alpha = 0.6f)) else null
+    
+    val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
+    val timeLabel = sdf.format(Date(dec.decidedAtMillis))
+    
     Card(
         Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = bg),
@@ -143,11 +184,7 @@ private fun DecisionRow(dec: ApprovalDecision, sdf: SimpleDateFormat) {
                 Text(v.subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Spacer(Modifier.width(8.dp))
-            Text(
-                sdf.format(Date(dec.decidedAtMillis)).substringAfter(" "),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Text(timeLabel, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.width(8.dp))
             Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
