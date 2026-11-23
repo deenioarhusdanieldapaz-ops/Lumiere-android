@@ -43,7 +43,12 @@ class IntelligenceViewModel(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    init { refreshInsights() }
+    init {
+        refreshInsights()
+        viewModelScope.launch {
+            runCatching { engine.sweepExpired() }
+        }
+    }
 
     fun refreshInsights() {
         viewModelScope.launch {

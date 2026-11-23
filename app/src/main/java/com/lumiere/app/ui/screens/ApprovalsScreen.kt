@@ -17,11 +17,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.lumiere.app.core.engine.ApprovalDecision
+import com.lumiere.app.core.engine.ApprovalDecisionKind
 import com.lumiere.app.core.model.Suggestion
 import com.lumiere.app.ui.theme.LumiereSpacing
 import com.lumiere.app.ui.utils.toPT
@@ -29,6 +32,38 @@ import com.lumiere.app.ui.viewmodel.IntelligenceViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+
+private data class DecisionVisual(
+    val icon: ImageVector,
+    val tint: Color,
+    val title: String,
+    val subtitle: String,
+    val highlightPartial: Boolean = false
+)
+
+private fun visualFor(dec: ApprovalDecision, sdf: SimpleDateFormat): DecisionVisual = when (dec.decision) {
+    ApprovalDecisionKind.APPROVED -> DecisionVisual(
+        Icons.Default.CheckCircle, Color(0xFF4CAF50), "Aprovado",
+        "Decidido em: ${sdf.format(Date(dec.decidedAtMillis))}"
+    )
+    ApprovalDecisionKind.PARTIAL -> DecisionVisual(
+        Icons.Default.Warning, Color(0xFFFFC107), "Parcialmente aplicado",
+        "Alguns itens alterados · ${sdf.format(Date(dec.decidedAtMillis))}",
+        highlightPartial = true
+    )
+    ApprovalDecisionKind.REJECTED -> DecisionVisual(
+        Icons.Default.Cancel, Color(0xFFF44336), "Rejeitado",
+        "Decidido em: ${sdf.format(Date(dec.decidedAtMillis))}"
+    )
+    ApprovalDecisionKind.FAILED -> DecisionVisual(
+        Icons.Default.Error, Color(0xFFB71C1C), "Falhou ao aplicar",
+        "Nenhuma alteração efetuada · ${sdf.format(Date(dec.decidedAtMillis))}"
+    )
+    ApprovalDecisionKind.EXPIRED -> DecisionVisual(
+        Icons.Default.History, Color(0xFF757575), "Expirado",
+        "Expirou em: ${sdf.format(Date(dec.decidedAtMillis))}"
+    )
+}
 
 @Composable
 fun ApprovalsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit) {
@@ -75,29 +110,47 @@ fun ApprovalsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit) {
                     Text("Ainda não tomaste decisões.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             } else {
+                val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
                 Column(Modifier.padding(horizontal = LumiereSpacing.M), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    history.forEach { dec ->
-                        val isApproved = dec.decision.name == "APPROVED"
-                        val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
-                        Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-                            Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    if (isApproved) Icons.Default.CheckCircle else Icons.Default.Cancel,
-                                    null,
-                                    tint = if (isApproved) Color(0xFF4CAF50) else Color.Red
-                                )
-                                Spacer(Modifier.width(16.dp))
-                                Column {
-                                    Text(if (isApproved) "Aprovado" else "Rejeitado", fontWeight = FontWeight.Bold)
-                                    Text("Decidido em: ${sdf.format(Date(dec.decidedAtMillis))}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                }
-                            }
-                        }
-                    }
+                    history.forEach { dec -> DecisionRow(dec, sdf) }
                 }
             }
         }
         Spacer(Modifier.height(100.dp))
+    }
+}
+
+@Composable
+private fun DecisionRow(dec: ApprovalDecision, sdf: SimpleDateFormat) {
+    val v = visualFor(dec, sdf)
+    val bg = if (v.highlightPartial) v.tint.copy(alpha = 0.06f) else MaterialTheme.colorScheme.surface
+    val border = if (v.highlightPartial) BorderStroke(1.dp, v.tint.copy(alpha = 0.6f)) else null
+    Card(
+        Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = bg),
+        border = border
+    ) {
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier.size(40.dp).background(v.tint.copy(alpha = 0.15f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(v.icon, null, tint = v.tint, modifier = Modifier.size(24.dp))
+            }
+            Spacer(Modifier.width(16.dp))
+            Column(Modifier.weight(1f)) {
+                Text(v.title, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                Text(v.subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Spacer(Modifier.width(8.dp))
+            Text(
+                sdf.format(Date(dec.decidedAtMillis)).substringAfter(" "),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.width(8.dp))
+            Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }
 
@@ -139,7 +192,7 @@ fun RealApprovalCard(s: Suggestion, viewModel: IntelligenceViewModel) {
 }
 
 @Composable
-fun TabPill(title: String, icon: androidx.compose.ui.graphics.vector.ImageVector, selected: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
+fun TabPill(title: String, icon: ImageVector, selected: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
     val bgColor = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent
     val contentColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary
     Box(modifier = modifier.height(48.dp).clip(RoundedCornerShape(50)).background(bgColor).clickable { onClick() }, contentAlignment = Alignment.Center) {

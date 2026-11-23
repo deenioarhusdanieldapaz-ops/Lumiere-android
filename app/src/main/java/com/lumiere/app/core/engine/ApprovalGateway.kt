@@ -24,7 +24,7 @@ data class ApprovalRequest(
     val whatItDoesNotAuthorize: List<String>
 )
 
-enum class ApprovalDecisionKind { APPROVED, REJECTED, EXPIRED }
+enum class ApprovalDecisionKind { APPROVED, PARTIAL, REJECTED, FAILED, EXPIRED }
 
 data class ApprovalDecision(
     val approvalId: String,
