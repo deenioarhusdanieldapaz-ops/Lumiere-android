@@ -1,5 +1,6 @@
 package com.lumiere.app.core.contract
 
+import com.lumiere.app.core.model.Schedulable
 import com.lumiere.app.core.model.Sensitivity
 import com.lumiere.app.data.local.dao.TaskDao
 import kotlinx.coroutines.flow.first

@@ -71,6 +71,20 @@ class IntelligenceEngine(
                     }
                 }
             }
+            is SuggestionAction.BatchDeferItems -> {
+                if (act.moduleId == "M01_TASKS") {
+                    act.itemIds.forEach { rawId ->
+                        val id = rawId.toLongOrNull()
+                        if (id != null) {
+                            val t = taskDao.getTaskById(id)
+                            if (t != null) {
+                                val newDate = (t.dueDate ?: timeProvider.currentTimeMillis()) + (act.days * 86_400_000L)
+                                taskDao.updateTask(t.copy(dueDate = newDate, updatedAt = timeProvider.currentTimeMillis()))
+                            }
+                        }
+                    }
+                }
+            }
             is SuggestionAction.RescheduleItem -> {
                 if (act.moduleId == "M02_HABITS") {
                     val id = act.itemId.toLongOrNull()

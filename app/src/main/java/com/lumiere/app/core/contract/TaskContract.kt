@@ -13,7 +13,7 @@ data class TaskSnapshot(
     override val id: String, 
     val titleShort: String, 
     val state: TaskState,
-    val deadlineMillis: Long?, 
+    override val deadlineMillis: Long?, 
     val priorityDeclared: Int, 
     val estimatedEffortMinutes: Int?,
     val dependencyIds: List<String>, 
@@ -29,8 +29,10 @@ data class TaskSnapshot(
 ) : Schedulable {
     override val moduleId: String get() = "M01_TASKS"
     override val title: String get() = titleShort
-    override val startTimeMillis: Long? get() = deadlineMillis
-    override val durationMinutes: Int? get() = estimatedEffortMinutes
+    override val startTimeMillis: Long? get() = deadlineMillis?.let { prazo ->
+        prazo - ((estimatedEffortMinutes ?: 30) * 60_000L)
+    }
+    override val durationMinutes: Int? get() = estimatedEffortMinutes ?: 30
     override val energyCost: Int get() = energy
     override val priority: Int get() = importance
 }

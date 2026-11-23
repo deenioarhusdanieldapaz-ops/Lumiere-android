@@ -26,8 +26,15 @@ class RoomHabitContract(
 
     private suspend fun com.lumiere.app.data.local.entity.Habit.toSnapshot(now: Long): HabitSnapshot {
         val dayMs = 24L * 60 * 60 * 1000
-        val checkIns7d = checkInDao.countSuccessSince(id, now - 7 * dayMs)
-        val checkIns30d = checkInDao.countSuccessSince(id, now - 30 * dayMs)
+        
+        // ✅ UMA SÓ QUERY (em vez de 3)
+        val allTimestamps = checkInDao.successTimestampsForHabit(id)
+        
+        // Cálculos em Kotlin (rápidos, sem tocar no SQLite)
+        val checkIns7d = allTimestamps.count { it >= now - 7 * dayMs }
+        val checkIns30d = allTimestamps.count { it >= now - 30 * dayMs }
+        val lastActivity = allTimestamps.firstOrNull() ?: createdAt
+        
         val freq = when (frequencyType.uppercase()) {
             "WEEKLY" -> HabitFrequency.WEEKLY
             "MONTHLY" -> HabitFrequency.MONTHLY
@@ -39,15 +46,14 @@ class RoomHabitContract(
             HabitFrequency.MONTHLY -> 1
         }
         val rate = (checkIns30d.toFloat() / expected30d).coerceIn(0f, 1f)
-        val timestamps = checkInDao.successTimestampsForHabit(id)
-        val lastActivity = timestamps.firstOrNull() ?: createdAt
+        
         return HabitSnapshot(
             id = id.toString(),
             nameShort = name.take(60),
             frequency = freq,
             targetPerPeriod = targetValue ?: 1,
             checkInsLast7d = checkIns7d,
-            streakCurrent = computeStreak(timestamps, now),
+            streakCurrent = computeStreak(allTimestamps, now),
             successRate30d = rate,
             lastUpdatedMillis = lastActivity,
             sensitivity = Sensitivity.NORMAL,

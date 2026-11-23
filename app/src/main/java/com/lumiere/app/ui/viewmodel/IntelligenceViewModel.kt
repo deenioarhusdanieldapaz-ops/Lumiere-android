@@ -67,15 +67,24 @@ class IntelligenceViewModel(
 
     fun approveSuggestion(suggestion: Suggestion) {
         viewModelScope.launch {
-            engine.approveSuggestion(suggestion)
-            removeSuggestionFromUi(suggestion)
+            val result = engine.approveSuggestion(suggestion)
+            if (result.isSuccess) {
+                removeSuggestionFromUi(suggestion)
+                refreshInsights()
+            } else {
+                // Se falhar, o ecrã NÃO é atualizado para esconder o problema
+                android.util.Log.e("IntelligenceVM", "Erro ao aprovar sugestão: ${result.exceptionOrNull()?.message}")
+            }
         }
     }
 
     fun rejectSuggestion(suggestion: Suggestion) {
         viewModelScope.launch {
-            engine.rejectSuggestion(suggestion)
-            removeSuggestionFromUi(suggestion)
+            val result = engine.rejectSuggestion(suggestion)
+            if (result.isSuccess) {
+                removeSuggestionFromUi(suggestion)
+                refreshInsights()
+            }
         }
     }
 

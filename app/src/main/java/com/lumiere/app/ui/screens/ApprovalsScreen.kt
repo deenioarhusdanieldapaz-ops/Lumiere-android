@@ -26,6 +26,9 @@ import com.lumiere.app.core.model.Suggestion
 import com.lumiere.app.ui.theme.LumiereSpacing
 import com.lumiere.app.ui.utils.toPT
 import com.lumiere.app.ui.viewmodel.IntelligenceViewModel
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun ApprovalsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit) {
@@ -74,17 +77,19 @@ fun ApprovalsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit) {
             } else {
                 Column(Modifier.padding(horizontal = LumiereSpacing.M), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     history.forEach { dec ->
+                        val isApproved = dec.decision.name == "APPROVED"
+                        val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
                         Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
                             Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
-                                    if (dec.decision.name == "APPROVED") Icons.Default.CheckCircle else Icons.Default.Cancel,
+                                    if (isApproved) Icons.Default.CheckCircle else Icons.Default.Cancel,
                                     null,
-                                    tint = if (dec.decision.name == "APPROVED") Color(0xFF4CAF50) else Color.Red
+                                    tint = if (isApproved) Color(0xFF4CAF50) else Color.Red
                                 )
-                                Spacer(Modifier.width(12.dp))
+                                Spacer(Modifier.width(16.dp))
                                 Column {
-                                    Text(dec.decision.name, fontWeight = FontWeight.Bold)
-                                    Text("Decidido em: ${java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(java.util.Date(dec.decidedAtMillis))}", style = MaterialTheme.typography.bodySmall)
+                                    Text(if (isApproved) "Aprovado" else "Rejeitado", fontWeight = FontWeight.Bold)
+                                    Text("Decidido em: ${sdf.format(Date(dec.decidedAtMillis))}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             }
                         }
@@ -110,7 +115,7 @@ fun RealApprovalCard(s: Suggestion, viewModel: IntelligenceViewModel) {
             }
             Spacer(Modifier.height(LumiereSpacing.M))
             Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp)).padding(12.dp)) {
-                Icon(Icons.Default.Warning, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                Icon(Icons.Default.Info, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                 Spacer(Modifier.width(8.dp))
                 Column {
                     Text("Porquê?", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)

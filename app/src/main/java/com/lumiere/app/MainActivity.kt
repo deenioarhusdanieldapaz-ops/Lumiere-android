@@ -83,7 +83,7 @@ class MainActivity : ComponentActivity() {
             habitContract = RoomHabitContract(database.habitDao(), database.habitCheckInDao(), timeProvider),
             rules = RecommendationRules(timeProvider),
             strictChecker = StrictConflictChecker(timeProvider),
-            approvalGateway = ApprovalGateway(CoreMemoryApprovalStore(database.coreMemoryDao()), timeProvider),
+            approvalGateway = ApprovalGateway(CoreMemoryApprovalStore(database.coreMemoryDao(), timeProvider), timeProvider),
             memory = CoreMemoryRepository(database.coreMemoryDao(), timeProvider),
             timeProvider = timeProvider,
             taskDao = database.taskDao(),

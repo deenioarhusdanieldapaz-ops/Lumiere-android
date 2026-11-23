@@ -21,7 +21,7 @@ data class HabitSnapshot(
     val lastUpdatedMillis: Long,
     val sensitivity: Sensitivity = Sensitivity.NORMAL,
     val preferredTime: String? = null, 
-    override val durationMinutes: Int? = null, // <-- Resolvido: override adicionado
+    override val durationMinutes: Int? = null,
     val isAdaptationPeriod: Boolean = false, 
     val unit: String? = null
 ) : Schedulable {
@@ -36,6 +36,7 @@ data class HabitSnapshot(
         cal.set(Calendar.MINUTE, parts[1].toIntOrNull() ?: return null)
         return cal.timeInMillis
     }
+    override val deadlineMillis: Long? get() = startTimeMillis?.let { it + ((durationMinutes ?: 30) * 60_000L) }
     override val energyCost: Int get() = 2
     override val priority: Int get() = if (isAdaptationPeriod) 3 else 2
 }

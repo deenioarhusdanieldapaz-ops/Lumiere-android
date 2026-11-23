@@ -9,11 +9,12 @@ import org.json.JSONObject
 
 class CoreMemoryApprovalStore(
     private val memoryDao: CoreMemoryDao,
+    private val timeProvider: com.lumiere.app.core.time.TimeProvider,
     private val defaultTtlMillis: Long = 7L * 24 * 60 * 60 * 1000
 ) : ApprovalStore {
 
     override suspend fun save(request: ApprovalRequest): Result<Unit> = runCatching {
-        val now = System.currentTimeMillis()
+        val now = timeProvider.currentTimeMillis()
         val expiresAt = minOf(request.expiresAtMillis, now + defaultTtlMillis)
         memoryDao.save(CoreMemory(
             key = KEY_REQ_PREFIX + request.id,
@@ -31,7 +32,7 @@ class CoreMemoryApprovalStore(
     }
 
     override suspend fun saveDecision(decision: ApprovalDecision): Result<Unit> = runCatching {
-        val now = System.currentTimeMillis()
+        val now = timeProvider.currentTimeMillis()
         memoryDao.save(CoreMemory(
             key = KEY_DEC_PREFIX + decision.approvalId,
             value = decisionToJson(decision).toString(),
@@ -55,7 +56,7 @@ class CoreMemoryApprovalStore(
 
     private fun isExpired(mem: CoreMemory): Boolean {
         val exp = mem.expiresAt ?: return false
-        return exp < System.currentTimeMillis()
+        return exp < timeProvider.currentTimeMillis()
     }
 
     private fun requestToJson(r: ApprovalRequest): JSONObject = JSONObject().apply {

@@ -7,6 +7,15 @@ import java.util.Calendar
 class RecommendationRules(private val timeProvider: TimeProvider) {
     private val dayMs = 86_400_000L
 
+    // Helper: evita duplicar a fórmula de overlap
+    private fun overlaps(a: Schedulable, b: Schedulable): Boolean {
+        val startA = a.startTimeMillis ?: return false
+        val endA = startA + ((a.durationMinutes ?: 30) * 60_000L)
+        val startB = b.startTimeMillis ?: return false
+        val endB = startB + ((b.durationMinutes ?: 30) * 60_000L)
+        return Math.max(startA, startB) < Math.min(endA, endB)
+    }
+
     fun buildFacts(items: List<Schedulable>): List<Fact> {
         return items.map { item ->
             Fact(
@@ -35,60 +44,61 @@ class RecommendationRules(private val timeProvider: TimeProvider) {
         val now = timeProvider.currentTimeMillis()
         val suggestions = mutableListOf<Suggestion>()
 
-        // 1. Resolver Prazos Ultrapassados (STRICT_VIOLATION)
+        // 1. Prazos Ultrapassados (agrupados com BatchDeferItems)
         val overdueTasks = items.filter { item ->
-            val time = item.startTimeMillis
-            item.moduleId == "M01_TASKS" && time != null && time < now
+            val deadline = item.deadlineMillis
+            item.moduleId == "M01_TASKS" && deadline != null && deadline < now
         }
-        overdueTasks.forEach { task ->
+        if (overdueTasks.isNotEmpty()) {
+            val firstTask = overdueTasks.first()
             suggestions.add(Suggestion(
-                statement = "Reagendar a tarefa atrasada '${task.title}' para amanhã",
-                why = "Esta tarefa já ultrapassou o prazo definido.",
-                impactDescription = "Remove o aviso de atraso e dá-te um novo foco.",
-                approvalClass = ApprovalClass.A2_LOW_IMPACT,
-                targetModules = setOf(task.moduleId),
-                impact = Impact.LOW,
+                statement = "Reagendar ${overdueTasks.size} tarefa(s) atrasada(s) para amanhã",
+                why = "Tens tarefas que ultrapassaram o prazo (ex: '${firstTask.title}').",
+                impactDescription = "Remove a sensação de culpa e limpa a agenda.",
+                approvalClass = ApprovalClass.A3_RELEVANT,
+                targetModules = setOf("M01_TASKS"),
+                impact = Impact.MEDIUM,
                 alternatives = listOf("Concluir hoje", "Ignorar"),
                 reversibility = Reversibility.REVERSIBLE,
                 expiresAtMillis = now + dayMs,
-                action = SuggestionAction.DeferItem(task.id, task.moduleId, 1)
+                action = SuggestionAction.BatchDeferItems(overdueTasks.map { it.id }, "M01_TASKS", 1)
             ))
         }
 
-        // 2. Resolver Cruzamento de Módulos (TEMPORAL_OVERLAP)
+        // 2. Cruzamento de Módulos (usa helper overlaps + evita duplicados por hábito)
         val scheduledItems = items.filter { it.startTimeMillis != null }
-        scheduledItems.forEachIndexed { i, itemA ->
-            val timeA = itemA.startTimeMillis ?: return@forEachIndexed
+        val habitsAlreadyScheduled = mutableSetOf<String>() // evita sugestões duplicadas para o mesmo hábito
+        for (i in scheduledItems.indices) {
             for (j in i + 1 until scheduledItems.size) {
+                val itemA = scheduledItems[i]
                 val itemB = scheduledItems[j]
-                val timeB = itemB.startTimeMillis ?: continue
-                val diffMins = Math.abs(timeA - timeB) / 60_000
-                
-                if (diffMins < 30 && itemA.moduleId != itemB.moduleId) {
-                    val habit = if (itemA.moduleId == "M02_HABITS") itemA else if (itemB.moduleId == "M02_HABITS") itemB else null
-                    if (habit != null) {
-                        val habitTime = habit.startTimeMillis ?: continue
-                        val cal = Calendar.getInstance()
-                        cal.timeInMillis = habitTime
-                        cal.add(Calendar.HOUR_OF_DAY, 2)
-                        suggestions.add(Suggestion(
-                            statement = "Mudar o horário do hábito '${habit.title}'",
-                            why = "Este hábito está a colidir com uma tarefa de outro módulo.",
-                            impactDescription = "Evita interrupções e conflitos de agenda.",
-                            approvalClass = ApprovalClass.A3_RELEVANT,
-                            targetModules = setOf(habit.moduleId),
-                            impact = Impact.MEDIUM,
-                            alternatives = listOf("Manter", "Mover tarefa"),
-                            reversibility = Reversibility.REVERSIBLE,
-                            expiresAtMillis = now + dayMs,
-                            action = SuggestionAction.RescheduleItem(habit.id, habit.moduleId, cal.timeInMillis)
-                        ))
-                    }
+                if (itemA.moduleId == itemB.moduleId) continue
+                if (!overlaps(itemA, itemB)) continue
+
+                val habit = if (itemA.moduleId == "M02_HABITS") itemA else if (itemB.moduleId == "M02_HABITS") itemB else null
+                if (habit != null && habit.id !in habitsAlreadyScheduled) {
+                    habitsAlreadyScheduled.add(habit.id)
+                    val habitTime = habit.startTimeMillis ?: continue
+                    val cal = Calendar.getInstance()
+                    cal.timeInMillis = habitTime
+                    cal.add(Calendar.HOUR_OF_DAY, 2)
+                    suggestions.add(Suggestion(
+                        statement = "Mudar o horário do hábito '${habit.title}'",
+                        why = "Este hábito está a colidir com uma tarefa de outro módulo.",
+                        impactDescription = "Evita interrupções e fadiga.",
+                        approvalClass = ApprovalClass.A3_RELEVANT,
+                        targetModules = setOf(habit.moduleId),
+                        impact = Impact.MEDIUM,
+                        alternatives = listOf("Manter", "Mover tarefa"),
+                        reversibility = Reversibility.REVERSIBLE,
+                        expiresAtMillis = now + dayMs,
+                        action = SuggestionAction.RescheduleItem(habit.id, habit.moduleId, cal.timeInMillis)
+                    ))
                 }
             }
         }
 
-        // 3. Resolver Sobrecarga Diária
+        // 3. Sobrecarga Diária
         val overloadedDays = items.filter { it.startTimeMillis != null }.groupBy { (it.startTimeMillis ?: 0L) / dayMs }
         overloadedDays.forEach { (_, dayItems) ->
             if (dayItems.sumOf { it.durationMinutes ?: 0 } > 480) {
@@ -111,6 +121,6 @@ class RecommendationRules(private val timeProvider: TimeProvider) {
             }
         }
 
-        return suggestions.distinctBy { it.statement }.shuffled().take(5)
+        return suggestions.distinctBy { it.statement }.take(5)
     }
 }
