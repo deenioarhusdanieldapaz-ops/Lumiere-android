@@ -135,8 +135,31 @@ class RecommendationRules(private val timeProvider: TimeProvider) {
             for (j in i + 1 until scheduledItems.size) {
                 val itemA = scheduledItems[i]
                 val itemB = scheduledItems[j]
-                if (itemA.moduleId == itemB.moduleId) continue
                 if (!overlaps(itemA, itemB)) continue
+                
+                if (itemA.moduleId == itemB.moduleId) {
+                    if (itemA.moduleId == "M01_TASKS" && (itemA.energyCost + itemB.energyCost) >= 5) {
+                        val toDefer = if (itemA.priority <= itemB.priority) itemA else itemB
+                        val alreadySuggested = suggestions.any { 
+                            (it.action as? SuggestionAction.DeferItem)?.itemId == toDefer.id 
+                        }
+                        if (!alreadySuggested) {
+                            suggestions.add(Suggestion(
+                                statement = "Evitar sobreposição: adiar '${toDefer.title}'",
+                                why = "Tens tarefas de alta energia em simultâneo.",
+                                impactDescription = "Reduz a fadiga e evita conflito de tempo.",
+                                approvalClass = ApprovalClass.A3_RELEVANT,
+                                targetModules = setOf(toDefer.moduleId),
+                                impact = Impact.MEDIUM,
+                                alternatives = listOf("Manter", "Mover outra"),
+                                reversibility = Reversibility.REVERSIBLE,
+                                expiresAtMillis = now + dayMs,
+                                action = SuggestionAction.DeferItem(toDefer.id, toDefer.moduleId, 1)
+                            ))
+                        }
+                    }
+                    continue
+                }
 
                 val habit = if (itemA.moduleId == "M02_HABITS") itemA
                             else if (itemB.moduleId == "M02_HABITS") itemB
