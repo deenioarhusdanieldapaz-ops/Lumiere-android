@@ -16,7 +16,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.util.Calendar
-import com.lumiere.app.core.time.SystemTimeProvider
+import com.lumiere.app.core.time.FixedTimeProvider
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TaskRecurrenceTest {
@@ -28,14 +28,12 @@ class TaskRecurrenceTest {
     private lateinit var repository: TaskRepository
     private lateinit var viewModel: TaskViewModel
 
-    private val baseDate = Calendar.getInstance().apply {
-        set(2026, Calendar.NOVEMBER, 7, 10, 0, 0)
-        set(Calendar.MILLISECOND, 0)
-    }.timeInMillis
+    private val fixedNow = 1700000000000L
+    private val timeProvider = FixedTimeProvider(fixedNow)
 
     private fun expectedDate(addField: Int, amount: Int): Long {
         return Calendar.getInstance().apply {
-            timeInMillis = baseDate
+            timeInMillis = fixedNow
             add(addField, amount)
         }.timeInMillis
     }
@@ -43,14 +41,14 @@ class TaskRecurrenceTest {
     @BeforeEach
     fun setup() {
         repository = mockk(relaxed = true)
-        viewModel = TaskViewModel(repository, SystemTimeProvider())
+        viewModel = TaskViewModel(repository, timeProvider)
     }
 
     @Test
     @DisplayName("Recorrência DAILY gera tarefa com dueDate +1 dia")
     fun daily_recurrence_createsTaskTomorrow() = runTest(mainDispatcherRule.testDispatcher) {
         val task = TestDataFactory.task(
-            id = 1L, status = 0, recurrenceRule = "DAILY", dueDate = baseDate
+            id = 1L, status = 0, recurrenceRule = "DAILY", dueDate = fixedNow
         )
         val captured = slot<Task>()
 
@@ -65,7 +63,7 @@ class TaskRecurrenceTest {
     @DisplayName("Recorrência WEEKLY gera tarefa com dueDate +7 dias")
     fun weekly_recurrence_createsTaskNextWeek() = runTest(mainDispatcherRule.testDispatcher) {
         val task = TestDataFactory.task(
-            id = 2L, status = 0, recurrenceRule = "WEEKLY", dueDate = baseDate
+            id = 2L, status = 0, recurrenceRule = "WEEKLY", dueDate = fixedNow
         )
         val captured = slot<Task>()
 
@@ -80,7 +78,7 @@ class TaskRecurrenceTest {
     @DisplayName("Recorrência MONTHLY gera tarefa com dueDate +1 mês")
     fun monthly_recurrence_createsTaskNextMonth() = runTest(mainDispatcherRule.testDispatcher) {
         val task = TestDataFactory.task(
-            id = 3L, status = 0, recurrenceRule = "MONTHLY", dueDate = baseDate
+            id = 3L, status = 0, recurrenceRule = "MONTHLY", dueDate = fixedNow
         )
         val captured = slot<Task>()
 
@@ -95,7 +93,7 @@ class TaskRecurrenceTest {
     @DisplayName("Recorrência YEARLY gera tarefa com dueDate +1 ano")
     fun yearly_recurrence_createsTaskNextYear() = runTest(mainDispatcherRule.testDispatcher) {
         val task = TestDataFactory.task(
-            id = 4L, status = 0, recurrenceRule = "YEARLY", dueDate = baseDate
+            id = 4L, status = 0, recurrenceRule = "YEARLY", dueDate = fixedNow
         )
         val captured = slot<Task>()
 
@@ -110,7 +108,7 @@ class TaskRecurrenceTest {
     @DisplayName("Recorrência NONE não gera nova tarefa")
     fun noRecurrence_doesNotCreateTask() = runTest(mainDispatcherRule.testDispatcher) {
         val task = TestDataFactory.task(
-            id = 5L, status = 0, recurrenceRule = "NONE", dueDate = baseDate
+            id = 5L, status = 0, recurrenceRule = "NONE", dueDate = fixedNow
         )
 
         viewModel.toggleTaskCompletion(task)
@@ -123,7 +121,7 @@ class TaskRecurrenceTest {
     @DisplayName("Tarefa sem recurrenceRule não gera nova")
     fun nullRecurrence_doesNotCreateTask() = runTest(mainDispatcherRule.testDispatcher) {
         val task = TestDataFactory.task(
-            id = 6L, status = 0, recurrenceRule = null, dueDate = baseDate
+            id = 6L, status = 0, recurrenceRule = null, dueDate = fixedNow
         )
 
         viewModel.toggleTaskCompletion(task)
