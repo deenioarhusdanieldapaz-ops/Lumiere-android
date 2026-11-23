@@ -4,6 +4,7 @@ import com.lumiere.app.data.local.entity.*
 import com.lumiere.app.data.repository.HabitRepository
 import com.lumiere.app.core.time.TimeProvider
 import com.lumiere.app.core.time.TimeUtils
+import kotlinx.coroutines.flow.first
 import java.util.Calendar
 
 enum class HabitKind {
@@ -156,7 +157,7 @@ class ResumeHabitUseCase(private val repository: HabitRepository, private val ti
         val now = timeProvider.currentTimeMillis()
         repository.updateHabit(habit.copy(status = 0))
         // P2: Fechar a exceção ativa
-        val exceptions = repository.getExceptions(habit.id).firstOrNull() ?: emptyList()
+        val exceptions = repository.getExceptions(habit.id).first()
         val activeException = exceptions.find { it.type == "PAUSE" && it.endDate == Long.MAX_VALUE }
         if (activeException != null) {
             repository.insertException(activeException.copy(endDate = now))

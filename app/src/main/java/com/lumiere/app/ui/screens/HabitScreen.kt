@@ -246,7 +246,7 @@ fun HabitScreen(viewModel: HabitViewModel, onOpenDrawer: () -> Unit = {}) {
                             val currentVal = viewModel.getTodayValueForHabit(habit.id, checkInsToday)
                             viewModel.addCheckInValue(habit.id, currentVal, habit.targetValue)
                         },
-                        onDelete = { viewModel.deleteHabit(habit) },
+                        onDelete = { viewModel.archiveHabit(habit) },
                         onPause = { viewModel.pauseHabit(habit) },
                         onResume = { viewModel.resumeHabit(habit) },
                         onEdit = {
