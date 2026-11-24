@@ -73,19 +73,6 @@ class CreateNextRecurringTaskUseCase(private val repository: TaskRepository, pri
     }
 }
 
-class ToggleTaskCompletionUseCase(private val repository: TaskRepository, private val timeProvider: com.lumiere.app.core.time.TimeProvider) {
-    private val createNext = CreateNextRecurringTaskUseCase(repository, timeProvider)
-
-    suspend operator fun invoke(task: Task) {
-        val newStatus = if (task.isCompleted) 0 else 2
-        val newCompletedAt = if (newStatus == 2) timeProvider.currentTimeMillis() else null
-        repository.updateTask(task.copy(status = newStatus, completedAt = newCompletedAt, updatedAt = timeProvider.currentTimeMillis()))
-        repository.insertHistory(TaskHistory(taskId = task.id, action = if (newStatus == 2) "Concluída" else "Reaberta"))
-        if (newStatus == 2 && task.recurrenceRule != null && task.recurrenceRule != "NONE") {
-            createNext(task)
-        }
-    }
-}
 
 class CancelTaskUseCase(private val repository: TaskRepository) {
     suspend operator fun invoke(task: Task, reason: String) {
@@ -166,5 +153,30 @@ class DeleteTaskUseCase(private val repository: TaskRepository) {
         val now = System.currentTimeMillis()
         repository.updateTask(task.copy(deletedAt = now, updatedAt = now))
         repository.insertHistory(TaskHistory(taskId = task.id, action = "Tarefa Eliminada (recuperável)"))
+    }
+}
+
+class ToggleTaskCompletionUseCase(private val repository: TaskRepository, private val timeProvider: com.lumiere.app.core.time.TimeProvider) {
+    private val createNext = CreateNextRecurringTaskUseCase(repository, timeProvider)
+
+    suspend operator fun invoke(task: Task) {
+        val newStatus = if (task.isCompleted) 0 else 2
+        
+        // Verificação STRICT: Impede concluir se a tarefa bloqueante não estiver concluída
+        if (newStatus == 2 && task.blockedByTaskId != null) {
+            val blocker = repository.getTaskById(task.blockedByTaskId)
+            if (blocker != null && !blocker.isCompleted && blocker.status != 3 && blocker.status != 4) {
+                repository.insertHistory(TaskHistory(taskId = task.id, action = "Conclusão bloqueada: dependência pendente"))
+                return
+            }
+        }
+
+        val newCompletedAt = if (newStatus == 2) timeProvider.currentTimeMillis() else null
+        repository.updateTask(task.copy(status = newStatus, completedAt = newCompletedAt, updatedAt = timeProvider.currentTimeMillis()))
+        repository.insertHistory(TaskHistory(taskId = task.id, action = if (newStatus == 2) "Concluída" else "Reaberta"))
+        
+        if (newStatus == 2 && task.recurrenceRule != null && task.recurrenceRule != "NONE") {
+            createNext(task)
+        }
     }
 }

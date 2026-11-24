@@ -17,6 +17,7 @@ class TaskRepository(
     suspend fun insertTask(task: Task): Long = try { taskDao.insertTask(task) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { LumiereLogger.e("TaskRepo", "Falha ao inserir tarefa", e); -1L }
     suspend fun updateTask(task: Task) = try { taskDao.updateTask(task) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { LumiereLogger.e("TaskRepo", "Falha ao atualizar tarefa", e) }
     suspend fun deleteTask(task: Task) = try { taskDao.deleteTask(task) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { LumiereLogger.e("TaskRepo", "Falha ao apagar tarefa", e) }
+    suspend fun getTaskById(id: Long): Task? = taskDao.getTaskById(id)
 
     fun getSubtasks(taskId: Long) = subtaskDao.getSubtasksForTask(taskId)
     suspend fun insertSubtask(subtask: Subtask) = subtaskDao.insertSubtask(subtask)
