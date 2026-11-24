@@ -1,7 +1,5 @@
 package com.lumiere.app.core.contract
 
-import com.lumiere.app.core.model.Schedulable
-import com.lumiere.app.core.model.Sensitivity
 import com.lumiere.app.core.time.TimeProvider
 import com.lumiere.app.data.local.dao.TaskDao
 import com.lumiere.app.data.local.entity.Task
@@ -11,30 +9,28 @@ class RoomTaskContract(
     private val taskDao: TaskDao,
     private val timeProvider: TimeProvider
 ) : TaskContract {
-    override val contractVersion = "1.1.0"
+    override val contractVersion = "1.2.0"
 
     override suspend fun getActiveTasks(windowDays: Int): Result<List<TaskSnapshot>> = runCatching {
         val now = timeProvider.currentTimeMillis()
         val windowMs = windowDays.toLong() * 86_400_000L
         taskDao.getAllTasks().first()
             .filter { isInAnalysisWindow(it, now, windowMs) }
-            .map { it.toSnapshot() }
+            .map { it.toSnapshot(timeProvider.currentTimeMillis()) }
     }
 
     override suspend fun getTask(id: String): Result<TaskSnapshot?> = runCatching {
         val taskId = id.toLongOrNull() ?: return@runCatching null
-        taskDao.getTaskById(taskId)?.toSnapshot()
+        taskDao.getTaskById(taskId)?.toSnapshot(timeProvider.currentTimeMillis())
     }
 
-    /**
-     * Regra explícita de janela:
-     * - Sem prazo -> sempre (tarefa sem deadline continua relevante)
-     * - Atrasada (dueDate < now) -> sempre (é o caso mais crítico)
-     * - Dentro da janela [now, now+windowMs] -> sim
-     * - Fora da janela (futuro distante) -> não
-     */
+    override suspend fun updateTaskDueDate(id: String, newDueDate: Long): Result<Unit> = runCatching {
+        val taskId = id.toLongOrNull() ?: throw IllegalArgumentException("ID inválido")
+        val task = taskDao.getTaskById(taskId) ?: throw IllegalArgumentException("Tarefa não encontrada")
+        taskDao.updateTask(task.copy(dueDate = newDueDate, updatedAt = timeProvider.currentTimeMillis()))
+    }
+
     private fun isInAnalysisWindow(task: Task, now: Long, windowMs: Long): Boolean {
-        // F12 defesa em profundidade: DONE(2), CANCELLED(3), ARCHIVED(4) nunca entram
         if (task.status == 2 || task.status == 3 || task.status == 4) return false
         if (task.deletedAt != null) return false
         val deadline = task.dueDate ?: return true
@@ -42,7 +38,7 @@ class RoomTaskContract(
         return deadline <= now + windowMs
     }
 
-    private fun Task.toSnapshot() = TaskSnapshot(
+    private fun Task.toSnapshot(now: Long) = TaskSnapshot(
         id = id.toString(),
         titleShort = title.take(60),
         state = when {
@@ -52,7 +48,7 @@ class RoomTaskContract(
             deletedAt != null -> TaskState.ARCHIVED
             blockedByTaskId != null -> TaskState.BLOCKED
             timerStartedAt != null -> TaskState.IN_PROGRESS
-            dueDate != null && dueDate < timeProvider.currentTimeMillis() -> TaskState.OVERDUE
+            dueDate != null && dueDate < now -> TaskState.OVERDUE
             else -> TaskState.ACTIVE
         },
         deadlineMillis = dueDate,

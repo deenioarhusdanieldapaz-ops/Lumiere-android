@@ -72,8 +72,6 @@ class IntelligenceEngineResilienceTest {
         approvalGateway = ApprovalGateway(InMemoryApprovalStore(), timeProvider),
         memory = memory,
         timeProvider = timeProvider,
-        taskDao = FakeTaskDao(),
-        habitDao = FakeHabitDao()
     )
 
     @Test

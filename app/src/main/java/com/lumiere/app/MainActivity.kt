@@ -86,8 +86,6 @@ class MainActivity : ComponentActivity() {
             approvalGateway = ApprovalGateway(CoreMemoryApprovalStore(database.coreMemoryDao(), timeProvider), timeProvider),
             memory = CoreMemoryRepository(database.coreMemoryDao(), timeProvider),
             timeProvider = timeProvider,
-            taskDao = database.taskDao(),
-            habitDao = database.habitDao()
         ),
         taskDao = database.taskDao()
     ) } } }

@@ -36,8 +36,6 @@ class IntelligenceEngineTest {
                 }, timeProvider
             ),
             timeProvider = timeProvider,
-            taskDao = FakeTaskDao(),
-            habitDao = FakeHabitDao()
         )
 
         val result = engine.analyzeWeek().getOrThrow()
