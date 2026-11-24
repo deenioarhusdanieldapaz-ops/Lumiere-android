@@ -28,30 +28,18 @@ class TaskRepositoryIntegrationTest {
     @Before
     fun setup() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        db = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
-            .allowMainThreadQueries()
-            .build()
-
-        repository = TaskRepository(
-            taskDao = db.taskDao(),
-            subtaskDao = db.subtaskDao(),
-            projectDao = db.projectDao(),
-            taskHistoryDao = db.taskHistoryDao()
-        )
+        db = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).allowMainThreadQueries().build()
+        repository = TaskRepository(db.taskDao(), db.subtaskDao(), db.projectDao(), db.taskHistoryDao())
     }
 
     @After
-    fun teardown() {
-        db.close()
-    }
+    fun teardown() { db.close() }
 
     @Test
     fun insertAndReadTask() = runTest {
         val task = TestDataFactory.task(title = "BD Real QA", status = 0)
-
-        val id = repository.insertTask(task)
+        val id = repository.insertTask(task).getOrThrow()
         assertTrue("O ID gerado pelo Room deve ser maior que 0", id > 0)
-
         val tasks = repository.allTasks.first()
         assertEquals(1, tasks.size)
         assertEquals("BD Real QA", tasks[0].title)
@@ -60,11 +48,9 @@ class TaskRepositoryIntegrationTest {
     @Test
     fun updateTask_modifiesDatabase() = runTest {
         val task = TestDataFactory.task(title = "Original")
-        val id = repository.insertTask(task)
-
+        val id = repository.insertTask(task).getOrThrow()
         val updated = task.copy(id = id, title = "Modificada")
-        repository.updateTask(updated)
-
+        repository.updateTask(updated).getOrThrow()
         val tasks = repository.allTasks.first()
         assertEquals("Modificada", tasks[0].title)
     }
@@ -75,12 +61,11 @@ class TaskRepositoryIntegrationTest {
         val arquivada = TestDataFactory.task(title = "Arquivada", status = 4)
         val apagada = TestDataFactory.task(title = "Apagada", status = 0).copy(deletedAt = 123L)
 
-        repository.insertTask(ativa)
-        repository.insertTask(arquivada)
-        repository.insertTask(apagada)
+        repository.insertTask(ativa).getOrThrow()
+        repository.insertTask(arquivada).getOrThrow()
+        repository.insertTask(apagada).getOrThrow()
 
         val resultado = repository.allTasks.first()
-
         assertEquals("Deveria retornar 2 tarefas (ativa e arquivada)", 2, resultado.size)
         assertEquals("A apagada NÃO deve estar presente", 0, resultado.count { it.title == "Apagada" })
     }
