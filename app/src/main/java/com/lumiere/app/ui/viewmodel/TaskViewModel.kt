@@ -71,6 +71,8 @@ class TaskViewModel(private val repository: TaskRepository, private val timeProv
         return cal.timeInMillis
     }
 
+    fun getTaskById(id: Long): StateFlow<Task?> = flow { emit(repository.getTaskById(id)) }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
     fun getSubtasks(taskId: Long): StateFlow<List<Subtask>> = repository.getSubtasks(taskId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 

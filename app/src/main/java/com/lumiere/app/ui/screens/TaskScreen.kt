@@ -30,11 +30,20 @@ import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TaskScreen(viewModel: TaskViewModel, onOpenDrawer: () -> Unit = {}) {
+fun TaskScreen(
+    viewModel: TaskViewModel, 
+    onOpenDrawer: () -> Unit = {},
+    onTaskClick: (Task) -> Unit = {},
+    onOpenProjects: () -> Unit = {}
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showQuickAdd by remember { mutableStateOf(false) }
+    
+    // Estado para o diálogo de eliminar
+    var taskToDelete by remember { mutableStateOf<Task?>(null) }
+    var confirmText by remember { mutableStateOf("") }
 
-    val tasks = uiState.tasks // Usar a lista base e agrupar localmente para as secções
+    val tasks = uiState.tasks
     val now = System.currentTimeMillis()
     val endOfDay = getEndOfDay(now)
 
@@ -50,13 +59,12 @@ fun TaskScreen(viewModel: TaskViewModel, onOpenDrawer: () -> Unit = {}) {
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = Color.Black,
                 shape = CircleShape,
-                modifier = Modifier.padding(bottom = 60.dp) // Acima da bottom bar
+                modifier = Modifier.padding(bottom = 60.dp)
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Adicionar Tarefa", modifier = Modifier.size(32.dp))
             }
         },
         bottomBar = {
-            // Barra de navegação visual baseada na imagem
             NavigationBar(containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 8.dp) {
                 NavigationBarItem(selected = false, onClick = {}, icon = { Icon(Icons.Default.Home, null) }, label = { Text("Início") })
                 NavigationBarItem(selected = true, onClick = {}, icon = { Icon(Icons.Default.CheckCircle, null) }, label = { Text("Tarefas") }, colors = NavigationBarItemDefaults.colors(selectedIconColor = MaterialTheme.colorScheme.primary, selectedTextColor = MaterialTheme.colorScheme.primary))
@@ -69,7 +77,7 @@ fun TaskScreen(viewModel: TaskViewModel, onOpenDrawer: () -> Unit = {}) {
             modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = LumiereSpacing.M),
             verticalArrangement = Arrangement.spacedBy(LumiereSpacing.M)
         ) {
-            // Header (Título e Subtítulo)
+            // Header (Título, Menu, Projetos)
             item {
                 Row(modifier = Modifier.fillMaxWidth().padding(top = LumiereSpacing.M), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -80,77 +88,62 @@ fun TaskScreen(viewModel: TaskViewModel, onOpenDrawer: () -> Unit = {}) {
                         }
                     }
                     Row {
-                        Icon(Icons.Default.Search, contentDescription = "Pesquisar", tint = MaterialTheme.colorScheme.primary)
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Box {
-                            Icon(Icons.Default.Notifications, contentDescription = "Notificações", tint = MaterialTheme.colorScheme.primary)
-                            Box(modifier = Modifier.align(Alignment.TopEnd).background(Color.Red, CircleShape).size(8.dp))
-                        }
+                        IconButton(onClick = onOpenProjects) { Icon(Icons.Default.Folder, contentDescription = "Projetos", tint = MaterialTheme.colorScheme.primary) }
+                        IconButton(onClick = { }) { Icon(Icons.Default.Search, contentDescription = "Pesquisar", tint = MaterialTheme.colorScheme.primary) }
                     }
+                }
+            }
+
+            // Abas (Todas, Hoje, Próximas, Concluídas)
+            item {
+                ScrollableTabRow(
+                    selectedTabIndex = when(uiState.activeFilter) {
+                        "TODAY" -> 1
+                        "COMPLETED" -> 2
+                        else -> 0
+                    },
+                    edgePadding = 0.dp,
+                    containerColor = Color.Transparent,
+                    contentColor = MaterialTheme.colorScheme.primary,
+                    divider = {}
+                ) {
+                    Tab(selected = uiState.activeFilter == "ALL", onClick = { viewModel.setFilter("ALL") }, text = { Text("Todas") })
+                    Tab(selected = uiState.activeFilter == "TODAY", onClick = { viewModel.setFilter("TODAY") }, text = { Text("Hoje") })
+                    Tab(selected = uiState.activeFilter == "OVERDUE", onClick = { viewModel.setFilter("OVERDUE") }, text = { Text("Atrasadas") })
+                    Tab(selected = uiState.activeFilter == "COMPLETED", onClick = { viewModel.setFilter("COMPLETED") }, text = { Text("Concluídas") })
                 }
             }
 
             // Summary Cards
             item {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SummaryBox(Modifier.weight(1f), "3", "Hoje", Icons.Default.CalendarToday, MaterialTheme.colorScheme.primary)
+                    SummaryBox(Modifier.weight(1f), todayTasks.size.toString(), "Hoje", Icons.Default.CalendarToday, MaterialTheme.colorScheme.primary)
                     SummaryBox(Modifier.weight(1f), overdueTasks.size.toString(), "Atrasada", Icons.Default.Warning, MaterialTheme.colorScheme.error)
                     SummaryBox(Modifier.weight(1f), "68%", "Foco", Icons.Default.TrackChanges, MaterialTheme.colorScheme.primary)
                 }
             }
 
-            // Secção Atrasadas
-            if (overdueTasks.isNotEmpty()) {
-                item { SectionHeader("Atrasadas", overdueTasks.size, Icons.Default.Schedule, MaterialTheme.colorScheme.error) }
-                items(overdueTasks) { task ->
-                    TaskCardItem(task, MaterialTheme.colorScheme.error, "há 2h") // Simulação de tempo
+            // Lista de Tarefas
+            val displayTasks = uiState.filteredTasks
+            if (displayTasks.isEmpty()) {
+                item { Text("Nenhuma tarefa encontrada.", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 16.dp)) }
+            } else {
+                items(displayTasks) { task ->
+                    TaskCardItem(
+                        task = task, 
+                        borderColor = if (task.isCompleted) Lumiere.colors.success else MaterialTheme.colorScheme.primary,
+                        timeLabel = if (task.isCompleted) "Concluída" else null,
+                        onClick = { onTaskClick(task) },
+                        onDelete = { taskToDelete = task }
+                    )
                 }
             }
 
-            // Secção Hoje
-            if (todayTasks.isNotEmpty()) {
-                item { SectionHeader("Hoje", todayTasks.size, Icons.Default.CalendarMonth, MaterialTheme.colorScheme.primary) }
-                items(todayTasks) { task ->
-                    TaskCardItem(task, MaterialTheme.colorScheme.primary)
-                }
-            }
-
-            // Secção Próximas
-            if (upcomingTasks.isNotEmpty()) {
-                item { SectionHeader("Próximas", upcomingTasks.size, Icons.Default.Schedule, Color(0xFF3B82F6)) }
-                items(upcomingTasks) { task ->
-                    TaskCardItem(task, Color(0xFF3B82F6))
-                }
-            }
-
-            // Cartão da Inteligência Lumière
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(LumiereRadius.M))
-                        .background(Color(0xFF1A1500))
-                        .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), RoundedCornerShape(LumiereRadius.M))
-                        .padding(LumiereSpacing.M)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Lightbulb, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(32.dp))
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Inteligência Lumière", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
-                            Text("Tens 2 tarefas de 30m. Queres agrupá-las esta tarde?", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface)
-                        }
-                        OutlinedButton(onClick = {}, border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary)) {
-                            Text("Ver", color = MaterialTheme.colorScheme.primary)
-                        }
-                    }
-                }
-            }
-            
             item { Spacer(modifier = Modifier.height(80.dp)) }
         }
     }
 
+    // Formulário Rápido
     if (showQuickAdd) {
         LumiereUniversalForm(
             mode = FormMode.QUICK,
@@ -165,6 +158,46 @@ fun TaskScreen(viewModel: TaskViewModel, onOpenDrawer: () -> Unit = {}) {
                     viewModel.addTask(Task(title = title))
                     showQuickAdd = false
                 }
+            }
+        )
+    }
+
+    // Diálogo de Eliminar (Destructive Form)
+    if (taskToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { taskToDelete = null; confirmText = "" },
+            containerColor = MaterialTheme.colorScheme.surface,
+            title = { Text("Eliminar tarefa?", style = MaterialTheme.typography.titleLarge) },
+            text = {
+                Column {
+                    Text("Esta ação não pode ser desfeita. O histórico será preservado.", style = MaterialTheme.typography.bodyMedium)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Escreve ELIMINAR para confirmar", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    OutlinedTextField(
+                        value = confirmText,
+                        onValueChange = { confirmText = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.error,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.error
+                        ),
+                        shape = RoundedCornerShape(LumiereRadius.S)
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        taskToDelete?.let { viewModel.deleteTask(it) }
+                        taskToDelete = null; confirmText = ""
+                    },
+                    enabled = confirmText == "ELIMINAR",
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) { Text("Eliminar") }
+            },
+            dismissButton = {
+                TextButton(onClick = { taskToDelete = null; confirmText = "" }) { Text("Cancelar", color = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
         )
     }
@@ -191,54 +224,27 @@ private fun SummaryBox(modifier: Modifier, value: String, label: String, icon: I
 }
 
 @Composable
-private fun SectionHeader(title: String, count: Int, icon: ImageVector, color: Color) {
-    Row(modifier = Modifier.fillMaxWidth().padding(top = LumiereSpacing.S), verticalAlignment = Alignment.CenterVertically) {
-        Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(title, style = MaterialTheme.typography.titleLarge)
-        Spacer(modifier = Modifier.width(8.dp))
-        Box(modifier = Modifier.background(color, CircleShape).padding(horizontal = 8.dp, vertical = 2.dp)) {
-            Text(count.toString(), color = Color.White, style = MaterialTheme.typography.labelSmall)
-        }
-        Spacer(modifier = Modifier.weight(1f))
-        Text("Ver todas >", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
-    }
-}
-
-@Composable
-private fun TaskCardItem(task: Task, borderColor: Color, timeLabel: String? = null) {
+private fun TaskCardItem(task: Task, borderColor: Color, timeLabel: String? = null, onClick: () -> Unit, onDelete: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(LumiereRadius.M))
             .background(MaterialTheme.colorScheme.surface)
             .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), RoundedCornerShape(LumiereRadius.M))
+            .clickable { onClick() }
     ) {
-        Box(modifier = Modifier.width(4.dp).height(if (task.actualDurationMinutes > 0) 72.dp else 60.dp).background(borderColor))
+        Box(modifier = Modifier.width(4.dp).height(60.dp).background(borderColor))
         Row(modifier = Modifier.padding(LumiereSpacing.M).weight(1f), verticalAlignment = Alignment.CenterVertically) {
             Box(modifier = Modifier.size(24.dp).border(2.dp, MaterialTheme.colorScheme.outline, CircleShape))
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(task.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(task.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = if (task.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface)
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(task.category ?: "Pessoal", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    if (timeLabel != null) {
-                        Text(" • $timeLabel", style = MaterialTheme.typography.bodySmall, color = borderColor)
-                    }
-                }
-                if (task.actualDurationMinutes > 0 && task.estimatedDurationMinutes != null) {
-                    val p = (task.actualDurationMinutes.toFloat() / task.estimatedDurationMinutes).coerceIn(0f, 1f)
-                    LinearProgressIndicator(progress = p, modifier = Modifier.fillMaxWidth().padding(top = 4.dp).height(4.dp).clip(RoundedCornerShape(2.dp)), color = borderColor, trackColor = MaterialTheme.colorScheme.surfaceVariant)
+                    if (timeLabel != null) Text(" • $timeLabel", style = MaterialTheme.typography.bodySmall, color = borderColor)
                 }
             }
-            if (task.actualDurationMinutes == 0 && task.dueDate == null) {
-                Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            } else if (task.actualDurationMinutes == 0 && task.dueDate != null) {
-                // Simulação de botão Iniciar Timer
-                OutlinedButton(onClick = {}, border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary)) {
-                    Text("Iniciar timer", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelSmall)
-                }
-            }
+            IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = MaterialTheme.colorScheme.error) }
         }
     }
 }

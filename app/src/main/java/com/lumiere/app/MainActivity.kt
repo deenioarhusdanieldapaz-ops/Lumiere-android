@@ -186,7 +186,9 @@ class MainActivity : ComponentActivity() {
                                     isNotificationsEnabled = notificationsEnabled
                                 )
                             }
-                            composable(Screen.Tasks.route) { TaskScreen(viewModel = taskViewModel, onOpenDrawer = { scope.launch { drawerState.open() } }) }
+                            composable(Screen.Tasks.route) { TaskScreen(viewModel = taskViewModel, onOpenDrawer = { scope.launch { drawerState.open() } }, onTaskClick = { task -> navController.navigate("task_detail/${task.id}") }, onOpenProjects = { navController.navigate("projects") }) }
+                            composable("projects") { ProjectScreen(viewModel = taskViewModel, onBack = { navController.popBackStack() }) }
+                            composable("task_detail/{taskId}") { backStackEntry -> val taskId = backStackEntry.arguments?.getString("taskId")?.toLongOrNull(); val task by taskViewModel.getTaskById(taskId ?: 0L).collectAsStateWithLifecycle(); task?.let { TaskDetailScreen(task = it, onBack = { navController.popBackStack() }, onSave = { t -> taskViewModel.updateTask(t); navController.popBackStack() }) } }
                             composable(Screen.Habits.route) { HabitScreen(viewModel = habitViewModel, onOpenDrawer = { scope.launch { drawerState.open() } }) }
                             composable("help_and_learning") { HelpScreen(onBack = { navController.popBackStack() }) }
                             composable("global_history") { GlobalHistoryScreen(onBack = { navController.popBackStack() }) }
