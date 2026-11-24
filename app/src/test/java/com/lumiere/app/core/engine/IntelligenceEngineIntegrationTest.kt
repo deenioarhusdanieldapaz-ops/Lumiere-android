@@ -32,7 +32,7 @@ class IntelligenceEngineIntegrationTest {
 
     private class MutableTaskDao : TaskDao {
         val tasks = mutableMapOf<Long, Task>()
-        override fun getAllActiveTasks(): Flow<List<Task>> = flowOf(tasks.values.toList())
+        override fun getAllTasks(): Flow<List<Task>> = flowOf(tasks.values.toList())
         override suspend fun getTaskById(id: Long): Task? = tasks[id]
         override suspend fun completionTimestampsSince(since: Long): List<Long> = emptyList()
         override suspend fun insertTask(task: Task): Long { tasks[task.id] = task; return task.id }

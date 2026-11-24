@@ -114,7 +114,7 @@ class IntelligenceViewModel(
     }
 
     private suspend fun computeLifeAreas(): List<LifeAreaProgress> {
-        val tasks = taskDao.getAllActiveTasks().first()
+        val tasks = taskDao.getAllTasks().first()
         if (tasks.isEmpty()) {
             return DEFAULT_AREAS.map { LifeAreaProgress(it, "Sem dados", 0f) }
         }

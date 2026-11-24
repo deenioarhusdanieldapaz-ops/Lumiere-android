@@ -18,7 +18,7 @@ class RoomTaskContractTest {
     }
 
     private class ControlledTaskDao(private val tasks: List<Task>) : TaskDao {
-        override fun getAllActiveTasks(): Flow<List<Task>> = flowOf(tasks)
+        override fun getAllTasks(): Flow<List<Task>> = flowOf(tasks)
         override suspend fun getTaskById(id: Long): Task? = tasks.find { it.id == id }
         override suspend fun completionTimestampsSince(since: Long): List<Long> = emptyList()
         override suspend fun insertTask(task: Task): Long = 0L

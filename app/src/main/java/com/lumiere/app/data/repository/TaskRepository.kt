@@ -11,7 +11,7 @@ class TaskRepository(
     private val projectDao: ProjectDao,
     private val taskHistoryDao: TaskHistoryDao
 ) {
-    val allTasks: Flow<List<Task>> = taskDao.getAllActiveTasks()
+    val allTasks: Flow<List<Task>> = taskDao.getAllTasks()
     val allProjects: Flow<List<Project>> = projectDao.getAllProjects()
 
     suspend fun insertTask(task: Task): Long = try { taskDao.insertTask(task) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { LumiereLogger.e("TaskRepo", "Falha ao inserir tarefa", e); -1L }

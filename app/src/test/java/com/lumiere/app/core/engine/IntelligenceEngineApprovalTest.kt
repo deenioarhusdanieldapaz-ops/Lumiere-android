@@ -23,7 +23,7 @@ class IntelligenceEngineApprovalTest {
     }
 
     private class MutableTaskDao(private val tasks: MutableMap<Long, Task> = mutableMapOf()) : TaskDao {
-        override fun getAllActiveTasks(): Flow<List<Task>> = flowOf(tasks.values.toList())
+        override fun getAllTasks(): Flow<List<Task>> = flowOf(tasks.values.toList())
         override suspend fun getTaskById(id: Long): Task? = tasks[id]
         override suspend fun completionTimestampsSince(since: Long): List<Long> = emptyList()
         override suspend fun insertTask(task: Task): Long { tasks[task.id] = task; return task.id }

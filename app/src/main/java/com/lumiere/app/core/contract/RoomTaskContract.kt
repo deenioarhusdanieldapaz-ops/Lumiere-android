@@ -16,7 +16,7 @@ class RoomTaskContract(
     override suspend fun getActiveTasks(windowDays: Int): Result<List<TaskSnapshot>> = runCatching {
         val now = timeProvider.currentTimeMillis()
         val windowMs = windowDays.toLong() * 86_400_000L
-        taskDao.getAllActiveTasks().first()
+        taskDao.getAllTasks().first()
             .filter { isInAnalysisWindow(it, now, windowMs) }
             .map { it.toSnapshot() }
     }
