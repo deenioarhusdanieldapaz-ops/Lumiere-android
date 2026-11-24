@@ -26,6 +26,8 @@ class IntelligenceEngineResilienceTest {
             Result.failure(RuntimeException("task source down"))
         override suspend fun getTask(id: String): Result<TaskSnapshot?> =
             Result.failure(RuntimeException("task source down"))
+        override suspend fun updateTaskDueDate(id: String, newDueDate: Long): Result<Unit> =
+            Result.failure(RuntimeException("task source down"))
     }
 
     private fun failingHabitContract(): HabitContract = object : HabitContract {
@@ -71,7 +73,7 @@ class IntelligenceEngineResilienceTest {
         strictChecker = StrictConflictChecker(timeProvider),
         approvalGateway = ApprovalGateway(InMemoryApprovalStore(), timeProvider),
         memory = memory,
-        timeProvider = timeProvider,
+        timeProvider = timeProvider
     )
 
     @Test
