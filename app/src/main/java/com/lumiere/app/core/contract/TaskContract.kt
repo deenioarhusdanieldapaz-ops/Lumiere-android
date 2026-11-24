@@ -36,4 +36,4 @@ data class TaskSnapshot(
     override val energyCost: Int get() = energy
     override val priority: Int get() = importance
 }
-enum class TaskState { ACTIVE, DONE, ARCHIVED }
+enum class TaskState { ACTIVE, IN_PROGRESS, DONE, OVERDUE, BLOCKED, PAUSED, CANCELLED, ARCHIVED }

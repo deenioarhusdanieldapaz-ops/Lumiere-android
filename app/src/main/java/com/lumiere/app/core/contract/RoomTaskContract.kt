@@ -45,9 +45,14 @@ class RoomTaskContract(
     private fun Task.toSnapshot() = TaskSnapshot(
         id = id.toString(),
         titleShort = title.take(60),
-        state = when (status) {
-            2 -> TaskState.DONE
-            4 -> TaskState.ARCHIVED
+        state = when {
+            status == 2 -> TaskState.DONE
+            status == 3 -> TaskState.CANCELLED
+            status == 4 -> TaskState.ARCHIVED
+            deletedAt != null -> TaskState.ARCHIVED
+            blockedByTaskId != null -> TaskState.BLOCKED
+            timerStartedAt != null -> TaskState.IN_PROGRESS
+            dueDate != null && dueDate < timeProvider.currentTimeMillis() -> TaskState.OVERDUE
             else -> TaskState.ACTIVE
         },
         deadlineMillis = dueDate,
