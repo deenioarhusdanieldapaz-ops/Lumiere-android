@@ -27,6 +27,7 @@ class TaskRepository(
     }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it; LumiereLogger.e("TaskRepo", "Falha ao apagar", it) }
 
     suspend fun getTaskById(id: Long): Task? = taskDao.getTaskById(id)
+    fun getTaskFlowById(id: Long): Flow<Task?> = taskDao.getTaskFlowById(id)
 
     fun getSubtasks(taskId: Long) = subtaskDao.getSubtasksForTask(taskId)
     

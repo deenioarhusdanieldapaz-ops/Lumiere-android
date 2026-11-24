@@ -2,6 +2,7 @@ package com.lumiere.app.domain.usecase
 
 import com.lumiere.app.data.local.entity.*
 import com.lumiere.app.data.repository.TaskRepository
+import com.lumiere.app.core.time.TimeProvider
 import kotlinx.coroutines.flow.first
 import java.util.Calendar
 
@@ -13,17 +14,18 @@ class AddTaskUseCase(private val repository: TaskRepository) {
     }
 }
 
-class UpdateTaskUseCase(private val repository: TaskRepository) {
+class UpdateTaskUseCase(private val repository: TaskRepository, private val timeProvider: TimeProvider) {
     suspend operator fun invoke(task: Task): Result<Unit> {
-        return repository.updateTask(task.copy(updatedAt = System.currentTimeMillis())).onSuccess {
+        return repository.updateTask(task.copy(updatedAt = timeProvider.currentTimeMillis())).onSuccess {
             repository.insertHistory(TaskHistory(taskId = task.id, action = "Tarefa Editada"))
         }
     }
 }
 
-class CreateNextRecurringTaskUseCase(private val repository: TaskRepository, private val timeProvider: com.lumiere.app.core.time.TimeProvider) {
+class CreateNextRecurringTaskUseCase(private val repository: TaskRepository, private val timeProvider: TimeProvider) {
     suspend operator fun invoke(task: Task): Result<Unit> = runCatching {
-        val baseDate = timeProvider.currentTimeMillis()
+        // Correção D1-B: Usa o prazo anterior como base
+        val baseDate = task.dueDate ?: timeProvider.currentTimeMillis()
         val nextDate = when (task.recurrenceRule) {
             "DAILY" -> addDays(baseDate, 1)
             "WEEKLY" -> addDays(baseDate, 7)
@@ -33,7 +35,7 @@ class CreateNextRecurringTaskUseCase(private val repository: TaskRepository, pri
         }
         val newTask = task.copy(
             id = 0, status = 0, dueDate = nextDate,
-            createdAt = System.currentTimeMillis(), updatedAt = System.currentTimeMillis(),
+            createdAt = timeProvider.currentTimeMillis(), updatedAt = timeProvider.currentTimeMillis(),
             completedAt = null, timerStartedAt = null, actualDurationMinutes = 0
         )
         val newId = repository.insertTask(newTask).getOrThrow()
@@ -59,7 +61,7 @@ class CreateNextRecurringTaskUseCase(private val repository: TaskRepository, pri
     }
 }
 
-class ToggleTaskCompletionUseCase(private val repository: TaskRepository, private val timeProvider: com.lumiere.app.core.time.TimeProvider) {
+class ToggleTaskCompletionUseCase(private val repository: TaskRepository, private val timeProvider: TimeProvider) {
     private val createNext = CreateNextRecurringTaskUseCase(repository, timeProvider)
 
     suspend operator fun invoke(task: Task): Result<Unit> {
@@ -81,17 +83,17 @@ class ToggleTaskCompletionUseCase(private val repository: TaskRepository, privat
     }
 }
 
-class CancelTaskUseCase(private val repository: TaskRepository) {
+class CancelTaskUseCase(private val repository: TaskRepository, private val timeProvider: TimeProvider) {
     suspend operator fun invoke(task: Task, reason: String): Result<Unit> {
-        return repository.updateTask(task.copy(status = 3, cancellationReason = reason, timerStartedAt = null, completedAt = null, updatedAt = System.currentTimeMillis())).onSuccess {
+        return repository.updateTask(task.copy(status = 3, cancellationReason = reason, timerStartedAt = null, completedAt = null, updatedAt = timeProvider.currentTimeMillis())).onSuccess {
             repository.insertHistory(TaskHistory(taskId = task.id, action = "Cancelada: $reason"))
         }
     }
 }
 
-class ResumeTaskUseCase(private val repository: TaskRepository) {
+class ResumeTaskUseCase(private val repository: TaskRepository, private val timeProvider: TimeProvider) {
     suspend operator fun invoke(task: Task): Result<Unit> {
-        return repository.updateTask(task.copy(status = 0, cancellationReason = null, completedAt = null, updatedAt = System.currentTimeMillis())).onSuccess {
+        return repository.updateTask(task.copy(status = 0, cancellationReason = null, completedAt = null, updatedAt = timeProvider.currentTimeMillis())).onSuccess {
             repository.insertHistory(TaskHistory(taskId = task.id, action = "Retomada"))
         }
     }
@@ -101,6 +103,12 @@ class DuplicateTaskUseCase(private val repository: TaskRepository) {
     suspend operator fun invoke(task: Task): Result<Long> {
         return repository.insertTask(task.copy(id = 0, title = "${task.title} (Cópia)", status = 0)).onSuccess { newId ->
             repository.insertHistory(TaskHistory(taskId = newId, action = "Tarefa Duplicada"))
+            // Correção: Copiar subtarefas
+            runCatching {
+                repository.getSubtasks(task.id).first().forEach { st ->
+                    repository.insertSubtask(st.copy(id = 0, taskId = newId, isCompleted = false))
+                }
+            }
         }
     }
 }
@@ -113,24 +121,25 @@ class ArchiveTaskUseCase(private val repository: TaskRepository) {
     }
 }
 
-class DeleteTaskUseCase(private val repository: TaskRepository) {
+class DeleteTaskUseCase(private val repository: TaskRepository, private val timeProvider: TimeProvider) {
     suspend operator fun invoke(task: Task): Result<Unit> {
-        val now = System.currentTimeMillis()
+        val now = timeProvider.currentTimeMillis()
         return repository.updateTask(task.copy(deletedAt = now, updatedAt = now)).onSuccess {
             repository.insertHistory(TaskHistory(taskId = task.id, action = "Tarefa Eliminada (recuperável)"))
         }
     }
 }
 
-class ToggleTimerUseCase(private val repository: TaskRepository) {
+class ToggleTimerUseCase(private val repository: TaskRepository, private val timeProvider: TimeProvider) {
     suspend operator fun invoke(task: Task): Result<Unit> {
         if (task.timerStartedAt != null) {
-            val elapsedMinutes = ((System.currentTimeMillis() - task.timerStartedAt) / 60000).toInt().coerceAtLeast(0)
-            return repository.updateTask(task.copy(actualDurationMinutes = task.actualDurationMinutes + elapsedMinutes, timerStartedAt = null, updatedAt = System.currentTimeMillis())).onSuccess {
+            // Correção: Usa o timeProvider em vez de System.currentTimeMillis
+            val elapsedMinutes = ((timeProvider.currentTimeMillis() - task.timerStartedAt) / 60000).toInt().coerceAtLeast(0)
+            return repository.updateTask(task.copy(actualDurationMinutes = task.actualDurationMinutes + elapsedMinutes, timerStartedAt = null, updatedAt = timeProvider.currentTimeMillis())).onSuccess {
                 repository.insertHistory(TaskHistory(taskId = task.id, action = "Cronómetro Parado (+$elapsedMinutes min)"))
             }
         } else {
-            return repository.updateTask(task.copy(timerStartedAt = System.currentTimeMillis(), updatedAt = System.currentTimeMillis())).onSuccess {
+            return repository.updateTask(task.copy(timerStartedAt = timeProvider.currentTimeMillis(), updatedAt = timeProvider.currentTimeMillis())).onSuccess {
                 repository.insertHistory(TaskHistory(taskId = task.id, action = "Cronómetro Iniciado"))
             }
         }

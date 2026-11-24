@@ -71,7 +71,7 @@ class TaskViewModel(private val repository: TaskRepository, private val timeProv
         return cal.timeInMillis
     }
 
-    fun getTaskById(id: Long): StateFlow<Task?> = flow { emit(repository.getTaskById(id)) }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+    fun getTaskById(id: Long): StateFlow<Task?> = repository.getTaskFlowById(id).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     fun getSubtasks(taskId: Long): StateFlow<List<Subtask>> = repository.getSubtasks(taskId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -80,14 +80,14 @@ class TaskViewModel(private val repository: TaskRepository, private val timeProv
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val addTaskUC = AddTaskUseCase(repository)
-    private val updateTaskUC = UpdateTaskUseCase(repository)
+    private val updateTaskUC = UpdateTaskUseCase(repository, timeProvider)
     private val toggleCompletionUC = ToggleTaskCompletionUseCase(repository, timeProvider)
-    private val cancelTaskUC = CancelTaskUseCase(repository)
-    private val resumeTaskUC = ResumeTaskUseCase(repository)
+    private val cancelTaskUC = CancelTaskUseCase(repository, timeProvider)
+    private val resumeTaskUC = ResumeTaskUseCase(repository, timeProvider)
     private val duplicateTaskUC = DuplicateTaskUseCase(repository)
     private val archiveTaskUC = ArchiveTaskUseCase(repository)
-    private val deleteTaskUC = DeleteTaskUseCase(repository)
-    private val toggleTimerUC = ToggleTimerUseCase(repository)
+    private val deleteTaskUC = DeleteTaskUseCase(repository, timeProvider)
+    private val toggleTimerUC = ToggleTimerUseCase(repository, timeProvider)
     private val addSubtaskUC = AddSubtaskUseCase(repository)
     private val toggleSubtaskUC = ToggleSubtaskUseCase(repository)
     private val deleteSubtaskUC = DeleteSubtaskUseCase(repository)
