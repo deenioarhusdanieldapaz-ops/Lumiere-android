@@ -19,7 +19,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.lumiere.app.data.local.entity.Project
 import com.lumiere.app.data.local.entity.Task
 import com.lumiere.app.ui.theme.LumiereRadius
 import com.lumiere.app.ui.theme.LumiereSpacing
@@ -46,7 +45,9 @@ fun ProjectScreen(viewModel: TaskViewModel, onBack: () -> Unit = {}) {
             modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = LumiereSpacing.M),
             verticalArrangement = Arrangement.spacedBy(LumiereSpacing.M)
         ) {
-            item { Text("Organize as suas tarefas por projeto", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            item { 
+                Text("Organize as suas tarefas por projeto", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) 
+            }
             
             items(projects) { project ->
                 val projectTasks = tasks.filter { it.projectId == project.id }
@@ -58,13 +59,15 @@ fun ProjectScreen(viewModel: TaskViewModel, onBack: () -> Unit = {}) {
                 ProjectCard(name = project.name, count = total.toString(), overdue = overdue, completed = completed, progress = progress, color = Color(0xFF3B82F6), icon = Icons.Default.Folder)
             }
 
-            // Sem projeto
+            // Sem projeto (CORRIGIDO: agora está dentro de um item)
             val noProjectTasks = tasks.filter { it.projectId == null }
             if (noProjectTasks.isNotEmpty()) {
-                val total = noProjectTasks.size
-                val completed = noProjectTasks.count { it.isCompleted }
-                val overdue = noProjectTasks.count { !it.isCompleted && it.dueDate != null && it.dueDate < System.currentTimeMillis() }
-                ProjectCard(name = "Sem projeto", count = total.toString(), overdue = overdue, completed = completed, progress = completed.toFloat() / total, color = Color(0xFFA0A0A0), icon = Icons.Default.Star)
+                item {
+                    val total = noProjectTasks.size
+                    val completed = noProjectTasks.count { it.isCompleted }
+                    val overdue = noProjectTasks.count { !it.isCompleted && it.dueDate != null && it.dueDate < System.currentTimeMillis() }
+                    ProjectCard(name = "Sem projeto", count = total.toString(), overdue = overdue, completed = completed, progress = if (total > 0) completed.toFloat() / total else 0f, color = Color(0xFFA0A0A0), icon = Icons.Default.Star)
+                }
             }
         }
     }
