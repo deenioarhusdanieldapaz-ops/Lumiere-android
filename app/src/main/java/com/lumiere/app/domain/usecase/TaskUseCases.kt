@@ -117,11 +117,6 @@ class ArchiveTaskUseCase(private val repository: TaskRepository) {
     }
 }
 
-class DeleteTaskUseCase(private val repository: TaskRepository) {
-    suspend operator fun invoke(task: Task) {
-        repository.deleteTask(task)
-    }
-}
 
 class ToggleTimerUseCase(private val repository: TaskRepository) {
     suspend operator fun invoke(task: Task) {
@@ -163,5 +158,13 @@ class DeleteSubtaskUseCase(private val repository: TaskRepository) {
 class AddProjectUseCase(private val repository: TaskRepository) {
     suspend operator fun invoke(name: String) {
         repository.insertProject(Project(name = name))
+    }
+}
+
+class DeleteTaskUseCase(private val repository: TaskRepository) {
+    suspend operator fun invoke(task: Task) {
+        val now = System.currentTimeMillis()
+        repository.updateTask(task.copy(deletedAt = now, updatedAt = now))
+        repository.insertHistory(TaskHistory(taskId = task.id, action = "Tarefa Eliminada (recuperável)"))
     }
 }

@@ -36,6 +36,7 @@ class RoomTaskContract(
     private fun isInAnalysisWindow(task: Task, now: Long, windowMs: Long): Boolean {
         // F12 defesa em profundidade: DONE(2), CANCELLED(3), ARCHIVED(4) nunca entram
         if (task.status == 2 || task.status == 3 || task.status == 4) return false
+        if (task.deletedAt != null) return false
         val deadline = task.dueDate ?: return true
         if (deadline < now) return true
         return deadline <= now + windowMs

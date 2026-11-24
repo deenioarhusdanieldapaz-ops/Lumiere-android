@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TaskDao {
-    @Query("SELECT * FROM tasks WHERE status = 0 ORDER BY priority DESC, dueDate ASC")
+    @Query("SELECT * FROM tasks WHERE status = 0 AND deletedAt IS NULL ORDER BY priority DESC, dueDate ASC")
     fun getAllActiveTasks(): Flow<List<Task>>
 
     @Query("SELECT * FROM tasks WHERE id = :id")
