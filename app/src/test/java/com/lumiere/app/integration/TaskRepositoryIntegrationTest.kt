@@ -58,18 +58,6 @@ class TaskRepositoryIntegrationTest {
     }
 
     @Test
-    fun allActiveTasks_excludesArchived() = runTest {
-        val ativa = TestDataFactory.task(title = "Ativa", status = 0)
-        val arquivada = TestDataFactory.task(title = "Arquivada", status = 4)
-
-        repository.insertTask(ativa)
-        repository.insertTask(arquivada)
-
-        val resultado = repository.allTasks.first()
-        
-        assertEquals("Deveria retornar apenas 1 tarefa (a ativa)", 1, resultado.size)
-        assertEquals("Ativa", resultado[0].title)
-    }
 
     @Test
     fun updateTask_modifiesDatabase() = runTest {
@@ -81,5 +69,22 @@ class TaskRepositoryIntegrationTest {
 
         val tasks = repository.allTasks.first()
         assertEquals("Modificada", tasks[0].title)
+    }
+}
+
+    @Test
+    fun allTasks_excludesDeleted() = runTest {
+        val ativa = TestDataFactory.task(title = "Ativa", status = 0)
+        val arquivada = TestDataFactory.task(title = "Arquivada", status = 4)
+        val apagada = TestDataFactory.task(title = "Apagada", status = 0).copy(deletedAt = 123L)
+
+        repository.insertTask(ativa)
+        repository.insertTask(arquivada)
+        repository.insertTask(apagada)
+
+        val resultado = repository.allTasks.first()
+
+        assertEquals("Deveria retornar 2 tarefas (ativa e arquivada)", 2, resultado.size)
+        assertEquals("A apagada NÃO deve estar presente", 0, resultado.count { it.title == "Apagada" })
     }
 }
