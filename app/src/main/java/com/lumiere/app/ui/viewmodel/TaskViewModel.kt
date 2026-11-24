@@ -11,17 +11,64 @@ import kotlinx.coroutines.launch
 
 class TaskViewModel(private val repository: TaskRepository, private val timeProvider: com.lumiere.app.core.time.TimeProvider) : ViewModel() {
 
-    val tasks: StateFlow<List<Task>> = repository.allTasks.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val projects: StateFlow<List<Project>> = repository.allProjects.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _uiError = MutableStateFlow<String?>(null)
     val uiError: StateFlow<String?> = _uiError.asStateFlow()
-
     fun clearError() { _uiError.value = null }
+
+    private val _activeFilter = MutableStateFlow("ALL")
+    private val _searchQuery = MutableStateFlow("")
+    private val _selectedProjectFilter = MutableStateFlow<Long?>(null)
+
+    // O Estado da UI combina a lista da BD com as escolhas do utilizador
+    val uiState: StateFlow<TaskUiState> = combine(
+        repository.allTasks,
+        _activeFilter,
+        _searchQuery,
+        _selectedProjectFilter,
+        timeProvider.currentTimeMillis()
+    ) { tasks, filter, query, projectId, now ->
+        val overdue = tasks.filter { !it.isCompleted && it.dueDate != null && it.dueDate < now }
+        val filtered = tasks.filter { task ->
+            val matchesSearch = task.title.contains(query, ignoreCase = true)
+            val matchesFilter = when (filter) {
+                "TODAY" -> !task.isCompleted && task.dueDate != null && task.dueDate >= now && task.dueDate <= getEndOfDay(now)
+                "OVERDUE" -> !task.isCompleted && task.dueDate != null && task.dueDate < now
+                "COMPLETED" -> task.isCompleted
+                else -> true
+            }
+            val matchesProject = projectId == null || task.projectId == projectId
+            matchesSearch && matchesFilter && matchesProject
+        }
+        TaskUiState(
+            tasks = tasks,
+            filteredTasks = filtered,
+            activeFilter = filter,
+            searchQuery = query,
+            selectedProjectFilter = projectId,
+            tasksOverdueCount = overdue.size
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), TaskUiState())
+
+    fun setFilter(filter: String) { _activeFilter.value = filter }
+    fun setSearchQuery(query: String) { _searchQuery.value = query }
+    fun setProjectFilter(projectId: Long?) { _selectedProjectFilter.value = projectId }
+
+    private fun getEndOfDay(timestamp: Long): Long {
+        val cal = java.util.Calendar.getInstance()
+        cal.timeInMillis = timestamp
+        cal.set(java.util.Calendar.HOUR_OF_DAY, 23)
+        cal.set(java.util.Calendar.MINUTE, 59)
+        cal.set(java.util.Calendar.SECOND, 59)
+        cal.set(java.util.Calendar.MILLISECOND, 999)
+        return cal.timeInMillis
+    }
 
     fun getSubtasks(taskId: Long): StateFlow<List<Subtask>> = repository.getSubtasks(taskId).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     fun getHistory(taskId: Long): StateFlow<List<TaskHistory>> = repository.getHistory(taskId).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    // Use cases (mantidos)
     private val addTaskUC = AddTaskUseCase(repository)
     private val updateTaskUC = UpdateTaskUseCase(repository)
     private val toggleCompletionUC = ToggleTaskCompletionUseCase(repository, timeProvider)

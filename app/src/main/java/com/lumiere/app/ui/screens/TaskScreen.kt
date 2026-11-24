@@ -55,7 +55,8 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun TaskScreen(viewModel: TaskViewModel, onOpenDrawer: () -> Unit = {}) {
-    val tasks by viewModel.tasks.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val tasks = uiState.filteredTasks
     val appContext = LocalContext.current
     var taskAttachmentUris by remember { mutableStateOf<List<String>>(emptyList()) }
 
@@ -178,7 +179,7 @@ fun TaskScreen(viewModel: TaskViewModel, onOpenDrawer: () -> Unit = {}) {
                             Icon(Icons.Default.Info, contentDescription = null, tint = MaterialTheme.colorScheme.error)
                             Spacer(modifier = Modifier.width(12.dp))
                             Text("Atenção: ${tasksOverdue.size} tarefas atrasadas", color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
-                            TextButton(onClick = { activeFilter = "OVERDUE" }) {
+                            TextButton(onClick = { viewModel.setFilter("OVERDUE") }) {
                                 Text("Ver detalhes >", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelMedium)
                             }
                         }
@@ -205,7 +206,7 @@ fun TaskScreen(viewModel: TaskViewModel, onOpenDrawer: () -> Unit = {}) {
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
                         InputChip(
                             selected = true,
-                            onClick = { selectedProjectFilter = null },
+                            onClick = { viewModel.setProjectFilter(null) },
                             label = { Text(projName, color = MaterialTheme.colorScheme.primary) },
                             trailingIcon = { Icon(Icons.Default.Close, contentDescription = "Limpar filtro", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp)) },
                             colors = InputChipDefaults.inputChipColors(selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
@@ -294,7 +295,7 @@ fun TaskScreen(viewModel: TaskViewModel, onOpenDrawer: () -> Unit = {}) {
                     ListItem(
                         headlineContent = { Text(label, color = if (activeFilter == filter) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground) },
                         leadingContent = { Icon(imageVector = if (activeFilter == filter) Icons.Default.CheckCircle else LumiereIcons.RadioButtonUnchecked, contentDescription = null, tint = if (activeFilter == filter) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant) },
-                        modifier = Modifier.clickable { activeFilter = filter; showFilterSheet = false },
+                        modifier = Modifier.clickable { viewModel.setFilter(filter); showFilterSheet = false },
                         colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                     )
                 }
@@ -466,7 +467,7 @@ fun TaskScreen(viewModel: TaskViewModel, onOpenDrawer: () -> Unit = {}) {
                             headlineContent = { Text(proj.name, color = MaterialTheme.colorScheme.onSurface) },
                             supportingContent = { Text(text = if(total == 0) "Sem tarefas" else "$done de $total tarefas concluídas", color = if(done == total && total > 0) Lumiere.colors.success else MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall) },
                             leadingContent = { Icon(LumiereIcons.Folder, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
-                            modifier = Modifier.clickable { selectedProjectFilter = proj.id; showProjectsSheet = false },
+                            modifier = Modifier.clickable { viewModel.setProjectFilter(proj.id); showProjectsSheet = false },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                         )
                     }
