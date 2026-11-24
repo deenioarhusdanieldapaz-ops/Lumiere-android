@@ -159,7 +159,7 @@ class TaskViewModelTest {
         viewModel.deleteTask(task)
         advanceUntilIdle()
 
-        coVerify { repository.deleteTask(match { it.id == 14L }) }
+        coVerify { repository.updateTask(match { it.id == 14L && it.deletedAt != null }) }
     }
 
     @Test
