@@ -48,7 +48,7 @@ class TaskRepositoryIntegrationTest {
     @Test
     fun insertAndReadTask() = runTest {
         val task = TestDataFactory.task(title = "BD Real QA", status = 0)
-        
+
         val id = repository.insertTask(task)
         assertTrue("O ID gerado pelo Room deve ser maior que 0", id > 0)
 
@@ -56,8 +56,6 @@ class TaskRepositoryIntegrationTest {
         assertEquals(1, tasks.size)
         assertEquals("BD Real QA", tasks[0].title)
     }
-
-    @Test
 
     @Test
     fun updateTask_modifiesDatabase() = runTest {
@@ -70,7 +68,6 @@ class TaskRepositoryIntegrationTest {
         val tasks = repository.allTasks.first()
         assertEquals("Modificada", tasks[0].title)
     }
-}
 
     @Test
     fun allTasks_excludesDeleted() = runTest {
