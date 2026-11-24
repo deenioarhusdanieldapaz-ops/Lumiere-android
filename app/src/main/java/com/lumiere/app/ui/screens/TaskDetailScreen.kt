@@ -1,6 +1,5 @@
 package com.lumiere.app.ui.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,7 +13,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.lumiere.app.data.local.entity.Project
 import com.lumiere.app.data.local.entity.Task
+import com.lumiere.app.ui.components.*
 import com.lumiere.app.ui.theme.LumiereRadius
 import com.lumiere.app.ui.theme.LumiereSpacing
 
@@ -22,121 +23,60 @@ import com.lumiere.app.ui.theme.LumiereSpacing
 @Composable
 fun TaskDetailScreen(
     task: Task,
+    projects: List<Project>,
     onBack: () -> Unit,
     onSave: (Task) -> Unit
 ) {
-    var title by remember { mutableStateOf(task.title) }
-    var description by remember { mutableStateOf(task.description ?: "") }
+    val projectOptions = listOf("Sem projeto") + projects.map { it.name }
+    val currentProjectName = projects.find { it.id == task.projectId }?.name ?: "Sem projeto"
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            TopAppBar(
-                title = { Text("Editar tarefa", style = MaterialTheme.typography.titleLarge) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Voltar") }
-                },
-                actions = {
-                    IconButton(onClick = { onSave(task.copy(title = title, description = description)) }) {
-                        Icon(Icons.Default.Check, contentDescription = "Guardar", tint = MaterialTheme.colorScheme.primary)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+    // Mapear os 12 campos para o formulário
+    val formData = UniversalFormData(
+        title = "Editar tarefa",
+        fields = listOf(
+            FormField(id = "title", label = "Título", placeholder = "Ex: Preparar apresentação", isRequired = true, hint = "Mantém curto e claro"),
+            FormField(id = "description", label = "Descrição", placeholder = "Adiciona mais detalhes..."),
+            FormField(id = "project", label = "Projeto", type = FormFieldType.DROPDOWN, options = projectOptions, placeholder = currentProjectName),
+            FormField(id = "category", label = "Categoria", placeholder = task.category ?: "Ex: Trabalho"),
+            FormField(id = "startDate", label = "Data de início", type = FormFieldType.DATE, placeholder = "Hoje, 09:00"),
+            FormField(id = "dueDate", label = "Prazo", type = FormFieldType.DATE, placeholder = "Hoje, 18:00"),
+            FormField(id = "duration", label = "Duração estimada (min)", placeholder = task.estimatedDurationMinutes?.toString() ?: "45"),
+            FormField(id = "recurrence", label = "Recorrência", type = FormFieldType.DROPDOWN, options = listOf("Nenhuma", "Diária", "Semanal", "Mensal", "Anual"), placeholder = "Nenhuma"),
+            FormField(id = "priority", label = "Prioridade", type = FormFieldType.PRIORITY, options = listOf("Baixa", "Média", "Alta")),
+            FormField(id = "tags", label = "Tags", placeholder = "urgente, equipa"),
+            FormField(id = "blockedBy", label = "Bloqueado por (ID)", placeholder = task.blockedByTaskId?.toString() ?: "Nenhum")
+        )
+    )
+
+    // Estado para guardar os valores temporários
+    val initialValues = mapOf(
+        "title" to task.title,
+        "description" to (task.description ?: ""),
+        "project" to currentProjectName,
+        "category" to (task.category ?: ""),
+        "priority" to when(task.priority) { 1 -> "Baixa"; 2 -> "Média"; 3 -> "Alta"; else -> "Média" },
+        "duration" to (task.estimatedDurationMinutes?.toString() ?: ""),
+        "recurrence" to (task.recurrenceRule ?: "Nenhuma"),
+        "tags" to (task.tags ?: "")
+    )
+
+    LumiereUniversalForm(
+        mode = FormMode.FULL,
+        data = formData,
+        onDismiss = onBack,
+        onSubmit = { values ->
+            val selectedProject = projects.find { it.name == values["project"] }
+            val updatedTask = task.copy(
+                title = values["title"] ?: task.title,
+                description = values["description"],
+                projectId = selectedProject?.id,
+                category = values["category"],
+                priority = when(values["priority"]) { "Baixa" -> 1; "Alta" -> 3; else -> 2 },
+                estimatedDurationMinutes = values["duration"]?.toIntOrNull(),
+                recurrenceRule = if (values["recurrence"] == "Nenhuma") null else values["recurrence"]?.uppercase(),
+                tags = values["tags"]
             )
-        },
-        bottomBar = {
-            Box(modifier = Modifier.fillMaxWidth().padding(LumiereSpacing.M)) {
-                Button(
-                    onClick = { onSave(task.copy(title = title, description = description)) },
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = Color.Black),
-                    shape = RoundedCornerShape(LumiereRadius.M)
-                ) {
-                    Text("Guardar", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                }
-            }
+            onSave(updatedTask)
         }
-    ) { padding ->
-        Column(
-            modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(horizontal = LumiereSpacing.M)
-        ) {
-            // Secção 1: Informação
-            SectionHeader(icon = Icons.Default.Info, title = "Informação")
-            OutlinedTextField(
-                value = title, onValueChange = { title = it },
-                label = { Text("Título") }, modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                shape = RoundedCornerShape(LumiereRadius.S),
-                colors = OutlinedTextFieldDefaults.colors(unfocusedContainerColor = MaterialTheme.colorScheme.surface)
-            )
-            OutlinedTextField(
-                value = description, onValueChange = { description = it },
-                label = { Text("Descrição") }, modifier = Modifier.fillMaxWidth().height(120.dp),
-                shape = RoundedCornerShape(LumiereRadius.S),
-                colors = OutlinedTextFieldDefaults.colors(unfocusedContainerColor = MaterialTheme.colorScheme.surface)
-            )
-
-            Spacer(modifier = Modifier.height(LumiereSpacing.M))
-
-            // Secção 2: Planeamento
-            SectionHeader(icon = Icons.Default.CalendarToday, title = "Planeamento")
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                DetailRow("Data de início", "Hoje, 09:00")
-                DetailRow("Prazo", "Hoje, 18:00")
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            DetailRow("Duração estimada", "45 min")
-
-            Spacer(modifier = Modifier.height(LumiereSpacing.M))
-
-            // Secção 3: Organização
-            SectionHeader(icon = Icons.Default.Star, title = "Organização")
-            Text("Prioridade", style = MaterialTheme.typography.bodySmall)
-            Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(selected = false, onClick = {}, label = { Text("Baixa") })
-                FilterChip(selected = true, onClick = {}, label = { Text("Média") })
-                FilterChip(selected = false, onClick = {}, label = { Text("Alta") })
-            }
-            
-            Text("Tags", style = MaterialTheme.typography.bodySmall)
-            Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                SuggestionChip(onClick = {}, label = { Text("urgente") })
-                SuggestionChip(onClick = {}, label = { Text("equipa") })
-                IconButton(onClick = {}) { Icon(Icons.Default.Add, contentDescription = null) }
-            }
-
-            Spacer(modifier = Modifier.height(LumiereSpacing.M))
-
-            // Secção 4: Anexos
-            SectionHeader(icon = Icons.Default.AttachFile, title = "Anexos")
-            OutlinedButton(
-                onClick = {}, modifier = Modifier.fillMaxWidth().height(48.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
-            ) {
-                Icon(Icons.Default.Add, contentDescription = null)
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Adicionar anexo", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            Spacer(modifier = Modifier.height(LumiereSpacing.L))
-        }
-    }
-}
-
-@Composable
-private fun SectionHeader(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String) {
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 12.dp)) {
-        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-    }
-}
-
-@Composable
-private fun DetailRow(label: String, value: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(value, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
-    }
+    )
 }

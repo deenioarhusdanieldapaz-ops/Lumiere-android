@@ -3,6 +3,7 @@ package com.lumiere.app.ui.components
 import androidx.compose.ui.graphics.vector.ImageVector
 
 enum class FormMode { QUICK, FULL, WIZARD, DESTRUCTIVE }
+enum class FormFieldType { TEXT, DATE, PRIORITY, DROPDOWN }
 
 data class FormStep(
     val currentStep: Int,
@@ -14,11 +15,13 @@ data class FormField(
     val id: String,
     val label: String,
     val placeholder: String = "",
+    val type: FormFieldType = FormFieldType.TEXT,
     val isRequired: Boolean = false,
     val errorMessage: String? = null,
-    val hint: String? = null, // Para a lâmpada
-    val maxLength: Int? = null, // Para o contador (0/100)
-    val icon: ImageVector? = null // Para o ícone no topo do form
+    val hint: String? = null,
+    val maxLength: Int? = null,
+    val icon: ImageVector? = null,
+    val options: List<String> = emptyList() // Para Dropdowns e Prioridades
 )
 
 data class UniversalFormData(

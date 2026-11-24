@@ -2,9 +2,9 @@ package com.lumiere.app.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -39,48 +39,12 @@ fun LumiereUniversalForm(
                 .padding(LumiereSpacing.M)
                 .verticalScroll(rememberScrollState())
         ) {
-            // Header: Wizard ou Título Normal
-            if (mode == FormMode.WIZARD && data.stepInfo != null) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Voltar")
-                    }
-                    Text(data.title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                    Box(
-                        modifier = Modifier
-                            .border(1.dp, gold, RoundedCornerShape(16.dp))
-                            .padding(horizontal = 12.dp, vertical = 4.dp)
-                    ) {
-                        Text("Passo ${data.stepInfo.currentStep} de ${data.stepInfo.totalSteps}", style = MaterialTheme.typography.labelSmall, color = gold)
-                    }
-                }
-                Spacer(modifier = Modifier.height(LumiereSpacing.S))
-                // Barra de Progresso dos Passos
-                LinearProgressIndicator(
-                    progress = data.stepInfo.currentStep.toFloat() / data.stepInfo.totalSteps,
-                    modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)),
-                    color = gold,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-                Spacer(modifier = Modifier.height(LumiereSpacing.M))
-            } else {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(data.title, style = MaterialTheme.typography.titleLarge)
-                    IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = "Fechar", tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-                Spacer(modifier = Modifier.height(LumiereSpacing.S))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text(data.title, style = MaterialTheme.typography.titleLarge)
+                if (mode != FormMode.FULL) IconButton(onClick = onDismiss) { Icon(Icons.Default.Close, contentDescription = "Fechar", tint = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
+            Spacer(modifier = Modifier.height(LumiereSpacing.M))
 
-            // Campos
             data.fields.forEach { field ->
                 Column(modifier = Modifier.padding(bottom = LumiereSpacing.M)) {
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
@@ -90,63 +54,76 @@ fun LumiereUniversalForm(
                             color = if (field.isRequired) gold else MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.weight(1f))
-                        field.hint?.let {
-                            Icon(Icons.Default.Lightbulb, contentDescription = "Dica", tint = gold, modifier = Modifier.size(18.dp))
-                        }
+                        field.hint?.let { Icon(Icons.Default.Lightbulb, contentDescription = "Dica", tint = gold, modifier = Modifier.size(18.dp)) }
                     }
                     Spacer(modifier = Modifier.height(4.dp))
                     
-                    OutlinedTextField(
-                        value = formValues[field.id] ?: "",
-                        onValueChange = { formValues[field.id] = it },
-                        placeholder = { Text(field.placeholder, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)) },
-                        isError = field.errorMessage != null,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(LumiereRadius.S),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = gold,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                            errorBorderColor = MaterialTheme.colorScheme.error,
-                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-                        ),
-                        trailingIcon = field.maxLength?.let {
-                            {
-                                Text("${(formValues[field.id]?.length ?: 0)}/$it", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    when (field.type) {
+                        FormFieldType.TEXT, FormFieldType.DATE -> {
+                            OutlinedTextField(
+                                value = formValues[field.id] ?: "",
+                                onValueChange = { formValues[field.id] = it },
+                                placeholder = { Text(field.placeholder, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)) },
+                                isError = field.errorMessage != null,
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(LumiereRadius.S),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = gold, unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                                ),
+                                trailingIcon = if (field.type == FormFieldType.DATE) { { Icon(Icons.Default.CalendarToday, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) } } else null
+                            )
+                        }
+                        FormFieldType.DROPDOWN -> {
+                            var expanded by remember { mutableStateOf(false) }
+                            Box(modifier = Modifier.fillMaxWidth()) {
+                                OutlinedTextField(
+                                    value = formValues[field.id] ?: field.placeholder,
+                                    onValueChange = {},
+                                    readOnly = true,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(LumiereRadius.S),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = gold, unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                                    ),
+                                    trailingIcon = { Icon(Icons.Default.ArrowDropDown, contentDescription = null) }
+                                )
+                                Box(modifier = Modifier.matchParentSize().clickable { expanded = true })
+                                DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                                    field.options.forEach { option ->
+                                        DropdownMenuItem(text = { Text(option) }, onClick = { formValues[field.id] = option; expanded = false })
+                                    }
+                                }
                             }
                         }
-                    )
-                    field.errorMessage?.let {
-                        Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))
+                        FormFieldType.PRIORITY -> {
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                field.options.forEach { option ->
+                                    val isSelected = formValues[field.id] == option
+                                    FilterChip(
+                                        selected = isSelected,
+                                        onClick = { formValues[field.id] = option },
+                                        label = { Text(option, color = if (isSelected) Color.Black else MaterialTheme.colorScheme.onSurface) },
+                                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = gold)
+                                    )
+                                }
+                            }
+                        }
                     }
-                }
-            }
-
-            // Rascunho
-            if (data.hasDraft) {
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = LumiereSpacing.S)) {
-                    Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Lumiere.colors.success, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Rascunho guardado às ${data.draftTime ?: ""}", color = Lumiere.colors.success, style = MaterialTheme.typography.labelSmall)
                 }
             }
 
             Spacer(modifier = Modifier.height(LumiereSpacing.L))
 
-            // Botões
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                OutlinedButton(
-                    onClick = onDismiss,
-                    shape = RoundedCornerShape(LumiereRadius.S),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
-                ) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                OutlinedButton(onClick = onDismiss, shape = RoundedCornerShape(LumiereRadius.S), border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline)) {
                     Text("Cancelar", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Button(
-                    onClick = { onSubmit(formValues.toMap()) },
-                    shape = RoundedCornerShape(LumiereRadius.S),
-                    colors = ButtonDefaults.buttonColors(containerColor = gold, contentColor = Color.Black)
-                ) {
+                Spacer(modifier = Modifier.width(LumiereSpacing.S))
+                Button(onClick = { onSubmit(formValues.toMap()) }, shape = RoundedCornerShape(LumiereRadius.S), colors = ButtonDefaults.buttonColors(containerColor = gold, contentColor = Color.Black)) {
                     Text("Guardar", fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.width(4.dp))
                     Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -156,17 +133,7 @@ fun LumiereUniversalForm(
     }
 
     when (mode) {
-        FormMode.QUICK, FormMode.DESTRUCTIVE -> {
-            ModalBottomSheet(
-                onDismissRequest = onDismiss,
-                containerColor = MaterialTheme.colorScheme.surface,
-                shape = RoundedCornerShape(topStart = LumiereRadius.L, topEnd = LumiereRadius.L)
-            ) { content() }
-        }
-        FormMode.FULL, FormMode.WIZARD -> {
-            Scaffold(containerColor = MaterialTheme.colorScheme.background) { padding ->
-                Box(modifier = Modifier.padding(padding)) { content() }
-            }
-        }
+        FormMode.QUICK, FormMode.DESTRUCTIVE -> ModalBottomSheet(onDismissRequest = onDismiss, containerColor = MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(topStart = LumiereRadius.L, topEnd = LumiereRadius.L)) { content() }
+        FormMode.FULL, FormMode.WIZARD -> Scaffold(containerColor = MaterialTheme.colorScheme.background) { padding -> Box(modifier = Modifier.padding(padding)) { content() } }
     }
 }
