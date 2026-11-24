@@ -4,6 +4,7 @@ import com.lumiere.app.data.local.entity.Task
 import com.lumiere.app.data.repository.TaskRepository
 import com.lumiere.app.shared.MainDispatcherRule
 import com.lumiere.app.shared.TestDataFactory
+import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.slot
@@ -30,6 +31,10 @@ class TaskTimerTest {
     @BeforeEach
     fun setup() {
         repository = mockk(relaxed = true)
+        // F5: Garantir que o Repository devolve Result.success para o onSuccess funcionar
+        coEvery { repository.updateTask(any()) } returns Result.success(Unit)
+        coEvery { repository.insertHistory(any()) } returns Result.success(Unit)
+        
         viewModel = TaskViewModel(repository, SystemTimeProvider())
     }
 

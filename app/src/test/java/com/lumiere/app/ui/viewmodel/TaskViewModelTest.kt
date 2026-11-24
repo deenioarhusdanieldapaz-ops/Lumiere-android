@@ -9,7 +9,6 @@ import com.lumiere.app.shared.TestDataFactory
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
-import io.mockk.slot
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -33,6 +32,15 @@ class TaskViewModelTest {
     @BeforeEach
     fun setup() {
         repository = mockk(relaxed = true)
+        // F5: o Repository devolve Result<T>; por omissão configuramos sucesso
+        coEvery { repository.insertTask(any()) } returns Result.success(1L)
+        coEvery { repository.updateTask(any()) } returns Result.success(Unit)
+        coEvery { repository.deleteTask(any()) } returns Result.success(Unit)
+        coEvery { repository.insertSubtask(any()) } returns Result.success(1L)
+        coEvery { repository.updateSubtask(any()) } returns Result.success(Unit)
+        coEvery { repository.deleteSubtask(any()) } returns Result.success(Unit)
+        coEvery { repository.insertProject(any()) } returns Result.success(1L)
+        coEvery { repository.insertHistory(any()) } returns Result.success(Unit)
         viewModel = TaskViewModel(repository, SystemTimeProvider())
     }
 
@@ -40,7 +48,6 @@ class TaskViewModelTest {
     @DisplayName("addTask insere tarefa e regista histórico 'Tarefa Criada'")
     fun addTask_insertsTaskAndHistory() = runTest(mainDispatcherRule.testDispatcher) {
         val task = TestDataFactory.task(title = "QA addTask")
-        coEvery { repository.insertTask(task) } returns Result.success(1L)
 
         viewModel.addTask(task)
         advanceUntilIdle()
@@ -57,9 +64,7 @@ class TaskViewModelTest {
         viewModel.updateTask(task)
         advanceUntilIdle()
 
-        coVerify {
-            repository.updateTask(match { it.id == 5L && it.updatedAt >= task.updatedAt })
-        }
+        coVerify { repository.updateTask(match { it.id == 5L && it.updatedAt >= task.updatedAt }) }
         coVerify { repository.insertHistory(match { it.taskId == 5L && it.action == "Tarefa Editada" }) }
     }
 
@@ -95,14 +100,7 @@ class TaskViewModelTest {
         viewModel.cancelTask(task, "Motivo QA")
         advanceUntilIdle()
 
-        coVerify {
-            repository.updateTask(match {
-                it.id == 10L &&
-                it.status == 3 &&
-                it.cancellationReason == "Motivo QA" &&
-                it.timerStartedAt == null
-            })
-        }
+        coVerify { repository.updateTask(match { it.id == 10L && it.status == 3 && it.cancellationReason == "Motivo QA" && it.timerStartedAt == null }) }
         coVerify { repository.insertHistory(match { it.action == "Cancelada: Motivo QA" }) }
     }
 
@@ -114,11 +112,7 @@ class TaskViewModelTest {
         viewModel.resumeTask(task)
         advanceUntilIdle()
 
-        coVerify {
-            repository.updateTask(match {
-                it.id == 11L && it.status == 0 && it.cancellationReason == null
-            })
-        }
+        coVerify { repository.updateTask(match { it.id == 11L && it.status == 0 && it.cancellationReason == null }) }
         coVerify { repository.insertHistory(match { it.action == "Retomada" }) }
     }
 
@@ -130,13 +124,7 @@ class TaskViewModelTest {
         viewModel.duplicateTask(task)
         advanceUntilIdle()
 
-        coVerify {
-            repository.insertTask(match {
-                it.id == 0L &&
-                it.title == "Original (Cópia)" &&
-                it.status == 0
-            })
-        }
+        coVerify { repository.insertTask(match { it.id == 0L && it.title == "Original (Cópia)" && it.status == 0 }) }
     }
 
     @Test
@@ -152,7 +140,7 @@ class TaskViewModelTest {
     }
 
     @Test
-    @DisplayName("deleteTask chama deleteTask do repositório")
+    @DisplayName("deleteTask chama updateTask com deletedAt != null (soft-delete)")
     fun deleteTask_callsRepository() = runTest(mainDispatcherRule.testDispatcher) {
         val task = TestDataFactory.task(id = 14L)
 
@@ -168,11 +156,7 @@ class TaskViewModelTest {
         viewModel.addSubtask(taskId = 20L, title = "Subtarefa QA")
         advanceUntilIdle()
 
-        coVerify {
-            repository.insertSubtask(match {
-                it.taskId == 20L && it.title == "Subtarefa QA"
-            })
-        }
+        coVerify { repository.insertSubtask(match { it.taskId == 20L && it.title == "Subtarefa QA" }) }
         coVerify { repository.insertHistory(match { it.action.contains("Subtarefa Adicionada") }) }
     }
 
