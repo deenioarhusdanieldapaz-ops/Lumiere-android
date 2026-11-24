@@ -40,7 +40,7 @@ class TaskViewModelTest {
     @DisplayName("addTask insere tarefa e regista histórico 'Tarefa Criada'")
     fun addTask_insertsTaskAndHistory() = runTest(mainDispatcherRule.testDispatcher) {
         val task = TestDataFactory.task(title = "QA addTask")
-        coEvery { repository.insertTask(task) } returns 1L
+        coEvery { repository.insertTask(task) } returns Result.success(1L)
 
         viewModel.addTask(task)
         advanceUntilIdle()
