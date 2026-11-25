@@ -1,6 +1,7 @@
 package com.lumiere.app.ui.components
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -11,7 +12,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
@@ -146,11 +146,14 @@ fun SummaryCardContent(data: CardData) {
 // --- 3. PROGRESS (O Gráfico Circular) ---
 @Composable
 fun ProgressCardContent(data: CardData) {
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val trackColor = primaryColor.copy(alpha = 0.2f)
+    
     Row(modifier = Modifier.padding(LumiereSpacing.M), verticalAlignment = Alignment.CenterVertically) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.size(64.dp)) {
             Canvas(modifier = Modifier.fillMaxSize()) {
-                drawArc(color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f), startAngle = -90f, sweepAngle = 360f, useCenter = false, style = Stroke(width = 8.dp.toPx(), cap = StrokeCap.Round))
-                drawArc(color = MaterialTheme.colorScheme.primary, startAngle = -90f, sweepAngle = (data.progress ?: 0f) * 360f, useCenter = false, style = Stroke(width = 8.dp.toPx(), cap = StrokeCap.Round))
+                drawArc(color = trackColor, startAngle = -90f, sweepAngle = 360f, useCenter = false, style = Stroke(width = 8.dp.toPx(), cap = StrokeCap.Round))
+                drawArc(color = primaryColor, startAngle = -90f, sweepAngle = (data.progress ?: 0f) * 360f, useCenter = false, style = Stroke(width = 8.dp.toPx(), cap = StrokeCap.Round))
             }
             Text("${((data.progress ?: 0f) * 100).toInt()}%", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         }
@@ -195,8 +198,9 @@ fun InfoCardContent(data: CardData) {
 // --- 6. COMPACT (Lista Densa) ---
 @Composable
 fun CompactCardContent(data: CardData) {
+    val stateColor = getStateColor(data.state)
     Row(modifier = Modifier.padding(LumiereSpacing.S), verticalAlignment = Alignment.CenterVertically) {
-        Box(modifier = Modifier.size(24.dp).background(getStateColor(data.state), RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
+        Box(modifier = Modifier.size(24.dp).background(stateColor, RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
             if (data.state == LumiereCardState.DONE) Icon(LumiereIcons.CheckCircle, null, tint = Color.White, modifier = Modifier.size(16.dp))
         }
         Spacer(Modifier.width(LumiereSpacing.S))
