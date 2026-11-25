@@ -16,7 +16,9 @@ data class FormField(
     val hint: String? = null,
     val type: FormFieldType = FormFieldType.TEXT,
     val options: List<String> = emptyList(),
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val step: Int = 1, // NOVO: Define em que passo do Wizard o campo aparece
+    val maxLength: Int? = null // NOVO: Para o contador de caracteres
 )
 
 data class UniversalFormData(

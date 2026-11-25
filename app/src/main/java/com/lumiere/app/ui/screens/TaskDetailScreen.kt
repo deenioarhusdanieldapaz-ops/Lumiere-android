@@ -26,21 +26,26 @@ fun TaskDetailScreen(
     val startDateStr = task.startDate?.let { dateFormat.format(Date(it)) } ?: ""
     val dueDateStr = task.dueDate?.let { dateFormat.format(Date(it)) } ?: ""
 
-    // Mapeamento dos campos do M01 (PDF)
+    // Mapeamento dos campos distribuídos pelos 3 passos
     val formData = UniversalFormData(
         title = "Editar Tarefa",
         fields = listOf(
-            FormField(id = "title", label = "Título da Tarefa", placeholder = "Ex: Preparar apresentação", isRequired = true, hint = "Mantém curto e claro"),
-            FormField(id = "description", label = "Descrição", placeholder = "Adicione mais detalhes...", hint = "Opcional"),
-            FormField(id = "project", label = "Projeto", type = FormFieldType.DROPDOWN, options = projectOptions),
-            FormField(id = "category", label = "Categoria", placeholder = "Ex: Trabalho, Pessoal"),
-            FormField(id = "priority", label = "Prioridade", type = FormFieldType.PRIORITY, options = listOf("Baixa", "Média", "Alta")),
-            FormField(id = "startDate", label = "Data e Hora de Início", type = FormFieldType.DATETIME, placeholder = "DD/MM/AAAA HH:MM"),
-            FormField(id = "dueDate", label = "Data e Hora de Prazo", type = FormFieldType.DATETIME, placeholder = "DD/MM/AAAA HH:MM"),
-            FormField(id = "duration", label = "Duração Estimada (min)", placeholder = "Ex: 45"),
-            FormField(id = "recurrence", label = "Recorrência", type = FormFieldType.DROPDOWN, options = listOf("Nenhuma", "Diária", "Semanal", "Mensal", "Anual")),
-            FormField(id = "blockedBy", label = "Bloqueado por (ID)", placeholder = "Nenhuma dependência", hint = "ID da tarefa bloqueadora"),
-            FormField(id = "attachments", label = "Anexos", type = FormFieldType.ATTACHMENT)
+            // Passo 1: Informação Principal
+            FormField(id = "title", label = "Título da Tarefa", placeholder = "Ex: Preparar apresentação", isRequired = true, hint = "Mantém curto e claro", step = 1),
+            FormField(id = "description", label = "Descrição", placeholder = "Adicione mais detalhes...", hint = "Opcional", step = 1, maxLength = 500),
+            FormField(id = "priority", label = "Prioridade", type = FormFieldType.PRIORITY, options = listOf("Baixa", "Média", "Alta"), step = 1),
+
+            // Passo 2: Planeamento e Tempo
+            FormField(id = "startDate", label = "Data e Hora de Início", type = FormFieldType.DATETIME, placeholder = "DD/MM/AAAA HH:MM", step = 2),
+            FormField(id = "dueDate", label = "Data e Hora de Prazo", type = FormFieldType.DATETIME, placeholder = "DD/MM/AAAA HH:MM", step = 2),
+            FormField(id = "duration", label = "Duração Estimada (min)", placeholder = "Ex: 45", step = 2),
+            FormField(id = "recurrence", label = "Recorrência", type = FormFieldType.DROPDOWN, options = listOf("Nenhuma", "Diária", "Semanal", "Mensal", "Anual"), step = 2),
+
+            // Passo 3: Organização
+            FormField(id = "project", label = "Projeto", type = FormFieldType.DROPDOWN, options = projectOptions, step = 3),
+            FormField(id = "category", label = "Categoria", placeholder = "Ex: Trabalho, Pessoal", step = 3),
+            FormField(id = "blockedBy", label = "Bloqueado por (ID)", placeholder = "Nenhuma dependência", hint = "ID da tarefa bloqueadora", step = 3),
+            FormField(id = "attachments", label = "Anexos", type = FormFieldType.ATTACHMENT, step = 3)
         )
     )
 
@@ -64,7 +69,6 @@ fun TaskDetailScreen(
         onDismiss = onBack,
         onSubmit = { values ->
             val selectedProject = projects.find { it.name == values["project"] }
-            // Conversão simples de string de data (numa próxima fase ligamos o DatePicker nativo)
             val parsedStartDate = try { dateFormat.parse(values["startDate"] ?: "")?.time } catch (e: Exception) { task.startDate }
             val parsedDueDate = try { dateFormat.parse(values["dueDate"] ?: "")?.time } catch (e: Exception) { task.dueDate }
 
