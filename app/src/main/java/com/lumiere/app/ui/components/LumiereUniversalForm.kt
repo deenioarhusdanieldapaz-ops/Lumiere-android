@@ -7,17 +7,21 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.lumiere.app.ui.theme.LumiereIcons
 import com.lumiere.app.ui.theme.LumiereRadius
 import com.lumiere.app.ui.theme.LumiereSpacing
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,8 +39,6 @@ fun LumiereUniversalForm(
 
     val currentFields = data.fields.filter { it.step == currentStep }
     val isLastStep = currentStep == totalSteps
-    
-    // Verifica se o passo atual tem os campos obrigatórios preenchidos
     val isStepValid = currentFields.filter { it.isRequired }.all { !formValues[it.id].isNullOrBlank() }
 
     val content = @Composable {
@@ -44,8 +46,9 @@ fun LumiereUniversalForm(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
+                .imePadding() // Garante que o teclado não esconde os botões
         ) {
-            // Cabeçalho do Wizard
+            // Cabeçalho
             Column(modifier = Modifier.padding(LumiereSpacing.M)) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Text(data.title, style = MaterialTheme.typography.headlineSmall, color = gold, fontWeight = FontWeight.Bold)
@@ -62,7 +65,7 @@ fun LumiereUniversalForm(
                 Text("Passo $currentStep de $totalSteps", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
 
-            // Corpo do Formulário (Campos do Passo Atual)
+            // Corpo (Campos)
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -84,7 +87,7 @@ fun LumiereUniversalForm(
                         Spacer(modifier = Modifier.height(4.dp))
 
                         when (field.type) {
-                            FormFieldType.TEXT, FormFieldType.DATE, FormFieldType.DATETIME -> {
+                            FormFieldType.TEXT -> {
                                 OutlinedTextField(
                                     value = formValues[field.id] ?: "",
                                     onValueChange = { if (field.maxLength == null || it.length <= field.maxLength) formValues[field.id] = it },
@@ -94,38 +97,37 @@ fun LumiereUniversalForm(
                                     colors = OutlinedTextFieldDefaults.colors(
                                         focusedBorderColor = gold, unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
                                         focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
                                     ),
-                                    trailingIcon = {
-                                        when (field.type) {
-                                            FormFieldType.DATE, FormFieldType.DATETIME -> Icon(LumiereIcons.Event, contentDescription = null, tint = gold)
-                                            else -> null
-                                        }
-                                    },
                                     supportingText = if (field.maxLength != null) {
                                         { Text("${formValues[field.id]?.length ?: 0}/${field.maxLength}", modifier = Modifier.fillMaxWidth(), textAlign = androidx.compose.ui.text.style.TextAlign.End) }
                                     } else null
+                                )
+                            }
+                            FormFieldType.DATE, FormFieldType.DATETIME -> {
+                                DateTimePickerField(
+                                    field = field,
+                                    currentValue = formValues[field.id] ?: "",
+                                    onValueChanged = { formValues[field.id] = it },
+                                    gold = gold
                                 )
                             }
                             FormFieldType.DROPDOWN -> {
                                 var expanded by remember { mutableStateOf(false) }
                                 Box(modifier = Modifier.fillMaxWidth()) {
                                     OutlinedTextField(
-                                        value = formValues[field.id] ?: field.placeholder,
+                                        value = formValues[field.id] ?: "", // Mostra vazio se não houver seleção
                                         onValueChange = {},
                                         readOnly = true,
+                                        placeholder = { Text(field.placeholder.ifBlank { "Selecionar..." }, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)) },
                                         modifier = Modifier.fillMaxWidth(),
                                         shape = RoundedCornerShape(LumiereRadius.S),
                                         colors = OutlinedTextFieldDefaults.colors(
                                             focusedBorderColor = gold, unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
                                             focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
                                         ),
-                                        trailingIcon = { Icon(LumiereIcons.MoreVert, contentDescription = null, tint = gold) }
+                                        trailingIcon = { Icon(Icons.Default.ArrowDropDown, contentDescription = "Abrir", tint = gold) }
                                     )
                                     Box(modifier = Modifier.matchParentSize().clickable { expanded = true })
                                     DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
@@ -165,7 +167,7 @@ fun LumiereUniversalForm(
                 }
             }
 
-            // Rodapé de Navegação
+            // Rodapé (Botões)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -174,31 +176,16 @@ fun LumiereUniversalForm(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 if (currentStep > 1) {
-                    OutlinedButton(
-                        onClick = { currentStep-- },
-                        shape = RoundedCornerShape(LumiereRadius.S),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
-                    ) {
+                    OutlinedButton(onClick = { currentStep-- }, shape = RoundedCornerShape(LumiereRadius.S), border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline)) {
                         Text("Voltar", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 } else {
-                    OutlinedButton(
-                        onClick = onDismiss,
-                        shape = RoundedCornerShape(LumiereRadius.S),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
-                    ) {
+                    OutlinedButton(onClick = onDismiss, shape = RoundedCornerShape(LumiereRadius.S), border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline)) {
                         Text("Cancelar", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
-
                 Button(
-                    onClick = {
-                        if (isLastStep) {
-                            onSubmit(formValues.toMap())
-                        } else {
-                            currentStep++
-                        }
-                    },
+                    onClick = { if (isLastStep) onSubmit(formValues.toMap()) else currentStep++ },
                     enabled = isStepValid,
                     shape = RoundedCornerShape(LumiereRadius.S),
                     colors = ButtonDefaults.buttonColors(containerColor = gold, contentColor = Color.Black)
@@ -213,7 +200,7 @@ fun LumiereUniversalForm(
 
     when (mode) {
         FormMode.QUICK, FormMode.DESTRUCTIVE -> ModalBottomSheet(onDismissRequest = onDismiss, containerColor = MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(topStart = LumiereRadius.L, topEnd = LumiereRadius.L)) { 
-            // Para o QuickAdd, mostramos apenas o Passo 1
+            // Quick Add simplificado
             Column(modifier = Modifier.padding(LumiereSpacing.M)) {
                 Text("Nova Tarefa Rápida", style = MaterialTheme.typography.titleLarge, color = gold)
                 Spacer(modifier = Modifier.height(LumiereSpacing.M))
@@ -226,13 +213,91 @@ fun LumiereUniversalForm(
                         shape = RoundedCornerShape(LumiereRadius.S)
                     )
                 }
-                Button(
-                    onClick = { onSubmit(formValues.toMap()) }, 
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = gold, contentColor = Color.Black)
-                ) { Text("Guardar") }
+                Button(onClick = { onSubmit(formValues.toMap()) }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = gold, contentColor = Color.Black)) { Text("Guardar") }
             }
         }
-        FormMode.FULL, FormMode.WIZARD -> Scaffold(containerColor = MaterialTheme.colorScheme.background) { padding -> Box(modifier = Modifier.padding(padding)) { content() } }
+        FormMode.FULL, FormMode.WIZARD -> Surface(modifier = Modifier.fillMaxSize()) { content() } // Substituído Scaffold por Surface para não duplicar barras
+    }
+}
+
+// COMPONENTE PARA ABRIR O CALENDÁRIO E O RELÓGIO NATIVOS
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DateTimePickerField(
+    field: FormField,
+    currentValue: String,
+    onValueChanged: (String) -> Unit,
+    gold: Color
+) {
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(false) }
+    
+    val datePickerState = rememberDatePickerState()
+    val timePickerState = rememberTimePickerState(is24Hour = true)
+
+    val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+
+    Box(modifier = Modifier.fillMaxWidth()) {
+        OutlinedTextField(
+            value = currentValue,
+            onValueChange = {},
+            readOnly = true, // O utilizador não escreve, só seleciona
+            placeholder = { Text(field.placeholder, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)) },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(LumiereRadius.S),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = gold, unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+            ),
+            trailingIcon = { Icon(LumiereIcons.Event, contentDescription = null, tint = gold) }
+        )
+        // Caixa invisível por cima para apanhar o clique
+        Box(modifier = Modifier.matchParentSize().clickable { showDatePicker = true })
+    }
+
+    // Diálogo do Calendário
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDatePicker = false
+                    val selectedDate = datePickerState.selectedDateMillis
+                    if (selectedDate != null) {
+                        if (field.type == FormFieldType.DATETIME) {
+                            showTimePicker = true // Abre o relógio a seguir
+                        } else {
+                            onValueChanged(dateFormat.format(selectedDate))
+                        }
+                    }
+                }) { Text("OK", color = gold) }
+            },
+            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") } }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    // Diálogo do Relógio (Só para Datetime)
+    if (showTimePicker) {
+        AlertDialog(
+            onDismissRequest = { showTimePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    showTimePicker = false
+                    val selectedDate = datePickerState.selectedDateMillis ?: 0L
+                    val cal = Calendar.getInstance().apply {
+                        timeInMillis = selectedDate
+                        set(Calendar.HOUR_OF_DAY, timePickerState.hour)
+                        set(Calendar.MINUTE, timePickerState.minute)
+                    }
+                    onValueChanged("${dateFormat.format(cal.time)} ${timeFormat.format(cal.time)}")
+                }) { Text("OK", color = gold) }
+            },
+            dismissButton = { TextButton(onClick = { showTimePicker = false }) { Text("Cancelar") } },
+            text = { TimePicker(state = timePickerState) }
+        )
     }
 }
