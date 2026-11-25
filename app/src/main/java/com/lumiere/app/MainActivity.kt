@@ -25,6 +25,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.lumiere.app.core.engine.*
 import com.lumiere.app.core.contract.*
+import com.lumiere.app.core.memory.CoreMemoryRepository
 import com.lumiere.app.core.time.SystemTimeProvider
 import com.lumiere.app.data.local.database.AppDatabase
 import com.lumiere.app.data.repository.*
