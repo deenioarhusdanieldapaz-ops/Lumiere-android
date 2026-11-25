@@ -2,12 +2,13 @@
 set -u
 cd "$(dirname "$0")" || exit 1
 
-echo "🔍 A procurar o último build-apk.yml..."
+CURRENT_BRANCH=$(git branch --show-current)
+echo "🔍 A procurar o último build-apk.yml para a branch: $CURRENT_BRANCH"
 RUN_ID=""
 for i in {1..5}; do
-    RUN_ID=$(gh run list --workflow="build-apk.yml" --limit 1 --json databaseId -q ".[0].databaseId" 2>/dev/null)
+    RUN_ID=$(gh run list --workflow="build-apk.yml" --branch "$CURRENT_BRANCH" --limit 1 --json databaseId -q ".[0].databaseId" 2>/dev/null)
     if [ -n "$RUN_ID" ]; then break; fi
-    echo "⚠️ Falha de rede. Tentativa $i de 5..."
+    echo "⚠️ Falha de rede ou build não encontrado. Tentativa $i de 5..."
     sleep 3
 done
 
@@ -30,7 +31,6 @@ echo "✅ Build com sucesso! A descarregar via GitHub CLI (Seguro)..."
 if ! command -v unzip &> /dev/null; then pkg install unzip -y >/dev/null 2>&1; fi
 
 rm -rf temp-apk && mkdir -p temp-apk
-# O comando oficial do GitHub faz o download de forma segura e encriptada
 gh run download "$RUN_ID" -n debug-apk -D temp-apk
 
 if [ ! -f temp-apk/app-debug.apk ]; then echo "❌ APK não encontrado."; exit 1; fi

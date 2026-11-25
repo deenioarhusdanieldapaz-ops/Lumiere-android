@@ -1,18 +1,15 @@
 name: Build Android APK
-
 on:
   push:
-    branches: [ "main", "fase5/data-002" ]
+    branches: [ "**" ]
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-24.04
-
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v5
-
     - name: Set up JDK 17
       uses: actions/setup-java@v5
       with:
