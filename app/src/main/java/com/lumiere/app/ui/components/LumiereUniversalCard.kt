@@ -16,22 +16,17 @@ import androidx.compose.ui.unit.dp
 import com.lumiere.app.ui.theme.LumiereRadius
 import com.lumiere.app.ui.theme.LumiereSpacing
 
-data class CardData(
-    val title: String,
-    val subtitle: String,
-    val isOverdue: Boolean = false,
-    val isCompleted: Boolean = false
-)
-
 @Composable
 fun LumiereUniversalCard(
     data: CardData,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val stateColor = when {
-        data.isOverdue -> MaterialTheme.colorScheme.error
-        data.isCompleted -> MaterialTheme.colorScheme.primary
+    // Cores baseadas no estado do CardData oficial e no Tema
+    val stateColor = when (data.state) {
+        LumiereCardState.DONE -> MaterialTheme.colorScheme.primary
+        LumiereCardState.OVERDUE -> MaterialTheme.colorScheme.error
+        LumiereCardState.IN_PROGRESS -> MaterialTheme.colorScheme.primary
         else -> MaterialTheme.colorScheme.outline
     }
 
@@ -67,9 +62,9 @@ fun LumiereUniversalCard(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = data.subtitle,
+                text = data.subtitle ?: "Sem categoria",
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (data.isOverdue) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                color = if (data.state == LumiereCardState.OVERDUE) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -80,7 +75,7 @@ fun LumiereUniversalCard(
             modifier = Modifier
                 .size(24.dp)
                 .border(2.dp, stateColor, RoundedCornerShape(12.dp))
-                .background(if (data.isCompleted) stateColor else MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
+                .background(if (data.state == LumiereCardState.DONE) stateColor else MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
         )
     }
 }

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -16,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lumiere.app.data.local.entity.Task
 import com.lumiere.app.ui.components.CardData
+import com.lumiere.app.ui.components.LumiereCardState
 import com.lumiere.app.ui.components.LumiereUniversalCard
 import com.lumiere.app.ui.theme.LumiereRadius
 import com.lumiere.app.ui.theme.LumiereSpacing
@@ -32,7 +34,7 @@ fun TaskScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val now = System.currentTimeMillis()
 
-    // Contadores para o Resumo
+    // Contadores
     val overdueCount = uiState.tasks.count { !it.isCompleted && it.dueDate != null && it.dueDate < now }
     val todayCount = uiState.tasks.count { !it.isCompleted && it.dueDate != null && it.dueDate >= now }
 
@@ -65,7 +67,7 @@ fun TaskScreen(
                 }
             }
 
-            // 2. Resumo (3 Cartões)
+            // 2. Resumo
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = LumiereSpacing.M),
@@ -77,7 +79,7 @@ fun TaskScreen(
                 }
             }
 
-            // 3. Abas (Filtros)
+            // 3. Abas
             item {
                 ScrollableTabRow(
                     selectedTabIndex = 0,
@@ -93,25 +95,25 @@ fun TaskScreen(
                 }
             }
 
-            // 4. Lista de Tarefas (O Cartão Universal)
+            // 4. Lista de Tarefas
             val displayTasks = uiState.filteredTasks
             if (displayTasks.isEmpty()) {
                 item {
-                    Text(
-                        "Nenhuma tarefa encontrada.",
-                        modifier = Modifier.padding(LumiereSpacing.M),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Text("Nenhuma tarefa encontrada.", modifier = Modifier.padding(LumiereSpacing.M), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             } else {
                 items(displayTasks) { task ->
-                    val isOverdue = !task.isCompleted && task.dueDate != null && task.dueDate < now
+                    val cardState = when {
+                        task.isCompleted -> LumiereCardState.DONE
+                        task.dueDate != null && task.dueDate < now -> LumiereCardState.OVERDUE
+                        else -> LumiereCardState.PENDING
+                    }
+                    
                     LumiereUniversalCard(
                         data = CardData(
                             title = task.title,
                             subtitle = task.category ?: "Sem categoria",
-                            isOverdue = isOverdue,
-                            isCompleted = task.isCompleted
+                            state = cardState
                         ),
                         onClick = { onTaskClick(task) },
                         modifier = Modifier.padding(horizontal = LumiereSpacing.M, vertical = 4.dp)
@@ -120,9 +122,9 @@ fun TaskScreen(
             }
         }
 
-        // 5. Botão Flutuante (FAB)
+        // 5. FAB
         FloatingActionButton(
-            onClick = { /* Quick Add será ligado depois */ },
+            onClick = { /* Quick Add */ },
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary,
             shape = CircleShape,
