@@ -58,7 +58,6 @@ fun LumiereUniversalCard(
             modifier = Modifier.padding(if (isCompact) LumiereSpacing.S else LumiereSpacing.M),
             verticalAlignment = Alignment.Top
         ) {
-            // 1. Ícone / Thumbnail
             Box(
                 modifier = Modifier
                     .size(if (isCompact) 40.dp else 64.dp)
@@ -79,9 +78,7 @@ fun LumiereUniversalCard(
 
             Spacer(modifier = Modifier.width(LumiereSpacing.M))
 
-            // 2. Conteúdo Principal
             Column(modifier = Modifier.weight(1f)) {
-                // Tags Superiores
                 if (!isCompact) {
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 4.dp)) {
                         Box(
@@ -113,7 +110,6 @@ fun LumiereUniversalCard(
                     }
                 }
 
-                // Título
                 Text(
                     text = data.title,
                     style = if (isCompact) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
@@ -123,7 +119,6 @@ fun LumiereUniversalCard(
                     overflow = TextOverflow.Ellipsis
                 )
 
-                // Descrição com "Ler Mais"
                 if (!data.description.isNullOrBlank() && !isCompact) {
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
@@ -144,35 +139,33 @@ fun LumiereUniversalCard(
                     )
                 }
 
-                // Metadados (Data, Projeto, Anexos)
                 if (!isCompact && (data.metadata != null || data.subtitle != null || data.attachmentCount != null)) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        data.metadata?.let {
+                        data.metadata?.let { m ->
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(LumiereIcons.Event, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(14.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(m, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
-                        data.subtitle?.let {
+                        data.subtitle?.let { s ->
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(LumiereIcons.Folder, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(14.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(s, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
-                        data.attachmentCount?.let {
+                        data.attachmentCount?.let { count ->
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(LumiereIcons.Tag, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(14.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("$it anexos", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("$count anexos", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                     }
                 }
 
-                // Progresso
                 if (data.progress != null && !isCompact) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -188,7 +181,6 @@ fun LumiereUniversalCard(
                 }
             }
 
-            // 3. Menu de 3 Pontinhos
             if (!isCompact) {
                 Box {
                     IconButton(onClick = { showMenu = true }, modifier = Modifier.size(24.dp)) {
@@ -199,7 +191,7 @@ fun LumiereUniversalCard(
                             DropdownMenuItem(
                                 text = { Text(action.label) },
                                 onClick = { action.onClick(); showMenu = false },
-                                leadingIcon = action.icon?.let { { Icon(it, contentDescription = null) } }
+                                leadingIcon = if (action.icon != null) { { Icon(action.icon, contentDescription = null) } } else null
                             )
                         }
                     }
@@ -207,7 +199,6 @@ fun LumiereUniversalCard(
             }
         }
 
-        // 4. Rodapé de Ações (Apenas se não for Compact)
         if (!isCompact && data.actions.isNotEmpty()) {
             Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
             Row(
@@ -223,12 +214,18 @@ fun LumiereUniversalCard(
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                             modifier = Modifier.height(36.dp)
                         ) {
-                            action.icon?.let { Icon(it, contentDescription = null, modifier = Modifier.size(16.dp)); Spacer(Modifier.width(4.dp)) }
+                            if (action.icon != null) {
+                                Icon(action.icon, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(Modifier.width(4.dp))
+                            }
                             Text(action.label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
                         }
                     } else {
                         TextButton(onClick = action.onClick) {
-                            action.icon?.let { Icon(it, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp)); Spacer(Modifier.width(4.dp)) }
+                            if (action.icon != null) {
+                                Icon(action.icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
+                                Spacer(Modifier.width(4.dp))
+                            }
                             Text(action.label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
@@ -236,7 +233,6 @@ fun LumiereUniversalCard(
                 
                 Spacer(modifier = Modifier.weight(1f))
                 
-                // Menu Mais Opções (Rodapé)
                 if (data.menuActions.isNotEmpty()) {
                     Box {
                         TextButton(onClick = { showMoreOptionsMenu = true }) {
@@ -248,7 +244,7 @@ fun LumiereUniversalCard(
                                 DropdownMenuItem(
                                     text = { Text(action.label) },
                                     onClick = { action.onClick(); showMoreOptionsMenu = false },
-                                    leadingIcon = action.icon?.let { { Icon(it, contentDescription = null) } }
+                                    leadingIcon = if (action.icon != null) { { Icon(action.icon, contentDescription = null) } } else null
                                 )
                             }
                         }

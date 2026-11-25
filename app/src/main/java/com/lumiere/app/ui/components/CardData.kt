@@ -24,17 +24,20 @@ data class CardAction(
 
 data class CardData(
     val title: String,
+    val description: String? = null,
     val subtitle: String? = null,
     val state: LumiereCardState? = null,
     val metadata: String? = null,
-    val progress: Float? = null, // 0.0 a 1.0
+    val attachmentCount: Int? = null,
+    val progress: Float? = null,
     val summaryValue: String? = null,
-    val summaryTrend: String? = null, // Ex: "+20%"
+    val summaryTrend: String? = null,
     val summaryIcon: ImageVector? = null,
     val icon: ImageVector? = null,
-    val image: Painter? = null, // Para as imagens laterais
-    val tagText: String? = null, // Ex: "Tarefa"
-    val isPriority: Boolean = false, // Ex: Estrela
+    val image: Painter? = null,
+    val tagText: String? = null,
+    val isPriority: Boolean = false,
     val actions: List<CardAction> = emptyList(),
-    val onMoreClick: (() -> Unit)? = null
+    val onMoreClick: (() -> Unit)? = null,
+    val menuActions: List<CardAction> = emptyList()
 )
