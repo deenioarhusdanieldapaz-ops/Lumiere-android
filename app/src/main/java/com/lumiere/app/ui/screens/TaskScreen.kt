@@ -35,6 +35,13 @@ fun TaskScreen(
     val now = System.currentTimeMillis()
     val dateFormat = SimpleDateFormat("dd MMM, HH:mm", Locale.getDefault())
 
+    // ESTADO PARA O QUICK ADD
+    var showQuickAdd by remember { mutableStateOf(false) }
+    
+    // ESTADO PARA CONFIRMAÇÃO DE ELIMINAÇÃO (Próximo passo)
+    var taskToDelete by remember { mutableStateOf<Task?>(null) }
+    var confirmText by remember { mutableStateOf("") }
+
     val overdueCount = uiState.tasks.count { !it.isCompleted && it.dueDate != null && it.dueDate < now }
     val todayCount = uiState.tasks.count { !it.isCompleted && it.dueDate != null && it.dueDate >= now }
 
@@ -129,7 +136,7 @@ fun TaskScreen(
                             menuActions = listOf(
                                 CardAction(label = "Duplicar", icon = LumiereIcons.Copy, onClick = { viewModel.duplicateTask(task) }),
                                 CardAction(label = "Arquivar", icon = LumiereIcons.Archive, onClick = { viewModel.archiveTask(task) }),
-                                CardAction(label = "Eliminar", icon = LumiereIcons.Delete, onClick = { /* Abrir confirmação */ })
+                                CardAction(label = "Eliminar", icon = LumiereIcons.Delete, onClick = { taskToDelete = task })
                             )
                         ),
                         onClick = { onTaskClick(task) },
@@ -139,9 +146,9 @@ fun TaskScreen(
             }
         }
 
-        // FAB
+        // FAB LIGADO AO QUICK ADD
         FloatingActionButton(
-            onClick = { },
+            onClick = { showQuickAdd = true },
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary,
             shape = CircleShape,
@@ -149,6 +156,60 @@ fun TaskScreen(
         ) {
             Icon(LumiereIcons.Add, contentDescription = "Adicionar Tarefa", modifier = Modifier.size(32.dp))
         }
+    }
+
+    // FORMULÁRIO RÁPIDO (Bottom Sheet)
+    if (showQuickAdd) {
+        val quickFormData = UniversalFormData(
+            title = "Nova Tarefa Rápida",
+            fields = listOf(
+                FormField(id = "title", label = "Título da Tarefa", placeholder = "Ex: Comprar leite", isRequired = true, step = 1)
+            )
+        )
+        LumiereUniversalForm(
+            mode = FormMode.QUICK,
+            data = quickFormData,
+            onDismiss = { showQuickAdd = false },
+            onSubmit = { values ->
+                val title = values["title"] ?: ""
+                if (title.isNotBlank()) {
+                    viewModel.addTask(Task(title = title))
+                    showQuickAdd = false
+                }
+            }
+        )
+    }
+
+    // DIÁLOGO DE ELIMINAÇÃO (Implementado a seguir)
+    if (taskToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { taskToDelete = null; confirmText = "" },
+            containerColor = MaterialTheme.colorScheme.surface,
+            title = { Text("Eliminar tarefa?", style = MaterialTheme.typography.titleLarge) },
+            text = {
+                Column {
+                    Text("Esta ação não pode ser desfeita. O histórico será preservado.", style = MaterialTheme.typography.bodyMedium)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Escreve ELIMINAR para confirmar", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    OutlinedTextField(
+                        value = confirmText,
+                        onValueChange = { confirmText = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = MaterialTheme.colorScheme.error, unfocusedBorderColor = MaterialTheme.colorScheme.error),
+                        shape = RoundedCornerShape(LumiereRadius.S)
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { taskToDelete?.let { viewModel.deleteTask(it) }; taskToDelete = null; confirmText = "" },
+                    enabled = confirmText == "ELIMINAR",
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) { Text("Eliminar") }
+            },
+            dismissButton = { TextButton(onClick = { taskToDelete = null; confirmText = "" }) { Text("Cancelar", color = MaterialTheme.colorScheme.onSurfaceVariant) } }
+        )
     }
 }
 
