@@ -3,7 +3,7 @@ package com.lumiere.app.ui.components
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 
-enum class CardVariant { ENTITY, SUMMARY, ALERT, PROGRESS, INFO }
+enum class CardVariant { ENTITY, SUMMARY, PROGRESS, ALERT, INFO, COMPACT }
 enum class CardDensity { COMPACT, NORMAL, EXPANDED }
 
 enum class LumiereCardState(val label: String) {
