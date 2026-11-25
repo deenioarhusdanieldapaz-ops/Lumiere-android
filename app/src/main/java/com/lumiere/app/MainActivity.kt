@@ -1,54 +1,37 @@
 package com.lumiere.app
 
-
-import com.lumiere.app.core.engine.IntelligenceEngine
-import com.lumiere.app.core.engine.RecommendationRules
-import com.lumiere.app.core.engine.StrictConflictChecker
-import com.lumiere.app.core.engine.ApprovalGateway
-import com.lumiere.app.core.memory.CoreMemoryRepository
-import com.lumiere.app.core.engine.CoreMemoryApprovalStore
-import com.lumiere.app.core.contract.RoomTaskContract
-import com.lumiere.app.core.contract.RoomHabitContract
-import com.lumiere.app.core.time.SystemTimeProvider
-import com.lumiere.app.ui.viewmodel.IntelligenceViewModel
-
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
-import com.lumiere.app.data.repository.NotificationsRepository
-import com.lumiere.app.ui.viewmodel.NotificationsViewModel
-
 import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.lumiere.app.core.engine.*
+import com.lumiere.app.core.contract.*
+import com.lumiere.app.core.time.SystemTimeProvider
 import com.lumiere.app.data.local.database.AppDatabase
-import com.lumiere.app.data.repository.HabitRepository
-import com.lumiere.app.data.repository.TaskRepository
+import com.lumiere.app.data.repository.*
 import com.lumiere.app.ui.screens.*
 import com.lumiere.app.ui.theme.LumiereTheme
 import com.lumiere.app.ui.theme.LumiereThemeMode
-import com.lumiere.app.ui.viewmodel.HabitViewModel
-import com.lumiere.app.ui.viewmodel.HabitViewModelFactory
-import com.lumiere.app.ui.viewmodel.TaskViewModel
-import com.lumiere.app.ui.viewmodel.TaskViewModelFactory
+import com.lumiere.app.ui.viewmodel.*
 import kotlinx.coroutines.launch
 
 sealed class Screen(val route: String, val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
@@ -66,7 +49,6 @@ sealed class Screen(val route: String, val label: String, val icon: androidx.com
 }
 
 class MainActivity : ComponentActivity() {
-
     private val database by lazy { AppDatabase.getDatabase(this) }
     private val habitRepository by lazy { HabitRepository(database.habitDao(), database.habitCheckInDao(), database.habitExceptionDao()) }
     private val repository by lazy { TaskRepository(database.taskDao(), database.subtaskDao(), database.projectDao(), database.taskHistoryDao()) }
@@ -75,20 +57,22 @@ class MainActivity : ComponentActivity() {
     private val habitViewModel: HabitViewModel by viewModels { HabitViewModelFactory(habitRepository, SystemTimeProvider()) }
     private val taskViewModel: TaskViewModel by viewModels { TaskViewModelFactory(repository, SystemTimeProvider()) }
     private val notificationsViewModel: NotificationsViewModel by viewModels { viewModelFactory { initializer { NotificationsViewModel(notificationsRepository) } } }
+    
     private val intelligenceViewModel: IntelligenceViewModel by viewModels { viewModelFactory { initializer {
         val timeProvider = SystemTimeProvider()
         IntelligenceViewModel(
-        IntelligenceEngine(
-            taskContract = RoomTaskContract(database.taskDao(), timeProvider),
-            habitContract = RoomHabitContract(database.habitDao(), database.habitCheckInDao(), timeProvider),
-            rules = RecommendationRules(timeProvider),
-            strictChecker = StrictConflictChecker(timeProvider),
-            approvalGateway = ApprovalGateway(CoreMemoryApprovalStore(database.coreMemoryDao(), timeProvider), timeProvider),
-            memory = CoreMemoryRepository(database.coreMemoryDao(), timeProvider),
-            timeProvider = timeProvider,
-        ),
-        taskDao = database.taskDao()
-    ) } } }
+            IntelligenceEngine(
+                taskContract = RoomTaskContract(database.taskDao(), timeProvider),
+                habitContract = RoomHabitContract(database.habitDao(), database.habitCheckInDao(), timeProvider),
+                rules = RecommendationRules(timeProvider),
+                strictChecker = StrictConflictChecker(timeProvider),
+                approvalGateway = ApprovalGateway(CoreMemoryApprovalStore(database.coreMemoryDao(), timeProvider), timeProvider),
+                memory = CoreMemoryRepository(database.coreMemoryDao(), timeProvider),
+                timeProvider = timeProvider,
+            ),
+            taskDao = database.taskDao()
+        )
+    } } }
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -115,7 +99,6 @@ class MainActivity : ComponentActivity() {
                 val currentRoute = navBackStackEntry?.destination?.route
                 val drawerState = rememberDrawerState(DrawerValue.Closed)
                 val scope = rememberCoroutineScope()
-
                 val bottomItems = listOf(Screen.Dashboard, Screen.Tasks, Screen.Habits, Screen.More)
 
                 ModalNavigationDrawer(
@@ -130,8 +113,6 @@ class MainActivity : ComponentActivity() {
                             }
                             Divider(color = MaterialTheme.colorScheme.outline)
                             Spacer(modifier = Modifier.height(16.dp))
-
-                            // Itens do Menu Lateral
                             listOf(Screen.Dashboard, Screen.Tasks, Screen.Habits, Screen.WeeklyReview, Screen.GlobalSearch, Screen.Profile).forEach { screen ->
                                 NavigationDrawerItem(
                                     label = { Text(screen.label, color = if (currentRoute == screen.route) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface) },
@@ -177,7 +158,7 @@ class MainActivity : ComponentActivity() {
                                     taskViewModel = taskViewModel,
                                     habitViewModel = habitViewModel,
                                     isDark = isDark,
-                                        onOpenDrawer = { scope.launch { drawerState.open() } },
+                                    onOpenDrawer = { scope.launch { drawerState.open() } },
                                     onNavigateToTasks = { navController.navigate(Screen.Tasks.route) },
                                     onNavigateToHabits = { navController.navigate(Screen.Habits.route) },
                                     onNavigateToNotifications = { navController.navigate(Screen.Notifications.route) },
@@ -186,9 +167,21 @@ class MainActivity : ComponentActivity() {
                                     isNotificationsEnabled = notificationsEnabled
                                 )
                             }
-                            composable(Screen.Tasks.route) { TaskScreen(viewModel = taskViewModel, onOpenDrawer = { scope.launch { drawerState.open() } }, onTaskClick = { task -> navController.navigate("task_detail/${task.id}") }, onOpenProjects = { navController.navigate("projects") }) }
+                            composable(Screen.Tasks.route) { 
+                                TaskScreen(
+                                    viewModel = taskViewModel, 
+                                    onOpenDrawer = { scope.launch { drawerState.open() } }, 
+                                    onTaskClick = { task -> navController.navigate("task_detail/${task.id}") }, 
+                                    onOpenProjects = { navController.navigate("projects") }
+                                ) 
+                            }
                             composable("projects") { ProjectScreen(viewModel = taskViewModel, onBack = { navController.popBackStack() }) }
-                            composable("task_detail/{taskId}") { backStackEntry -> val taskId = backStackEntry.arguments?.getString("taskId")?.toLongOrNull(); val task by taskViewModel.getTaskById(taskId ?: 0L).collectAsStateWithLifecycle(); val projects by taskViewModel.projects.collectAsStateWithLifecycle(); task?.let { TaskDetailScreen(task = it, projects = projects, onBack = { navController.popBackStack() }, onSave = { t -> taskViewModel.updateTask(t); navController.popBackStack() }) } }
+                            composable("task_detail/{taskId}") { backStackEntry -> 
+                                val taskId = backStackEntry.arguments?.getString("taskId")?.toLongOrNull()
+                                val task by taskViewModel.getTaskById(taskId ?: 0L).collectAsStateWithLifecycle()
+                                val projects by taskViewModel.projects.collectAsStateWithLifecycle()
+                                task?.let { TaskDetailScreen(task = it, projects = projects, onBack = { navController.popBackStack() }, onSave = { t -> taskViewModel.updateTask(t); navController.popBackStack() }) } 
+                            }
                             composable(Screen.Habits.route) { HabitScreen(viewModel = habitViewModel, onOpenDrawer = { scope.launch { drawerState.open() } }) }
                             composable("help_and_learning") { HelpScreen(onBack = { navController.popBackStack() }) }
                             composable("global_history") { GlobalHistoryScreen(onBack = { navController.popBackStack() }) }
@@ -216,52 +209,42 @@ class MainActivity : ComponentActivity() {
                                     onNavigate = { route -> navController.navigate(route) }
                                 )
                             }
-                            
                             composable("history") { HistoryScreen(onBack = { navController.popBackStack() }) }
                             composable("reminders") { RemindersScreen(onBack = { navController.popBackStack() }) }
                             composable("types") { AlertTypesScreen(viewModel = notificationsViewModel, onBack = { navController.popBackStack() }) }
                             composable("sound") { SoundVibrationScreen(viewModel = notificationsViewModel, onBack = { navController.popBackStack() }) }
                             composable("silence") { SilentHoursScreen(viewModel = notificationsViewModel, onBack = { navController.popBackStack() }) }
-                            
                             composable(Screen.Profile.route) {
-                            ProfileScreen(
-                                themeMode = themeMode,
-                                notificationsViewModel = notificationsViewModel,
-                                isDark = isDark,
-                                onThemeToggle = { 
-                                    themeModeInt = if (isDark) 1 else 2
-                                    prefs.edit().putInt("theme_mode", themeModeInt).apply() 
-                                },
-                                onThemeChange = { mode -> 
-                                    themeModeInt = when(mode) { 
-                                        LumiereThemeMode.Light -> 1
-                                        LumiereThemeMode.System -> 0
-                                        else -> 2 
-                                    }; 
-                                    prefs.edit().putInt("theme_mode", themeModeInt).apply() 
-                                },
-                                onBack = { navController.popBackStack() },
-                                onNavigateToNotificationSettings = { navController.navigate(Screen.NotificationSettings.route) }
-                            )
+                                ProfileScreen(
+                                    themeMode = themeMode,
+                                    notificationsViewModel = notificationsViewModel,
+                                    isDark = isDark,
+                                    onThemeToggle = {
+                                        themeModeInt = if (isDark) 1 else 2
+                                        prefs.edit().putInt("theme_mode", themeModeInt).apply()
+                                    },
+                                    onThemeChange = { mode ->
+                                        themeModeInt = when(mode) {
+                                            LumiereThemeMode.Light -> 1
+                                            LumiereThemeMode.System -> 0
+                                            else -> 2
+                                        };
+                                        prefs.edit().putInt("theme_mode", themeModeInt).apply()
+                                    },
+                                    onBack = { navController.popBackStack() },
+                                    onNavigateToNotificationSettings = { navController.navigate(Screen.NotificationSettings.route) }
+                                )
+                            }
+                            composable(Screen.Approvals.route) {
+                                ApprovalsScreen(viewModel = intelligenceViewModel, onBack = { navController.popBackStack() })
+                            }
+                            composable(Screen.GlobalSearch.route) {
+                                GlobalSearchScreen(taskViewModel = taskViewModel, habitViewModel = habitViewModel, onBack = { navController.popBackStack() })
+                            }
+                            composable(Screen.Notifications.route) {
+                                NotificationScreen(taskViewModel = taskViewModel, habitViewModel = habitViewModel, onBack = { navController.popBackStack() })
+                            }
                         }
-                        composable(Screen.Approvals.route) {
-                            ApprovalsScreen(viewModel = intelligenceViewModel, onBack = { navController.popBackStack() })
-                        }
-                        composable(Screen.GlobalSearch.route) {
-                            GlobalSearchScreen(
-                                taskViewModel = taskViewModel,
-                                habitViewModel = habitViewModel,
-                                onBack = { navController.popBackStack() }
-                            )
-                        }
-                        composable(Screen.Notifications.route) {
-                            NotificationScreen(
-                                taskViewModel = taskViewModel,
-                                habitViewModel = habitViewModel,
-                                onBack = { navController.popBackStack() }
-                            )
-                        }
-                                                }
                     }
                 }
             }

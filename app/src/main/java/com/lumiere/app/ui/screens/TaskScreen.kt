@@ -1,20 +1,16 @@
 package com.lumiere.app.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -31,14 +27,13 @@ import java.util.Calendar
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskScreen(
-    viewModel: TaskViewModel, 
+    viewModel: TaskViewModel,
     onOpenDrawer: () -> Unit = {},
     onTaskClick: (Task) -> Unit = {},
     onOpenProjects: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showQuickAdd by remember { mutableStateOf(false) }
-    
     var taskToDelete by remember { mutableStateOf<Task?>(null) }
     var confirmText by remember { mutableStateOf("") }
 
@@ -52,9 +47,8 @@ fun TaskScreen(
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 120.dp) // Espaço para o botão flutuante
+            contentPadding = PaddingValues(bottom = 120.dp)
         ) {
-            // Header
             item {
                 Row(modifier = Modifier.fillMaxWidth().padding(horizontal = LumiereSpacing.M, vertical = LumiereSpacing.M), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -71,7 +65,6 @@ fun TaskScreen(
                 }
             }
 
-            // Abas
             item {
                 ScrollableTabRow(
                     selectedTabIndex = when(uiState.activeFilter) {
@@ -92,7 +85,6 @@ fun TaskScreen(
                 }
             }
 
-            // Summary Cards
             item {
                 Row(modifier = Modifier.fillMaxWidth().padding(LumiereSpacing.M), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     SummaryBox(Modifier.weight(1f), todayTasks.size.toString(), "Hoje", Icons.Default.CalendarToday, MaterialTheme.colorScheme.primary)
@@ -101,49 +93,48 @@ fun TaskScreen(
                 }
             }
 
-            // Lista de Tarefas
             val displayTasks = uiState.filteredTasks
             if (displayTasks.isEmpty()) {
                 item { Text("Nenhuma tarefa encontrada.", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(LumiereSpacing.M)) }
             } else {
                 items(displayTasks) { task ->
-                    TaskCardItem(
-                        task = task, 
-                        borderColor = if (task.isCompleted) Lumiere.colors.success else MaterialTheme.colorScheme.primary,
-                        timeLabel = if (task.isCompleted) "Concluída" else null,
+                    LumiereUniversalCard(
+                        variant = CardVariant.ENTITY,
+                        density = CardDensity.COMPACT,
+                        data = CardData(
+                            title = task.title,
+                            subtitle = task.category ?: "Pessoal",
+                            state = when {
+                                task.isCompleted -> LumiereCardState.DONE
+                                task.dueDate != null && task.dueDate < now -> LumiereCardState.OVERDUE
+                                else -> LumiereCardState.PENDING
+                            },
+                            actions = listOf(
+                                CardAction(
+                                    label = "Eliminar",
+                                    isPrimary = false,
+                                    onClick = { taskToDelete = task }
+                                )
+                            )
+                        ),
                         onClick = { onTaskClick(task) },
-                        onDelete = { taskToDelete = task },
                         modifier = Modifier.padding(horizontal = LumiereSpacing.M, vertical = 4.dp)
                     )
                 }
             }
         }
 
-        // Botão Flutuante (FAB)
         FloatingActionButton(
             onClick = { showQuickAdd = true },
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = Color.Black,
             shape = CircleShape,
-            modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 90.dp, end = LumiereSpacing.M)
+            modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 24.dp, end = LumiereSpacing.M)
         ) {
             Icon(Icons.Default.Add, contentDescription = "Adicionar Tarefa", modifier = Modifier.size(32.dp))
         }
-
-        // Barra de Navegação (Fundo)
-        NavigationBar(
-            containerColor = MaterialTheme.colorScheme.surface, 
-            tonalElevation = 8.dp,
-            modifier = Modifier.align(Alignment.BottomCenter)
-        ) {
-            NavigationBarItem(selected = false, onClick = {}, icon = { Icon(Icons.Default.Home, null) }, label = { Text("Início") })
-            NavigationBarItem(selected = true, onClick = {}, icon = { Icon(Icons.Default.CheckCircle, null) }, label = { Text("Tarefas") }, colors = NavigationBarItemDefaults.colors(selectedIconColor = MaterialTheme.colorScheme.primary, selectedTextColor = MaterialTheme.colorScheme.primary))
-            NavigationBarItem(selected = false, onClick = {}, icon = { Icon(Icons.Default.Favorite, null) }, label = { Text("Hábitos") })
-            NavigationBarItem(selected = false, onClick = {}, icon = { Icon(Icons.Default.MoreHoriz, null) }, label = { Text("Mais") })
-        }
     }
 
-    // Modals e Dialogs
     if (showQuickAdd) {
         LumiereUniversalForm(
             mode = FormMode.QUICK,
@@ -211,32 +202,6 @@ private fun SummaryBox(modifier: Modifier, value: String, label: String, icon: I
             Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Box(modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth(0.5f).height(2.dp).background(color))
-    }
-}
-
-@Composable
-private fun TaskCardItem(task: Task, borderColor: Color, timeLabel: String? = null, onClick: () -> Unit, onDelete: () -> Unit, modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(LumiereRadius.M))
-            .background(MaterialTheme.colorScheme.surface)
-            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), RoundedCornerShape(LumiereRadius.M))
-            .clickable { onClick() }
-    ) {
-        Box(modifier = Modifier.width(4.dp).height(60.dp).background(borderColor))
-        Row(modifier = Modifier.padding(LumiereSpacing.M).weight(1f), verticalAlignment = Alignment.CenterVertically) {
-            Box(modifier = Modifier.size(24.dp).border(2.dp, MaterialTheme.colorScheme.outline, CircleShape))
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(task.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = if (task.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface)
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(task.category ?: "Pessoal", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    if (timeLabel != null) Text(" • $timeLabel", style = MaterialTheme.typography.bodySmall, color = borderColor)
-                }
-            }
-            IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = MaterialTheme.colorScheme.error) }
-        }
     }
 }
 
