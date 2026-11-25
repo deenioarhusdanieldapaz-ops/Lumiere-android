@@ -6,8 +6,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,12 +14,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lumiere.app.data.local.entity.Task
-import com.lumiere.app.ui.components.CardData
-import com.lumiere.app.ui.components.LumiereCardState
-import com.lumiere.app.ui.components.LumiereUniversalCard
+import com.lumiere.app.ui.components.*
+import com.lumiere.app.ui.theme.LumiereIcons
 import com.lumiere.app.ui.theme.LumiereRadius
 import com.lumiere.app.ui.theme.LumiereSpacing
 import com.lumiere.app.ui.viewmodel.TaskViewModel
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,8 +33,8 @@ fun TaskScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val now = System.currentTimeMillis()
+    val dateFormat = SimpleDateFormat("dd MMM, HH:mm", Locale.getDefault())
 
-    // Contadores
     val overdueCount = uiState.tasks.count { !it.isCompleted && it.dueDate != null && it.dueDate < now }
     val todayCount = uiState.tasks.count { !it.isCompleted && it.dueDate != null && it.dueDate >= now }
 
@@ -43,7 +43,7 @@ fun TaskScreen(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(bottom = 100.dp)
         ) {
-            // 1. Cabeçalho
+            // Cabeçalho
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(LumiereSpacing.M),
@@ -51,23 +51,17 @@ fun TaskScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = onOpenDrawer) {
-                            Icon(Icons.Default.Menu, contentDescription = "Menu", tint = MaterialTheme.colorScheme.primary)
-                        }
+                        IconButton(onClick = onOpenDrawer) { Icon(LumiereIcons.Notes, contentDescription = "Menu", tint = MaterialTheme.colorScheme.primary) }
                         Column(modifier = Modifier.padding(start = 8.dp)) {
                             Text("Hoje", style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                             Text("Vamos fazer hoje ainda melhor.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
-                    Row {
-                        IconButton(onClick = onOpenProjects) {
-                            Icon(Icons.Default.Folder, contentDescription = "Projetos", tint = MaterialTheme.colorScheme.primary)
-                        }
-                    }
+                    IconButton(onClick = onOpenProjects) { Icon(LumiereIcons.Folder, contentDescription = "Projetos", tint = MaterialTheme.colorScheme.primary) }
                 }
             }
 
-            // 2. Resumo
+            // Resumo
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = LumiereSpacing.M),
@@ -79,7 +73,7 @@ fun TaskScreen(
                 }
             }
 
-            // 3. Abas
+            // Abas
             item {
                 ScrollableTabRow(
                     selectedTabIndex = 0,
@@ -95,12 +89,10 @@ fun TaskScreen(
                 }
             }
 
-            // 4. Lista de Tarefas
+            // Lista de Tarefas
             val displayTasks = uiState.filteredTasks
             if (displayTasks.isEmpty()) {
-                item {
-                    Text("Nenhuma tarefa encontrada.", modifier = Modifier.padding(LumiereSpacing.M), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
+                item { Text("Nenhuma tarefa encontrada.", modifier = Modifier.padding(LumiereSpacing.M), color = MaterialTheme.colorScheme.onSurfaceVariant) }
             } else {
                 items(displayTasks) { task ->
                     val cardState = when {
@@ -108,29 +100,54 @@ fun TaskScreen(
                         task.dueDate != null && task.dueDate < now -> LumiereCardState.OVERDUE
                         else -> LumiereCardState.PENDING
                     }
-                    
+                    val metadataText = task.dueDate?.let { dateFormat.format(Date(it)) }
+
                     LumiereUniversalCard(
+                        variant = CardVariant.ENTITY,
+                        density = CardDensity.NORMAL,
                         data = CardData(
                             title = task.title,
-                            subtitle = task.category ?: "Sem categoria",
-                            state = cardState
+                            description = task.description,
+                            subtitle = task.category ?: "Pessoal",
+                            state = cardState,
+                            metadata = metadataText,
+                            attachmentCount = task.attachmentUris?.split(",")?.size,
+                            isPriority = task.priority > 1,
+                            actions = listOf(
+                                CardAction(
+                                    label = "Concluir",
+                                    icon = LumiereIcons.CheckCircle,
+                                    isPrimary = true,
+                                    onClick = { viewModel.toggleTaskCompletion(task) }
+                                ),
+                                CardAction(
+                                    label = "Editar",
+                                    icon = LumiereIcons.Edit,
+                                    onClick = { onTaskClick(task) }
+                                )
+                            ),
+                            menuActions = listOf(
+                                CardAction(label = "Duplicar", icon = LumiereIcons.Copy, onClick = { viewModel.duplicateTask(task) }),
+                                CardAction(label = "Arquivar", icon = LumiereIcons.Archive, onClick = { viewModel.archiveTask(task) }),
+                                CardAction(label = "Eliminar", icon = LumiereIcons.Delete, onClick = { /* Abrir confirmação */ })
+                            )
                         ),
                         onClick = { onTaskClick(task) },
-                        modifier = Modifier.padding(horizontal = LumiereSpacing.M, vertical = 4.dp)
+                        modifier = Modifier.padding(horizontal = LumiereSpacing.M, vertical = 6.dp)
                     )
                 }
             }
         }
 
-        // 5. FAB
+        // FAB
         FloatingActionButton(
-            onClick = { /* Quick Add */ },
+            onClick = { },
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary,
             shape = CircleShape,
             modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 24.dp, end = LumiereSpacing.M)
         ) {
-            Icon(Icons.Default.Add, contentDescription = "Adicionar Tarefa", modifier = Modifier.size(32.dp))
+            Icon(LumiereIcons.Add, contentDescription = "Adicionar Tarefa", modifier = Modifier.size(32.dp))
         }
     }
 }
