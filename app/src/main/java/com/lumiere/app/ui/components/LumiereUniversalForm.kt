@@ -12,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.lumiere.app.ui.theme.LumiereIcons
@@ -52,7 +53,7 @@ fun LumiereUniversalForm(
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 LinearProgressIndicator(
-                    progress = { currentStep.toFloat() / totalSteps },
+                    progress = currentStep.toFloat() / totalSteps,
                     modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)),
                     color = gold,
                     trackColor = MaterialTheme.colorScheme.surfaceVariant
