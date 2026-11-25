@@ -21,25 +21,6 @@ import com.lumiere.app.ui.theme.Lumiere
 import com.lumiere.app.ui.theme.LumiereRadius
 import com.lumiere.app.ui.theme.LumiereSpacing
 
-enum class FormFieldType {
-    TEXT, DATE, DATETIME, DROPDOWN, PRIORITY, ATTACHMENT
-}
-
-data class FormField(
-    val id: String,
-    val label: String,
-    val placeholder: String = "",
-    val isRequired: Boolean = false,
-    val hint: String? = null,
-    val type: FormFieldType = FormFieldType.TEXT,
-    val options: List<String> = emptyList()
-)
-
-data class UniversalFormData(
-    val title: String,
-    val fields: List<FormField>
-)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LumiereUniversalForm(
@@ -49,7 +30,6 @@ fun LumiereUniversalForm(
     onDismiss: () -> Unit,
     onSubmit: (Map<String, String>) -> Unit
 ) {
-    // Inicializa o estado com os valores atuais para evitar o flicker
     val formValues = remember { mutableStateMapOf<String, String>().apply { putAll(initialValues) } }
     val gold = MaterialTheme.colorScheme.primary
 
@@ -147,7 +127,7 @@ fun LumiereUniversalForm(
                         }
                         FormFieldType.ATTACHMENT -> {
                             OutlinedButton(
-                                onClick = { /* Ligar seletor nativo na próxima fase */ },
+                                onClick = { /* Seletor nativo ligado na próxima fase */ },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(LumiereRadius.S),
                                 border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
