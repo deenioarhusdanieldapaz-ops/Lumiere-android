@@ -35,10 +35,9 @@ fun TaskScreen(
     val now = System.currentTimeMillis()
     val dateFormat = SimpleDateFormat("dd MMM, HH:mm", Locale.getDefault())
 
-    // ESTADO PARA O QUICK ADD
     var showQuickAdd by remember { mutableStateOf(false) }
-    
-    // ESTADO PARA CONFIRMAÇÃO DE ELIMINAÇÃO (Próximo passo)
+    var showFullCreateForm by remember { mutableStateOf(false) } // NOVO: Estado para o Wizard
+
     var taskToDelete by remember { mutableStateOf<Task?>(null) }
     var confirmText by remember { mutableStateOf("") }
 
@@ -50,7 +49,6 @@ fun TaskScreen(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(bottom = 100.dp)
         ) {
-            // Cabeçalho
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(LumiereSpacing.M),
@@ -68,7 +66,6 @@ fun TaskScreen(
                 }
             }
 
-            // Resumo
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = LumiereSpacing.M),
@@ -80,7 +77,6 @@ fun TaskScreen(
                 }
             }
 
-            // Abas
             item {
                 ScrollableTabRow(
                     selectedTabIndex = 0,
@@ -96,7 +92,6 @@ fun TaskScreen(
                 }
             }
 
-            // Lista de Tarefas
             val displayTasks = uiState.filteredTasks
             if (displayTasks.isEmpty()) {
                 item { Text("Nenhuma tarefa encontrada.", modifier = Modifier.padding(LumiereSpacing.M), color = MaterialTheme.colorScheme.onSurfaceVariant) }
@@ -146,9 +141,9 @@ fun TaskScreen(
             }
         }
 
-        // FAB LIGADO AO QUICK ADD
+        // FAB agora abre o Wizard Completo para CRIAR
         FloatingActionButton(
-            onClick = { showQuickAdd = true },
+            onClick = { showFullCreateForm = true },
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary,
             shape = CircleShape,
@@ -158,7 +153,44 @@ fun TaskScreen(
         }
     }
 
-    // FORMULÁRIO RÁPIDO (Bottom Sheet)
+    // WIZARD COMPLETO PARA CRIAR NOVA TAREFA
+    if (showFullCreateForm) {
+        val createFormData = UniversalFormData(
+            title = "Criar Nova Tarefa",
+            fields = listOf(
+                FormField(id = "title", label = "Título da Tarefa", placeholder = "Ex: Preparar apresentação", isRequired = true, hint = "Mantém curto e claro", step = 1),
+                FormField(id = "description", label = "Descrição", placeholder = "Adicione mais detalhes...", hint = "Opcional", step = 1, maxLength = 500),
+                FormField(id = "priority", label = "Prioridade", type = FormFieldType.PRIORITY, options = listOf("Baixa", "Média", "Alta"), step = 1),
+                FormField(id = "startDate", label = "Data e Hora de Início", type = FormFieldType.DATETIME, placeholder = "DD/MM/AAAA HH:MM", step = 2),
+                FormField(id = "dueDate", label = "Data e Hora de Prazo", type = FormFieldType.DATETIME, placeholder = "DD/MM/AAAA HH:MM", step = 2),
+                FormField(id = "duration", label = "Duração Estimada (min)", placeholder = "Ex: 45", step = 2),
+                FormField(id = "recurrence", label = "Recorrência", type = FormFieldType.DROPDOWN, options = listOf("Nenhuma", "Diária", "Semanal", "Mensal", "Anual"), step = 2),
+                FormField(id = "project", label = "Projeto", type = FormFieldType.DROPDOWN, options = listOf("Sem projeto"), step = 3),
+                FormField(id = "category", label = "Categoria", placeholder = "Ex: Trabalho, Pessoal", step = 3),
+                FormField(id = "blockedBy", label = "Bloqueado por (ID)", placeholder = "Nenhuma dependência", hint = "ID da tarefa bloqueadora", step = 3),
+                FormField(id = "attachments", label = "Anexos", type = FormFieldType.ATTACHMENT, step = 3)
+            )
+        )
+        LumiereUniversalForm(
+            mode = FormMode.FULL,
+            data = createFormData,
+            onDismiss = { showFullCreateForm = false },
+            onSubmit = { values ->
+                val title = values["title"] ?: ""
+                if (title.isNotBlank()) {
+                    viewModel.addTask(Task(
+                        title = title,
+                        description = values["description"],
+                        category = values["category"],
+                        priority = when(values["priority"]) { "Baixa" -> 1; "Alta" -> 3; else -> 2 }
+                    ))
+                    showFullCreateForm = false
+                }
+            }
+        )
+    }
+
+    // QUICK ADD (Mantido como opção se quiseres, mas vamos desativar por agora)
     if (showQuickAdd) {
         val quickFormData = UniversalFormData(
             title = "Nova Tarefa Rápida",
@@ -180,7 +212,7 @@ fun TaskScreen(
         )
     }
 
-    // DIÁLOGO DE ELIMINAÇÃO (Implementado a seguir)
+    // Diálogo de Eliminação
     if (taskToDelete != null) {
         AlertDialog(
             onDismissRequest = { taskToDelete = null; confirmText = "" },
